@@ -226,12 +226,14 @@ export function PayLinkForm() {
       <Card className="p-5 sm:p-8">
         <div className="mb-8 space-y-3">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-accent">
-            Create Privii link
+            One-time PayLink
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight">Create a PayLink</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Create a one-time PayLink
+          </h1>
           <p className="max-w-xl text-sm leading-6 text-secondary">
-            Pick your Privii tag, set the payment details, and publish a private link
-            that anyone can use to pay you.
+            Need a single-use style payment request? Create a one-time PayLink alongside
+            your main Privii tag identity.
           </p>
         </div>
 
@@ -331,7 +333,7 @@ export function PayLinkForm() {
                 Creating...
               </span>
             ) : (
-              "Create PayLink"
+              "Create one-time PayLink"
             )}
           </Button>
         </form>

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import { PRIVII_FALLBACK_DOMAIN, PRIVII_ROOT_DOMAIN } from "@/lib/constants";
 import type { PayLinkExpiryOption } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -21,6 +22,14 @@ export function getBaseUrl() {
 
 export function generateRandomTag() {
   return `privii-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function normalizePriviiTag(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function isValidPriviiTag(tag: string) {
+  return /^[a-z0-9-]{3,24}$/.test(normalizePriviiTag(tag));
 }
 
 export function expiryToTimestamp(option: PayLinkExpiryOption) {
@@ -48,7 +57,7 @@ export function truncateWalletAddress(address: string) {
 
 export function formatAmount(amount: string | null, token: string) {
   if (!amount) {
-    return `Custom ${token}`;
+    return "Custom amount";
   }
 
   return `${amount} ${token}`;
@@ -56,6 +65,14 @@ export function formatAmount(amount: string | null, token: string) {
 
 export function buildPaymentUrl(tag: string) {
   return `${getBaseUrl()}/${tag}`;
+}
+
+export function buildPrimaryTagUrl(tag: string) {
+  return `https://${normalizePriviiTag(tag)}.${PRIVII_ROOT_DOMAIN}`;
+}
+
+export function buildFallbackTagUrl(tag: string) {
+  return `https://${PRIVII_FALLBACK_DOMAIN}/${normalizePriviiTag(tag)}`;
 }
 
 export function buildWhatsAppShareUrl(url: string, tag: string) {
@@ -68,4 +85,34 @@ export function buildXShareUrl(url: string, tag: string) {
   return `https://x.com/intent/tweet?text=${encodeURIComponent(
     `Get paid in crypto with my Privii link ${url} @${tag}`
   )}`;
+}
+
+export function extractTagFromHost(host: string | null) {
+  if (!host) {
+    return null;
+  }
+
+  const normalizedHost = host.toLowerCase().split(":")[0];
+
+  if (
+    normalizedHost === PRIVII_ROOT_DOMAIN ||
+    normalizedHost === `www.${PRIVII_ROOT_DOMAIN}`
+  ) {
+    return null;
+  }
+
+  if (!normalizedHost.endsWith(`.${PRIVII_ROOT_DOMAIN}`)) {
+    return null;
+  }
+
+  const subdomain = normalizedHost.slice(
+    0,
+    normalizedHost.length - (`.${PRIVII_ROOT_DOMAIN}`).length
+  );
+
+  if (!subdomain || subdomain.includes(".")) {
+    return null;
+  }
+
+  return normalizePriviiTag(subdomain);
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
 import { savePayLink, tagExists } from "@/lib/paylinks";
+import { priviiTagExists } from "@/lib/tags";
 import type {
   PayLinkExpiryOption,
   PayLinkRecord,
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (await tagExists(tag)) {
+    if ((await tagExists(tag)) || (await priviiTagExists(tag))) {
       return NextResponse.json(
         { error: "That Privii tag is already taken." },
         { status: 409 }
@@ -82,7 +83,9 @@ export async function POST(request: Request) {
       expiryOption,
       expiresAt,
       recipientWallet: body.recipientWallet,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      stealthEnabled: false,
+      stealthMode: "coming_soon"
     };
 
     await savePayLink(link);

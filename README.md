@@ -1,6 +1,6 @@
 # Privii
 
-Privii is a dark-mode MVP for creating Solana payment links backed by Vercel KV. Users connect a supported wallet, create a shareable `/{tag}` link, and accept SOL or USDC payments without exposing the recipient wallet in the UI.
+Privii is a dark-mode MVP for registering crypto payment tags backed by Vercel KV. Users connect a supported wallet, register a Privii identity, and accept SOL or USDC without exposing the recipient wallet in the UI.
 
 ## Stack
 
@@ -14,11 +14,12 @@ Privii is a dark-mode MVP for creating Solana payment links backed by Vercel KV.
 ## Features
 
 - Connect a supported Solana wallet
-- Create permanent or expiring payment links with a Privii tag
+- Register a Privii tag identity and resolve it on `privii.xyz/[tag]`
+- Support wildcard subdomains like `[tag].privii.cash`
 - Optional fixed amount or payer-entered custom amount
 - SOL and USDC payment support
 - KV-backed API routes for create and fetch
-- Responsive dark UI with post-create preview, copy/share actions, and loading states
+- Responsive dark UI with onboarding, dashboard placeholders, copy/share actions, and loading states
 - Payment success page with transaction hash
 
 ## Environment variables
@@ -69,9 +70,27 @@ npm run dev
 
 - `POST /api/links/create`
 - `GET /api/links/[slug]` (the route shape stays the same, but the value is now the Privii tag)
+- `POST /api/tags/create`
+- `GET /api/tags/[tag]`
+- `GET /api/tags/by-owner/[wallet]`
+
+## Wildcard subdomain setup
+
+Privii tags support a primary identity URL on `privii.cash`.
+
+Required DNS record:
+
+- Type: `CNAME`
+- Name: `*`
+- Value: `cname.vercel-dns.com`
+
+Fallback route:
+
+- `privii.xyz/[tag]`
 
 ## Notes
 
 - Recipient wallet addresses are stored in KV and used for on-chain transfers, but are not rendered on the public payment UI.
+- Public tag pages currently keep the wallet hidden in the UI, and private receive addresses are marked as coming soon.
 - The app defaults to Solana mainnet RPC unless `NEXT_PUBLIC_SOLANA_RPC_URL` is provided.
 - For USDC transfers, the payer wallet covers any associated token account creation needed for the recipient.
