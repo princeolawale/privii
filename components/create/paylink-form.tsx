@@ -1,17 +1,9 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import {
-  ArrowRight,
-  Check,
-  Copy,
-  EyeOff,
-  LoaderCircle,
-  MessageCircle,
-  Shield,
-} from "lucide-react";
+import { ArrowRight, Check, Copy, LoaderCircle } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,11 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast-provider";
 import type { PayLinkExpiryOption, PayLinkToken, PayLinkType } from "@/lib/types";
-import {
-  buildWhatsAppShareUrl,
-  buildXShareUrl,
-  formatAmount
-} from "@/lib/utils";
 
 type CreateResponse = {
   link: {
@@ -109,78 +96,80 @@ export function PayLinkForm() {
   }
 
   if (createdLink) {
-    const whatsappUrl = buildWhatsAppShareUrl(createdLink.url, createdLink.link.tag);
-    const xUrl = buildXShareUrl(createdLink.url, createdLink.link.tag);
+    const cleanUrl = createdLink.url.replace(/^https?:\/\//, "");
 
     return (
-      <div className="mx-auto w-full max-w-xl pt-8 sm:pt-12">
-        <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-6 pt-20 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-8 sm:pt-24">
-          <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-            <TokenBadge token={createdLink.link.token} />
-            <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
-              ACTIVE
-            </span>
+      <div className="mx-auto w-full max-w-6xl pt-4 sm:pt-8">
+        <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="space-y-8">
+            <p className="text-sm uppercase tracking-[0.34em] text-[#3366FF]">
+              Payment link ready
+            </p>
+            <div className="space-y-2">
+              <h1 className="text-6xl font-semibold tracking-[-0.08em] text-primary sm:text-7xl">
+                Link
+              </h1>
+              <h2 className="text-6xl font-semibold italic tracking-[-0.08em] text-[#3366FF] sm:text-7xl">
+                Created.
+              </h2>
+            </div>
+            <p className="max-w-xl text-xl leading-9 text-secondary">
+              Share this link to receive payment. Payers will never see your wallet
+              address at any point in the flow.
+            </p>
           </div>
 
-          <div className="space-y-8">
-            <div className="space-y-4 text-center">
-              <p className="text-xs uppercase tracking-[0.34em] text-secondary">
-                Payment Request
-              </p>
-              <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-                {createdLink.link.amount ?? "Custom"}{" "}
-                <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                  {createdLink.link.token}
-                </span>
-              </h1>
+          <div className="space-y-5">
+            <div className="rounded-[30px] border border-[#1C3FA8]/60 bg-[#0A0C15]/90 p-4 sm:p-5">
+              <div className="flex items-center gap-4 rounded-[24px] border border-[#1C3FA8]/60 bg-[#090C16] p-5">
+                <p className="min-w-0 flex-1 break-all font-mono text-lg text-[#3366FF] sm:text-2xl">
+                  {cleanUrl}
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex h-16 min-w-[128px] items-center justify-center rounded-[22px] border border-[#2750D3] bg-[#0E1220] px-6 text-xl font-semibold text-[#3366FF] transition hover:bg-[#131A2D]"
+                  onClick={handleCopy}
+                >
+                  {copied ? (
+                    <span className="flex items-center gap-2">
+                      <Check className="h-5 w-5" />
+                      Copied
+                    </span>
+                  ) : (
+                    "COPY"
+                  )}
+                </button>
+              </div>
             </div>
 
-            <div className="border-t border-border/80" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Link href={`/${createdLink.link.tag}`}>
+                <Button
+                  variant="secondary"
+                  className="h-20 w-full rounded-[28px] border-white/10 bg-[#151923] text-2xl font-medium text-primary hover:bg-[#1A1F2B]"
+                >
+                  Preview
+                  <ArrowRight className="ml-3 h-5 w-5" />
+                </Button>
+              </Link>
 
-            <div className="space-y-5 text-sm text-secondary">
-              <PreviewRow label="Ref ID / Tag" value={`@${createdLink.link.tag}`} />
-              <PreviewRow
-                label="Link"
-                value={createdLink.url.replace(/^https?:\/\//, "")}
-                compact
-              />
-              <PreviewRow
-                label="Creator"
-                value="Hidden"
-                icon={<EyeOff className="h-4 w-4 text-accent" />}
-              />
-              <PreviewRow
-                label="Status"
-                value="Private"
-                icon={<Shield className="h-4 w-4 text-accent" />}
-              />
-            </div>
-
-            <div className="flex items-center justify-center gap-4">
-              <ShareCircle href={xUrl} label="Share on X">
-                <span className="text-lg font-medium">X</span>
-              </ShareCircle>
-              <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
-                <MessageCircle className="h-5 w-5" />
-              </ShareCircle>
               <button
                 type="button"
-                aria-label="Copy PayLink"
-                className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
-                onClick={handleCopy}
+                className="inline-flex h-20 w-full items-center justify-center rounded-[28px] bg-[#3366FF] px-6 text-2xl font-semibold text-white transition hover:bg-[#2b58e5]"
+                onClick={() => {
+                  setCreatedLink(null);
+                  setCopied(false);
+                  setAmount("");
+                  setTag("");
+                  setToken("USDC");
+                  setType("permanent");
+                  setExpiry("none");
+                  setError(null);
+                }}
               >
-                {copied ? <Check className="h-5 w-5 text-accent" /> : <Copy className="h-5 w-5" />}
+                Create Another
               </button>
             </div>
-
-            <Link href={`/${createdLink.link.tag}`}>
-              <Button className="h-16 w-full rounded-[22px] text-xl font-medium">
-                Pay Now
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </Button>
-            </Link>
-
-            <p className="text-center text-sm text-secondary">Powered by Privii</p>
           </div>
         </div>
       </div>
@@ -188,7 +177,7 @@ export function PayLinkForm() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+    <div className="mx-auto w-full max-w-3xl">
       <Card className="p-5 sm:p-8">
         <div className="mb-8 space-y-3">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-accent">
@@ -269,7 +258,11 @@ export function PayLinkForm() {
 
           <label className="space-y-2">
             <span className="text-sm text-secondary">Recipient wallet</span>
-            <Input disabled value={connected ? recipientWallet : ""} placeholder="Wallet autofills when connected" />
+            <Input
+              disabled
+              value={connected ? recipientWallet : ""}
+              placeholder="Wallet autofills when connected"
+            />
           </label>
 
           {!connected ? (
@@ -298,107 +291,6 @@ export function PayLinkForm() {
           </Button>
         </form>
       </Card>
-
-      <div className="space-y-6">
-        <Card className="space-y-5 p-5 sm:p-7">
-          <div className="space-y-2">
-            <p className="text-sm text-secondary">Public preview</p>
-            <p className="text-lg font-medium text-primary">
-              A premium payment page with private recipient details.
-            </p>
-          </div>
-          <div className="rounded-[24px] border border-border bg-background/70 p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-medium text-primary">
-                {amount ? `${amount} ${token}` : `Custom ${token}`}
-              </p>
-              <span className="rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs text-accent">
-                Private
-              </span>
-            </div>
-            <div className="space-y-3 text-sm text-secondary">
-              <div className="flex items-center justify-between gap-4">
-                <span>User tag</span>
-                <span className="text-primary">@{tag || "yourtag"}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>Link</span>
-                <span className="text-primary">privii.xyz/{tag || "yourtag"}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span>Creator</span>
-                <span className="text-primary">Hidden</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="space-y-4 p-5 sm:p-7">
-          <div className="space-y-2">
-            <p className="text-sm text-secondary">What happens next</p>
-            <p className="text-sm leading-6 text-secondary">
-              After creation, the form becomes the final Privii card so you can copy,
-              share, and open the payment link immediately.
-            </p>
-          </div>
-        </Card>
-      </div>
     </div>
-  );
-}
-
-function TokenBadge({ token }: { token: PayLinkToken }) {
-  return (
-    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2563EB] text-3xl font-semibold text-white">
-        {token === "USDC" ? "$" : "S"}
-      </div>
-    </div>
-  );
-}
-
-function PreviewRow({
-  label,
-  value,
-  icon,
-  compact = false
-}: {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-  compact?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span>{label}</span>
-      <span
-        className={`flex items-center gap-2 text-right text-primary ${compact ? "max-w-[210px] truncate sm:max-w-[260px]" : ""}`}
-      >
-        {icon}
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function ShareCircle({
-  href,
-  label,
-  children
-}: {
-  href: string;
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={label}
-      className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
-    >
-      {children}
-    </a>
   );
 }

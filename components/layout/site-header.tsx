@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/create", label: "Create" },
   { href: "/#how-it-works", label: "How it Works" }
 ];
 
@@ -59,43 +58,46 @@ export function SiteHeader() {
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 md:hidden",
-          open ? "mb-8 max-h-[420px] opacity-100" : "max-h-0 opacity-0"
+          open ? "mb-8 max-h-[520px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="rounded-[28px] border border-border bg-card p-4">
-          <div className="flex flex-col gap-2">
+        <div className="ml-auto w-full max-w-[390px] rounded-[32px] border border-white/10 bg-[#111111]/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="flex flex-col gap-5">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-2xl px-3 py-3 text-sm text-secondary transition hover:bg-white/[0.03] hover:text-primary"
+                className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
                 onClick={() => setOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-            <a
-              href="https://x.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-2xl px-3 py-3 text-sm text-secondary transition hover:bg-white/[0.03] hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              X
-            </a>
-            <a
-              href="https://t.me/"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-2xl px-3 py-3 text-sm text-secondary transition hover:bg-white/[0.03] hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              Telegram
-            </a>
+            <div className="border-t border-white/8 pt-5">
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href="https://x.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/[0.02] text-lg text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  onClick={() => setOpen(false)}
+                >
+                  X
+                </a>
+                <a
+                  href="https://t.me/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/[0.02] text-lg text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  onClick={() => setOpen(false)}
+                >
+                  Telegram
+                </a>
+              </div>
+            </div>
             <Link href="/create" onClick={() => setOpen(false)}>
-              <Button className="mt-3 w-full">Create PayLink</Button>
+              <Button className="mt-1 h-16 w-full rounded-[999px] text-xl">Create PayLink</Button>
             </Link>
-            <ConnectWalletButton className="!w-full !justify-center" />
           </div>
         </div>
       </div>
