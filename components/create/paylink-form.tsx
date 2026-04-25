@@ -7,7 +7,7 @@ import {
   Copy,
   EyeOff,
   LoaderCircle,
-  MessageCircle,
+  Send,
   Shield
 } from "lucide-react";
 import Link from "next/link";
@@ -19,17 +19,15 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast-provider";
 import type { PayLinkExpiryOption, PayLinkToken, PayLinkType } from "@/lib/types";
-import {
-  buildWhatsAppShareUrl,
-  buildXShareUrl,
-  formatAmount
-} from "@/lib/utils";
+import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type CreateResponse = {
   link: {
     tag: string;
     amount: string | null;
     token: PayLinkToken;
+    type: PayLinkType;
+    expiresAt: number | null;
   };
   url: string;
 };
@@ -108,13 +106,43 @@ export function PayLinkForm() {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  async function handleShare() {
+    if (!createdLink?.url) {
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Privii PayLink",
+          text: `Pay me privately with my Privii link (@${createdLink.link.tag})`,
+          url: createdLink.url
+        });
+        return;
+      } catch {
+        // Fall back to copy when native share is dismissed or unavailable.
+      }
+    }
+
+    await handleCopy();
+  }
+
   if (createdLink) {
     const whatsappUrl = buildWhatsAppShareUrl(createdLink.url, createdLink.link.tag);
     const xUrl = buildXShareUrl(createdLink.url, createdLink.link.tag);
+    const amountLabel = createdLink.link.amount
+      ? `${createdLink.link.amount} ${createdLink.link.token}`
+      : "Custom amount";
+    const linkTypeLabel =
+      createdLink.link.type === "permanent" ? "Permalink" : "Expiring link";
+    const expiryLabel =
+      createdLink.link.type === "permanent"
+        ? "No expiry"
+        : formatExpiryLabel(createdLink.link.expiresAt);
 
     return (
-      <div className="mx-auto w-full max-w-xl pt-8 sm:pt-12">
-        <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-6 pt-20 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-8 sm:pt-24">
+      <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
+        <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
           <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
             <TokenBadge token={createdLink.link.token} />
             <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
@@ -128,22 +156,20 @@ export function PayLinkForm() {
                 Payment Request
               </p>
               <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-                {createdLink.link.amount ?? "Custom"}{" "}
+                {createdLink.link.amount ? createdLink.link.amount : "Custom"}{" "}
                 <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                  {createdLink.link.token}
+                  {createdLink.link.amount ? createdLink.link.token : "amount"}
                 </span>
               </h1>
             </div>
 
             <div className="border-t border-border/80" />
 
-            <div className="space-y-5 text-sm text-secondary">
+            <div className="space-y-6 text-sm text-secondary">
               <PreviewRow label="Ref ID" value={createdLink.link.tag} />
-              <PreviewRow
-                label="Link"
-                value={createdLink.url.replace(/^https?:\/\//, "")}
-                compact
-              />
+              <PreviewRow label="Amount" value={amountLabel} />
+              <PreviewRow label="Link type" value={linkTypeLabel} />
+              <PreviewRow label="Expiry" value={expiryLabel} />
               <PreviewRow
                 label="Creator"
                 value="Hidden"
@@ -156,28 +182,36 @@ export function PayLinkForm() {
               />
             </div>
 
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-5 pt-4">
               <ShareCircle href={xUrl} label="Share on X">
                 <span className="text-lg font-medium">X</span>
               </ShareCircle>
               <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
-                <MessageCircle className="h-5 w-5" />
+                <Send className="h-5 w-5" />
               </ShareCircle>
               <button
                 type="button"
                 aria-label="Copy PayLink"
-                className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+                className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
                 onClick={handleCopy}
               >
                 {copied ? <Check className="h-5 w-5 text-accent" /> : <Copy className="h-5 w-5" />}
               </button>
             </div>
 
-            <Link href={`/${createdLink.link.tag}`}>
-              <Button className="h-16 w-full rounded-[22px] text-xl font-medium">
-                Pay Now
-                <ArrowRight className="ml-3 h-5 w-5" />
-              </Button>
+            <Button
+              className="mt-6 h-16 w-full rounded-[22px] text-xl font-medium"
+              onClick={handleShare}
+            >
+              Share PayLink
+              <ArrowRight className="ml-3 h-5 w-5" />
+            </Button>
+
+            <Link
+              href={`/${createdLink.link.tag}`}
+              className="block text-center text-sm text-secondary transition hover:text-primary"
+            >
+              Preview payment page
             </Link>
 
             <p className="text-center text-sm text-secondary">Powered by Privii</p>
@@ -355,9 +389,36 @@ function ShareCircle({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
     >
       {children}
     </a>
   );
+}
+
+function formatExpiryLabel(expiresAt: number | null) {
+  if (!expiresAt) {
+    return "No expiry";
+  }
+
+  const diff = expiresAt - Date.now();
+
+  if (diff <= 0) {
+    return "Expires soon";
+  }
+
+  const minutes = Math.floor(diff / (60 * 1000));
+  const days = Math.floor(minutes / (60 * 24));
+  const hours = Math.floor((minutes % (60 * 24)) / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (days > 0) {
+    return `Expires in ${days}d ${hours}h`;
+  }
+
+  if (hours > 0) {
+    return `Expires in ${hours}h ${remainingMinutes}m`;
+  }
+
+  return remainingMinutes <= 5 ? "Expires soon" : `Expires in ${remainingMinutes}m`;
 }

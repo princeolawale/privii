@@ -32,7 +32,7 @@ export function SiteHeader({
           href="/"
           className={cn(
             "font-semibold tracking-tight text-primary",
-            largeLogo ? "text-[2.1rem]" : "text-lg"
+            largeLogo ? "text-[2.35rem]" : "text-[1.6rem]"
           )}
         >
           {APP_NAME}

@@ -7,7 +7,7 @@ import {
   Copy,
   EyeOff,
   LoaderCircle,
-  MessageCircle,
+  Send,
   Shield
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -32,11 +32,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { USDC_MINT_ADDRESS } from "@/lib/solana";
 import type { PayLinkResponse, PayLinkToken } from "@/lib/types";
-import {
-  buildWhatsAppShareUrl,
-  buildXShareUrl,
-  formatAmount
-} from "@/lib/utils";
+import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type Props = {
   tag: string;
@@ -123,6 +119,27 @@ export function PayLinkPaymentClient({ tag }: Props) {
     window.setTimeout(() => setCopied(false), 1600);
   }
 
+  async function handleShare() {
+    if (!data?.link) {
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Privii PayLink",
+          text: `Pay me privately with my Privii link (@${data.link.tag})`,
+          url: currentUrl
+        });
+        return;
+      } catch {
+        // Fall back to copy when native share is dismissed or unavailable.
+      }
+    }
+
+    await handleCopy();
+  }
+
   async function handlePay() {
     if (!data?.link || !wallet.publicKey || !wallet.sendTransaction) {
       return;
@@ -206,16 +223,17 @@ export function PayLinkPaymentClient({ tag }: Props) {
   const whatsappUrl = buildWhatsAppShareUrl(currentUrl, data.link.tag);
   const xUrl = buildXShareUrl(currentUrl, data.link.tag);
   const amountLabel = data.link.amount
-    ? formatAmount(data.link.amount, data.link.token)
-    : "Custom Amount";
-  const linkTypeLabel = data.link.type === "permanent" ? "Permalink" : "Expiring";
+    ? `${data.link.amount} ${data.link.token}`
+    : "Custom amount";
+  const linkTypeLabel =
+    data.link.type === "permanent" ? "Permalink" : "Expiring link";
   const expiryLabel =
     data.link.type === "permanent"
-      ? "Permanent"
-      : formatExpiryCountdown(data.link.expiresAt);
+      ? "No expiry"
+      : formatExpiryLabel(data.link.expiresAt);
 
   return (
-    <div className="mx-auto w-full max-w-xl pt-8 sm:pt-12">
+    <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
       <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
           <TokenBadge token={data.link.token} />
@@ -230,19 +248,20 @@ export function PayLinkPaymentClient({ tag }: Props) {
               Payment Request
             </p>
             <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-              {amountLabel === "Custom Amount" ? "Custom" : data.link.amount}{" "}
+              {data.link.amount ? data.link.amount : "Custom"}{" "}
               <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                {amountLabel === "Custom Amount" ? "Amount" : data.link.token}
+                {data.link.amount ? data.link.token : "amount"}
               </span>
             </h1>
           </div>
 
           <div className="border-t border-border/80" />
 
-          <div className="space-y-5 text-sm text-secondary">
+          <div className="space-y-6 text-sm text-secondary">
             <PreviewRow label="Ref ID" value={data.link.tag} />
-            <PreviewRow label="Link Type" value={linkTypeLabel} />
-            <PreviewRow label="Expires In" value={expiryLabel} />
+            <PreviewRow label="Amount" value={amountLabel} />
+            <PreviewRow label="Link type" value={linkTypeLabel} />
+            <PreviewRow label="Expiry" value={expiryLabel} />
             <PreviewRow
               label="Creator"
               value="Hidden"
@@ -269,26 +288,36 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-          <div className="flex items-center justify-center gap-5 pt-2">
+          <div className="flex items-center justify-center gap-5 pt-4">
             <ShareCircle href={xUrl} label="Share on X">
               <span className="text-lg font-medium">X</span>
             </ShareCircle>
             <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
-              <MessageCircle className="h-5 w-5" />
+              <Send className="h-5 w-5" />
             </ShareCircle>
             <button
               type="button"
               aria-label="Copy PayLink"
-              className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+              className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
               onClick={handleCopy}
             >
               {copied ? <Check className="h-5 w-5 text-accent" /> : <Copy className="h-5 w-5" />}
             </button>
           </div>
 
+          {isCreator ? (
+            <Button
+              className="mt-6 h-16 w-full rounded-[22px] text-xl font-medium"
+              onClick={handleShare}
+            >
+              Share PayLink
+              <ArrowRight className="ml-3 h-5 w-5" />
+            </Button>
+          ) : null}
+
           {!isCreator && !isExpired ? (
             <Button
-              className="mt-4 h-16 w-full rounded-[22px] text-xl font-medium"
+              className="mt-6 h-16 w-full rounded-[22px] text-xl font-medium"
               disabled={!canPay || isPaying}
               onClick={handlePay}
             >
@@ -375,15 +404,15 @@ function ShareCircle({
   );
 }
 
-function formatExpiryCountdown(expiresAt: number | null) {
+function formatExpiryLabel(expiresAt: number | null) {
   if (!expiresAt) {
-    return "Permanent";
+    return "No expiry";
   }
 
   const diff = expiresAt - Date.now();
 
   if (diff <= 0) {
-    return "Expired";
+    return "Expires soon";
   }
 
   const minutes = Math.floor(diff / (60 * 1000));
@@ -392,14 +421,14 @@ function formatExpiryCountdown(expiresAt: number | null) {
   const remainingMinutes = minutes % 60;
 
   if (days > 0) {
-    return `${days}d ${hours}h left`;
+    return `Expires in ${days}d ${hours}h`;
   }
 
   if (hours > 0) {
-    return `${hours}h ${remainingMinutes}m left`;
+    return `Expires in ${hours}h ${remainingMinutes}m`;
   }
 
-  return `${Math.max(remainingMinutes, 1)}m left`;
+  return remainingMinutes <= 5 ? "Expires soon" : `Expires in ${Math.max(remainingMinutes, 1)}m`;
 }
 
 async function addUsdcTransfer({
