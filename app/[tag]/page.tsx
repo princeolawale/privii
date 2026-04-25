@@ -9,7 +9,11 @@ export default async function TagPayPage({
   const { tag } = await params;
 
   return (
-    <PageShell className="flex items-center">
+    <PageShell
+      className="flex items-start pt-6 sm:pt-10"
+      hideWalletButton
+      largeLogo
+    >
       <PayLinkPaymentClient tag={tag} />
     </PageShell>
   );

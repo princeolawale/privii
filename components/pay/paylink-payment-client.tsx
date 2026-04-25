@@ -1,7 +1,15 @@
 "use client";
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { ArrowRight, Check, Copy, EyeOff, LoaderCircle, MessageCircle, Shield } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  EyeOff,
+  LoaderCircle,
+  MessageCircle,
+  Shield
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -95,9 +103,12 @@ export function PayLinkPaymentClient({ tag }: Props) {
   }, [customAmount, data?.link.amount]);
 
   const isExpired = data?.status === "expired";
+  const recipientWallet = data?.link.recipientWallet ?? null;
+  const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
+  const connectedWalletAddress = wallet.publicKey?.toBase58().trim() ?? null;
   const isCreator =
-    Boolean(wallet.publicKey && data?.link.recipientWallet) &&
-    wallet.publicKey?.toBase58() === data?.link.recipientWallet;
+    Boolean(connectedWalletAddress && normalizedRecipientWallet) &&
+    connectedWalletAddress === normalizedRecipientWallet;
   const canPay =
     wallet.connected &&
     wallet.publicKey &&
@@ -194,10 +205,18 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
   const whatsappUrl = buildWhatsAppShareUrl(currentUrl, data.link.tag);
   const xUrl = buildXShareUrl(currentUrl, data.link.tag);
+  const amountLabel = data.link.amount
+    ? formatAmount(data.link.amount, data.link.token)
+    : "Custom Amount";
+  const linkTypeLabel = data.link.type === "permanent" ? "Permalink" : "Expiring";
+  const expiryLabel =
+    data.link.type === "permanent"
+      ? "Permanent"
+      : formatExpiryCountdown(data.link.expiresAt);
 
   return (
-    <div className="mx-auto w-full max-w-xl pt-4 sm:pt-8">
-      <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-6 pt-20 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-8 sm:pt-24">
+    <div className="mx-auto w-full max-w-xl pt-8 sm:pt-12">
+      <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
           <TokenBadge token={data.link.token} />
           <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
@@ -211,9 +230,9 @@ export function PayLinkPaymentClient({ tag }: Props) {
               Payment Request
             </p>
             <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-              {data.link.amount ?? "Custom"}{" "}
+              {amountLabel === "Custom Amount" ? "Custom" : data.link.amount}{" "}
               <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                {data.link.token}
+                {amountLabel === "Custom Amount" ? "Amount" : data.link.token}
               </span>
             </h1>
           </div>
@@ -222,11 +241,8 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
           <div className="space-y-5 text-sm text-secondary">
             <PreviewRow label="Ref ID" value={data.link.tag} />
-            <PreviewRow
-              label="Link"
-              value={currentUrl.replace(/^https?:\/\//, "")}
-              compact
-            />
+            <PreviewRow label="Link Type" value={linkTypeLabel} />
+            <PreviewRow label="Expires In" value={expiryLabel} />
             <PreviewRow
               label="Creator"
               value="Hidden"
@@ -253,7 +269,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-5 pt-2">
             <ShareCircle href={xUrl} label="Share on X">
               <span className="text-lg font-medium">X</span>
             </ShareCircle>
@@ -272,7 +288,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
           {!isCreator && !isExpired ? (
             <Button
-              className="h-16 w-full rounded-[22px] text-xl font-medium"
+              className="mt-4 h-16 w-full rounded-[22px] text-xl font-medium"
               disabled={!canPay || isPaying}
               onClick={handlePay}
             >
@@ -352,11 +368,38 @@ function ShareCircle({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
     >
       {children}
     </a>
   );
+}
+
+function formatExpiryCountdown(expiresAt: number | null) {
+  if (!expiresAt) {
+    return "Permanent";
+  }
+
+  const diff = expiresAt - Date.now();
+
+  if (diff <= 0) {
+    return "Expired";
+  }
+
+  const minutes = Math.floor(diff / (60 * 1000));
+  const days = Math.floor(minutes / (60 * 24));
+  const hours = Math.floor((minutes % (60 * 24)) / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h left`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${remainingMinutes}m left`;
+  }
+
+  return `${Math.max(remainingMinutes, 1)}m left`;
 }
 
 async function addUsdcTransfer({

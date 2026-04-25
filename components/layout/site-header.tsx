@@ -15,14 +15,26 @@ const navItems = [
   { href: "/#how-it-works", label: "How it Works" }
 ];
 
-export function SiteHeader() {
+export function SiteHeader({
+  hideWalletButton = false,
+  largeLogo = false
+}: {
+  hideWalletButton?: boolean;
+  largeLogo?: boolean;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <header className="mb-10 flex items-center justify-between">
-        <Link href="/" className="text-lg font-semibold tracking-tight text-primary">
+        <Link
+          href="/"
+          className={cn(
+            "font-semibold tracking-tight text-primary",
+            largeLogo ? "text-[2.1rem]" : "text-lg"
+          )}
+        >
           {APP_NAME}
         </Link>
 
@@ -39,11 +51,13 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <ConnectWalletButton />
+          {!hideWalletButton ? <ConnectWalletButton /> : null}
         </nav>
 
         <div className="flex items-center gap-2 md:hidden">
-          <ConnectWalletButton className="!h-10 !px-4 !text-sm" />
+          {!hideWalletButton ? (
+            <ConnectWalletButton className="!h-10 !px-4 !text-sm" />
+          ) : null}
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
