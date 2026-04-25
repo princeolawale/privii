@@ -14,7 +14,7 @@ export function ConnectWalletButton({ className }: { className?: string }) {
         "has-wallet": "Connect",
         "no-wallet": "Connect"
       }}
-      className={`!h-10 !rounded-full !border !border-white/10 !bg-white/5 !px-4 !text-sm !font-medium !text-white !transition !duration-200 hover:!border-white/20 hover:!bg-white/10 ${className ?? ""}`}
+      className={`!inline-flex !min-h-14 !items-center !justify-center !rounded-2xl !border !border-white/10 !bg-white/[0.04] !px-5 !text-base !font-medium !text-white !transition !duration-200 hover:!border-white/20 hover:!bg-white/[0.07] ${className ?? ""}`}
     />
   );
 }

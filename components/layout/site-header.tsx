@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Menu, Send, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -27,7 +27,7 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="mb-10 flex items-center justify-between">
+      <header className="mb-12 flex items-center justify-between">
         <Link
           href="/"
           className={cn(
@@ -54,14 +54,14 @@ export function SiteHeader({
           {!hideWalletButton ? <ConnectWalletButton /> : null}
         </nav>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-3 md:hidden">
           {!hideWalletButton ? (
-            <ConnectWalletButton className="!h-10 !px-4 !text-sm" />
+            <ConnectWalletButton className="!min-h-12 !rounded-2xl !px-4 !text-sm" />
           ) : null}
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-white/15 hover:bg-white/[0.03]"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-white/15 hover:bg-white/[0.03]"
             onClick={() => setOpen((current) => !current)}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -76,7 +76,7 @@ export function SiteHeader({
         )}
       >
         <div className="ml-auto w-full max-w-[390px] rounded-[32px] border border-white/10 bg-[#111111]/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -93,25 +93,28 @@ export function SiteHeader({
                   href="https://x.com/"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/[0.02] text-lg text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 text-base font-medium text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
                   onClick={() => setOpen(false)}
                 >
-                  X
+                  <span className="text-lg">X</span>
+                  <span>X</span>
                 </a>
                 <a
                   href="https://t.me/"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/[0.02] text-lg text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 text-base font-medium text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
                   onClick={() => setOpen(false)}
                 >
+                  <Send className="h-4 w-4" />
                   Telegram
                 </a>
               </div>
             </div>
             <Link href="/create" onClick={() => setOpen(false)}>
-              <Button className="mt-1 h-16 w-full rounded-[999px] text-xl">Create PayLink</Button>
+              <Button className="w-full">Create PayLink</Button>
             </Link>
+            {!hideWalletButton ? <ConnectWalletButton className="!w-full" /> : null}
           </div>
         </div>
       </div>

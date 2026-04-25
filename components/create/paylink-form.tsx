@@ -182,25 +182,25 @@ export function PayLinkForm() {
               />
             </div>
 
-            <div className="flex items-center justify-center gap-5 pt-4">
+            <div className="flex items-center justify-center gap-4 pt-6">
               <ShareCircle href={xUrl} label="Share on X">
-                <span className="text-lg font-medium">X</span>
+                <span className="text-base font-medium">X</span>
               </ShareCircle>
               <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </ShareCircle>
               <button
                 type="button"
                 aria-label="Copy PayLink"
-                className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
                 onClick={handleCopy}
               >
-                {copied ? <Check className="h-5 w-5 text-accent" /> : <Copy className="h-5 w-5" />}
+                {copied ? <Check className="h-4 w-4 text-accent" /> : <Copy className="h-4 w-4" />}
               </button>
             </div>
 
             <Button
-              className="mt-6 h-16 w-full rounded-[22px] text-xl font-medium"
+              className="mt-8 w-full"
               onClick={handleShare}
             >
               Share PayLink
@@ -389,7 +389,7 @@ function ShareCircle({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
     >
       {children}
     </a>
