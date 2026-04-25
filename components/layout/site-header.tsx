@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/#how-it-works", label: "How it Works" },
+  { href: "/get-started", label: "Get Started" },
+  { href: "/create", label: "Create PayLink" },
   { href: "/dashboard", label: "Dashboard" }
 ];
 
@@ -52,9 +53,6 @@ export function SiteHeader({
               {item.label}
             </Link>
           ))}
-          <Link href="/get-started">
-            <Button className="min-w-[140px]">Get Started</Button>
-          </Link>
           {!hideWalletButton ? <ConnectWalletButton /> : null}
         </nav>
 
@@ -91,13 +89,6 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/get-started"
-              className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              Get Started
-            </Link>
             <div className="border-t border-white/8 pt-5">
               <div className="grid grid-cols-2 gap-3">
                 <a

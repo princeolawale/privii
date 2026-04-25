@@ -10,7 +10,7 @@ export default async function PayPage({
 
   return (
     <PageShell className="flex items-start pt-6 sm:pt-10" largeLogo>
-      <PayLinkPaymentClient tag={slug} />
+      <PayLinkPaymentClient tag={slug} kind="paylink" />
     </PageShell>
   );
 }

@@ -12,6 +12,7 @@ export type PayLinkRecord = {
   expiresAt: number | null;
   recipientWallet: string;
   createdAt: number;
+  ownerTag?: string | null;
   stealthEnabled: boolean;
   stealthMode: StealthMode;
 };

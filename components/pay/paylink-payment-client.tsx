@@ -29,21 +29,29 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { USDC_MINT_ADDRESS } from "@/lib/solana";
-import type { PayLinkResponse, PayLinkToken } from "@/lib/types";
+import type { PayLinkResponse, PayLinkToken, PriviiTagRecord } from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type Props = {
   tag: string;
+  kind?: "paylink" | "tag";
 };
 
-export function PayLinkPaymentClient({ tag }: Props) {
+type PayTarget =
+  | { kind: "paylink"; link: PayLinkResponse["link"]; status: PayLinkResponse["status"] }
+  | { kind: "tag"; tagRecord: PriviiTagRecord };
+
+export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
   const { connection } = useConnection();
   const wallet = useWallet();
-  const [data, setData] = useState<PayLinkResponse | null>(null);
+  const [data, setData] = useState<PayTarget | null>(null);
   const [customAmount, setCustomAmount] = useState("");
+  const [selectedToken, setSelectedToken] = useState<PayLinkToken>("USDC");
   const [isFetching, setIsFetching] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +65,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
       setError(null);
 
       try {
-        const response = await fetch(`/api/links/${tag}`, {
+        const response = await fetch(kind === "tag" ? `/api/tags/${tag}` : `/api/links/${tag}`, {
           cache: "no-store"
         });
         const result = await response.json();
@@ -67,11 +75,21 @@ export function PayLinkPaymentClient({ tag }: Props) {
         }
 
         if (!cancelled) {
-          setData(result);
+          if (kind === "tag") {
+            setData({ kind: "tag", tagRecord: result.tag });
+          } else {
+            setData({ kind: "paylink", link: result.link, status: result.status });
+          }
         }
       } catch (fetchError) {
         if (!cancelled) {
-          setError(fetchError instanceof Error ? fetchError.message : "Unable to load link.");
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : kind === "tag"
+                ? "Unable to load tag."
+                : "Unable to load link."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -85,21 +103,22 @@ export function PayLinkPaymentClient({ tag }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [tag]);
+  }, [kind, tag]);
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
 
   const enteredAmount = useMemo(() => {
-    if (data?.link.amount) {
+    if (data?.kind === "paylink" && data.link.amount) {
       return data.link.amount;
     }
 
     return customAmount;
-  }, [customAmount, data?.link.amount]);
+  }, [customAmount, data]);
 
-  const isExpired = data?.status === "expired";
-  const recipientWallet = data?.link.recipientWallet ?? null;
+  const isExpired = data?.kind === "paylink" ? data.status === "expired" : false;
+  const recipientWallet =
+    data?.kind === "paylink" ? data.link.recipientWallet : data?.kind === "tag" ? data.tagRecord.ownerWallet : null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
   const connectedWalletAddress = wallet.publicKey?.toBase58().trim() ?? null;
   const isCreator =
@@ -120,15 +139,16 @@ export function PayLinkPaymentClient({ tag }: Props) {
   }
 
   async function handleShare() {
-    if (!data?.link) {
+    if (!data) {
       return;
     }
 
     if (navigator.share) {
       try {
+        const shareTag = data.kind === "tag" ? data.tagRecord.tag : data.link.tag;
         await navigator.share({
           title: "Privii PayLink",
-          text: `Pay me privately with my Privii link (@${data.link.tag})`,
+          text: `Pay me privately with my Privii link (@${shareTag})`,
           url: currentUrl
         });
         return;
@@ -141,7 +161,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
   }
 
   async function handlePay() {
-    if (!data?.link || !wallet.publicKey || !wallet.sendTransaction) {
+    if (!data || !wallet.publicKey || !wallet.sendTransaction) {
       return;
     }
 
@@ -156,10 +176,13 @@ export function PayLinkPaymentClient({ tag }: Props) {
     setIsPaying(true);
 
     try {
-      const recipient = new PublicKey(data.link.recipientWallet);
+      const recipient = new PublicKey(
+        data.kind === "tag" ? data.tagRecord.ownerWallet : data.link.recipientWallet
+      );
       const transaction = new Transaction();
+      const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
 
-      if (data.link.token === "SOL") {
+      if (paymentToken === "SOL") {
         transaction.add(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
@@ -182,7 +205,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
 
       router.push(
         `/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(
-          data.link.tag
+          data.kind === "tag" ? data.tagRecord.tag : data.link.tag
         )}`
       );
     } catch (paymentError) {
@@ -201,7 +224,7 @@ export function PayLinkPaymentClient({ tag }: Props) {
       <Card className="flex min-h-[360px] items-center justify-center">
         <div className="flex items-center gap-3 text-secondary">
           <LoaderCircle className="h-5 w-5 animate-spin" />
-          Loading PayLink
+          {kind === "tag" ? "Loading Privii tag" : "Loading PayLink"}
         </div>
       </Card>
     );
@@ -210,7 +233,9 @@ export function PayLinkPaymentClient({ tag }: Props) {
   if (error && !data) {
     return (
       <Card className="space-y-3">
-        <h1 className="text-2xl font-semibold">Link unavailable</h1>
+        <h1 className="text-2xl font-semibold">
+          {kind === "tag" ? "Privii tag not found." : "Link unavailable"}
+        </h1>
         <p className="text-sm text-secondary">{error}</p>
       </Card>
     );
@@ -220,23 +245,36 @@ export function PayLinkPaymentClient({ tag }: Props) {
     return null;
   }
 
-  const whatsappUrl = buildWhatsAppShareUrl(currentUrl, data.link.tag);
-  const xUrl = buildXShareUrl(currentUrl, data.link.tag);
-  const amountLabel = data.link.amount
-    ? `${data.link.amount} ${data.link.token}`
-    : "Custom amount";
+  const shareTag = data.kind === "tag" ? data.tagRecord.tag : data.link.tag;
+  const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
+  const whatsappUrl = buildWhatsAppShareUrl(currentUrl, shareTag);
+  const xUrl = buildXShareUrl(currentUrl, shareTag);
+  const amountLabel =
+    data.kind === "paylink"
+      ? data.link.amount
+        ? `${data.link.amount} ${data.link.token}`
+        : "Custom amount"
+      : "Custom amount";
   const linkTypeLabel =
-    data.link.type === "permanent" ? "Permalink" : "Expiring link";
+    data.kind === "tag"
+      ? "Privii tag"
+      : data.link.type === "permanent"
+        ? "Permalink"
+        : "Expiring link";
   const expiryLabel =
-    data.link.type === "permanent"
+    data.kind === "tag"
       ? "No expiry"
-      : formatExpiryLabel(data.link.expiresAt);
+      : data.link.type === "permanent"
+        ? "No expiry"
+        : formatExpiryLabel(data.link.expiresAt);
+  const shouldShowCustomAmount =
+    !isCreator && !isExpired && (data.kind === "tag" || !data.link.amount);
 
   return (
     <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
       <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
-          <TokenBadge token={data.link.token} />
+          <TokenBadge token={paymentToken} />
           <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
             ACTIVE
           </span>
@@ -245,20 +283,32 @@ export function PayLinkPaymentClient({ tag }: Props) {
           <div className="space-y-9">
           <div className="space-y-4 text-center">
             <p className="text-xs uppercase tracking-[0.34em] text-secondary">
-              Payment Request
+              {data.kind === "tag" ? "Privii tag" : "Payment Request"}
             </p>
-            <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-              {data.link.amount ? data.link.amount : "Custom"}{" "}
-              <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                {data.link.amount ? data.link.token : "amount"}
-              </span>
-            </h1>
+            {data.kind === "tag" ? (
+              <>
+                <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
+                  Send crypto
+                </h1>
+                <p className="text-base text-secondary sm:text-lg">to @{data.tagRecord.tag}</p>
+              </>
+            ) : (
+              <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
+                {data.link.amount ? data.link.amount : "Custom"}{" "}
+                <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
+                  {data.link.amount ? data.link.token : "amount"}
+                </span>
+              </h1>
+            )}
           </div>
 
           <div className="border-t border-border/80" />
 
           <div className="space-y-6 text-sm text-secondary">
-            <PreviewRow label="Ref ID" value={data.link.tag} />
+            <PreviewRow
+              label={data.kind === "tag" ? "Tag" : "Ref ID"}
+              value={data.kind === "tag" ? `@${data.tagRecord.tag}` : data.link.ownerTag ? `@${data.link.ownerTag}` : data.link.tag}
+            />
             <PreviewRow label="Amount" value={amountLabel} />
             <PreviewRow label="Link type" value={linkTypeLabel} />
             <PreviewRow label="Expiry" value={expiryLabel} />
@@ -274,16 +324,38 @@ export function PayLinkPaymentClient({ tag }: Props) {
             />
           </div>
 
-          {!data.link.amount && !isCreator && !isExpired ? (
-            <label className="block space-y-2">
-              <span className="text-sm text-secondary">Amount to send</span>
-              <Input
-                inputMode="decimal"
-                placeholder={`Enter ${data.link.token} amount`}
-                value={customAmount}
-                onChange={(event) => setCustomAmount(event.target.value)}
-              />
-            </label>
+          {shouldShowCustomAmount ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Amount to send</span>
+                <Input
+                  inputMode="decimal"
+                  placeholder={`Enter ${paymentToken} amount`}
+                  value={customAmount}
+                  onChange={(event) => setCustomAmount(event.target.value)}
+                />
+              </label>
+
+              {data.kind === "tag" ? (
+                <label className="block space-y-2">
+                  <span className="text-sm text-secondary">Token</span>
+                  <Select
+                    value={selectedToken}
+                    onChange={(event) => setSelectedToken(event.target.value as PayLinkToken)}
+                  >
+                    <option value="USDC">USDC</option>
+                    <option value="SOL">SOL</option>
+                  </Select>
+                </label>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!wallet.connected && !isCreator && !isExpired ? (
+            <div className="space-y-3">
+              <p className="text-sm text-secondary">Connect wallet to continue.</p>
+              <ConnectWalletButton className="!w-full" />
+            </div>
           ) : null}
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}

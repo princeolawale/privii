@@ -3,6 +3,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Check, Copy, LoaderCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
@@ -14,6 +15,7 @@ import type { PriviiTagRecord } from "@/lib/types";
 import { isValidPriviiTag, normalizePriviiTag, truncateWalletAddress } from "@/lib/utils";
 
 export function GetStartedFlow() {
+  const router = useRouter();
   const { publicKey, connected } = useWallet();
   const { showToast } = useToast();
   const walletAddress = publicKey?.toBase58() ?? "";
@@ -104,6 +106,7 @@ export function GetStartedFlow() {
 
       setCreatedTag(result.tag);
       showToast("Your Privii is live");
+      router.push("/dashboard");
     } catch (submissionError) {
       setError(
         submissionError instanceof Error

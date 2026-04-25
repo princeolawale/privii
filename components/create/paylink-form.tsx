@@ -28,6 +28,7 @@ type CreateResponse = {
     token: PayLinkToken;
     type: PayLinkType;
     expiresAt: number | null;
+    ownerTag?: string | null;
   };
   url: string;
 };
@@ -166,7 +167,10 @@ export function PayLinkForm() {
             <div className="border-t border-border/80" />
 
             <div className="space-y-6 text-sm text-secondary">
-              <PreviewRow label="Ref ID" value={createdLink.link.tag} />
+              <PreviewRow
+                label={createdLink.link.ownerTag ? "User tag" : "Ref ID"}
+                value={createdLink.link.ownerTag ? `@${createdLink.link.ownerTag}` : createdLink.link.tag}
+              />
               <PreviewRow label="Amount" value={amountLabel} />
               <PreviewRow label="Link type" value={linkTypeLabel} />
               <PreviewRow label="Expiry" value={expiryLabel} />

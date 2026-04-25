@@ -29,11 +29,11 @@ export default async function HomePage() {
           </div>
           <div className="space-y-4">
             <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-              Get paid privately with your Privii tag
+              Get paid with tags and links
             </h1>
             <p className="mx-auto max-w-xl text-base leading-7 text-secondary sm:text-lg">
-              Register your tag. Share it anywhere. Receive crypto without exposing
-              your wallet in the UI.
+              Create your Privii tag, share payment links, and receive crypto without
+              sending your wallet address.
             </p>
           </div>
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -43,9 +43,9 @@ export default async function HomePage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link href="#how-it-works">
+            <Link href="/create">
               <Button variant="secondary" className="w-full min-w-[200px] sm:w-auto">
-                See how it works
+                Create Payment Link
               </Button>
             </Link>
           </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
 import { savePayLink, tagExists } from "@/lib/paylinks";
-import { priviiTagExists } from "@/lib/tags";
+import { getPriviiTagByOwner, priviiTagExists } from "@/lib/tags";
 import type {
   PayLinkExpiryOption,
   PayLinkRecord,
@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       expiresAt,
       recipientWallet: body.recipientWallet,
       createdAt: Date.now(),
+      ownerTag: (await getPriviiTagByOwner(body.recipientWallet))?.tag ?? null,
       stealthEnabled: false,
       stealthMode: "coming_soon"
     };

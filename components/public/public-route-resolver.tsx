@@ -4,14 +4,12 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { PayLinkPaymentClient } from "@/components/pay/paylink-payment-client";
-import { TagPaymentClient } from "@/components/public/tag-payment-client";
 import { Card } from "@/components/ui/card";
-import type { PriviiTagRecord } from "@/lib/types";
 import { normalizePriviiTag } from "@/lib/utils";
 
 type State =
   | { kind: "loading" }
-  | { kind: "tag"; record: PriviiTagRecord }
+  | { kind: "tag" }
   | { kind: "paylink" }
   | { kind: "missing" };
 
@@ -30,10 +28,8 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
       });
 
       if (tagResponse.ok) {
-        const result = (await tagResponse.json()) as { tag: PriviiTagRecord };
-
         if (!cancelled) {
-          setState({ kind: "tag", record: result.tag });
+          setState({ kind: "tag" });
         }
         return;
       }
@@ -84,8 +80,8 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
   }
 
   if (state.kind === "paylink") {
-    return <PayLinkPaymentClient tag={normalizedTag} />;
+    return <PayLinkPaymentClient tag={normalizedTag} kind="paylink" />;
   }
 
-  return <TagPaymentClient record={state.record} />;
+  return <PayLinkPaymentClient tag={normalizedTag} kind="tag" />;
 }

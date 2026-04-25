@@ -1,5 +1,5 @@
 import { PageShell } from "@/components/layout/page-shell";
-import { PublicRouteResolver } from "@/components/public/public-route-resolver";
+import { PayLinkPaymentClient } from "@/components/pay/paylink-payment-client";
 
 export default async function TagPayPage({
   params
@@ -10,7 +10,7 @@ export default async function TagPayPage({
 
   return (
     <PageShell className="flex items-start pt-6 sm:pt-10" largeLogo>
-      <PublicRouteResolver tag={tag} />
+      <PayLinkPaymentClient tag={tag} kind="tag" />
     </PageShell>
   );
 }
