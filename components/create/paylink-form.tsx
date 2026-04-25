@@ -208,7 +208,7 @@ export function PayLinkForm() {
             </Button>
 
             <Link
-              href={`/${createdLink.link.tag}`}
+              href={`/pay/${createdLink.link.tag}`}
               className="block text-center text-sm text-secondary transition hover:text-primary"
             >
               Preview payment page
@@ -229,11 +229,11 @@ export function PayLinkForm() {
             One-time PayLink
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Create a one-time PayLink
+            Create one-time PayLink
           </h1>
           <p className="max-w-xl text-sm leading-6 text-secondary">
-            Need a single-use style payment request? Create a one-time PayLink alongside
-            your main Privii tag identity.
+            Privii tags are your main identity. Use one-time PayLinks here when you need
+            a dedicated payment request for testing or a specific checkout.
           </p>
         </div>
 

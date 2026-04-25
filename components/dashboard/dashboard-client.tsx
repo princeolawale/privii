@@ -47,15 +47,12 @@ export function DashboardClient() {
 
   if (!connected) {
     return (
-      <Card className="mx-auto max-w-2xl rounded-[32px] p-6 sm:p-8">
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm leading-6 text-secondary">
-            Connect your wallet to view your Privii tag, public links, and future private
-            claim flow updates.
-          </p>
-          <ConnectWalletButton />
-        </div>
+      <Card className="mx-auto max-w-2xl space-y-4 rounded-[32px] p-6 sm:p-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-sm leading-6 text-secondary">
+          Connect your wallet to view your Privii tag and future payment history.
+        </p>
+        <ConnectWalletButton />
       </Card>
     );
   }
@@ -63,16 +60,14 @@ export function DashboardClient() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <Card className="rounded-[32px] p-6 sm:p-8">
-        <div className="space-y-3">
-          <p className="text-xs uppercase tracking-[0.24em] text-secondary">Dashboard</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Your Privii</h1>
-          <p className="text-sm leading-6 text-secondary">
-            Connected as {truncateWalletAddress(walletAddress)}.
-          </p>
-        </div>
+        <p className="text-xs uppercase tracking-[0.24em] text-secondary">Dashboard</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Your Privii</h1>
+        <p className="mt-3 text-sm leading-6 text-secondary">
+          Connected as {truncateWalletAddress(walletAddress)}.
+        </p>
 
         {isLoading ? (
-          <p className="mt-6 text-sm text-secondary">Loading your Privii tag...</p>
+          <p className="mt-6 text-sm text-secondary">Loading your tag...</p>
         ) : tagRecord ? (
           <div className="mt-6 space-y-6">
             <div className="rounded-[24px] border border-border bg-background/60 p-5">
@@ -87,16 +82,16 @@ export function DashboardClient() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <PlaceholderCard title="Incoming payments" />
-              <PlaceholderCard title="Claimable balance" />
-              <PlaceholderCard title="Payment history" />
+              <Placeholder title="Incoming payments" />
+              <Placeholder title="Claimable balance" />
+              <Placeholder title="Payment history" />
             </div>
           </div>
         ) : (
           <div className="mt-6 rounded-[24px] border border-border bg-background/60 p-5">
             <p className="text-lg font-medium text-primary">No Privii tag yet</p>
             <p className="mt-2 text-sm leading-6 text-secondary">
-              Start onboarding to register your tag and unlock your payment identity.
+              Start onboarding to register your payment identity.
             </p>
             <Link href="/get-started" className="mt-5 inline-flex">
               <Button>Get Started</Button>
@@ -117,13 +112,11 @@ function LinkDetail({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PlaceholderCard({ title }: { title: string }) {
+function Placeholder({ title }: { title: string }) {
   return (
     <Card className="rounded-[24px] p-5">
       <p className="text-lg font-medium text-primary">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-secondary">
-        Private claim flow coming soon.
-      </p>
+      <p className="mt-2 text-sm leading-6 text-secondary">Private claim flow coming soon.</p>
     </Card>
   );
 }

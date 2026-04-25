@@ -61,12 +61,12 @@ export default async function HomePage() {
         <StepCard
           step="2"
           title="Share your payment identity"
-          copy="Drop your tag into socials, chat, or anywhere people pay you."
+          copy="Drop your tag into chat, socials, or your next invoice."
         />
         <StepCard
           step="3"
           title="Receive crypto through Privii"
-          copy="Accept SOL or USDC while keeping your wallet hidden in the UI."
+          copy="Accept crypto while your wallet stays hidden in the public UI."
         />
       </section>
     </PageShell>

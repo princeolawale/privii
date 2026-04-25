@@ -33,10 +33,7 @@ export async function POST(request: Request) {
     }
 
     if (!ownerWallet) {
-      return NextResponse.json(
-        { error: "Owner wallet is required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Owner wallet is required." }, { status: 400 });
     }
 
     try {
@@ -55,13 +52,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingOwnerTag = await getPriviiTagByOwner(ownerWallet);
+    const existingTag = await getPriviiTagByOwner(ownerWallet);
 
-    if (existingOwnerTag) {
+    if (existingTag) {
       return NextResponse.json(
         {
           error: "This wallet already has a registered Privii tag.",
-          tag: existingOwnerTag
+          tag: existingTag
         },
         { status: 409 }
       );

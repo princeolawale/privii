@@ -27,12 +27,12 @@ export function GetStartedFlow() {
   const [copied, setCopied] = useState(false);
 
   const normalizedTag = normalizePriviiTag(tag);
-  const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
   const isTagValid = isValidPriviiTag(normalizedTag);
+  const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
   const currentStep = createdTag ? 3 : connected ? 2 : 1;
 
   useEffect(() => {
-    async function fetchExistingTag() {
+    async function fetchOwnerTag() {
       if (!walletAddress) {
         return;
       }
@@ -51,12 +51,12 @@ export function GetStartedFlow() {
       setAvailability("available");
     }
 
-    fetchExistingTag();
+    fetchOwnerTag();
   }, [walletAddress]);
 
   useEffect(() => {
-    async function checkAvailability() {
-      if (!isTagValid || !normalizedTag || createdTag?.tag === normalizedTag) {
+    async function checkTag() {
+      if (!normalizedTag || !isTagValid || createdTag?.tag === normalizedTag) {
         setAvailability("idle");
         return;
       }
@@ -70,11 +70,8 @@ export function GetStartedFlow() {
       setAvailability(response.ok ? "taken" : "available");
     }
 
-    const timeout = window.setTimeout(checkAvailability, 300);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
+    const timeout = window.setTimeout(checkTag, 300);
+    return () => window.clearTimeout(timeout);
   }, [createdTag?.tag, isTagValid, normalizedTag]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -106,7 +103,6 @@ export function GetStartedFlow() {
       }
 
       setCreatedTag(result.tag);
-      setAvailability("available");
       showToast("Your Privii is live");
     } catch (submissionError) {
       setError(
@@ -131,7 +127,7 @@ export function GetStartedFlow() {
 
   const availabilityCopy = useMemo(() => {
     if (!normalizedTag) {
-      return "Choose a tag that feels like your payment identity.";
+      return "Choose the payment identity you want people to remember.";
     }
 
     if (!isTagValid) {
@@ -143,14 +139,14 @@ export function GetStartedFlow() {
     }
 
     if (availability === "taken") {
-      return "That tag is already taken.";
+      return "That Privii tag is already taken.";
     }
 
     if (availability === "available") {
-      return "That tag is available.";
+      return "That Privii tag is available.";
     }
 
-    return "Choose a tag that feels like your payment identity.";
+    return "Choose the payment identity you want people to remember.";
   }, [availability, isTagValid, normalizedTag]);
 
   return (
@@ -164,28 +160,24 @@ export function GetStartedFlow() {
             Register your Privii tag
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-            Claim your payment identity, share it anywhere, and receive crypto while
-            keeping your wallet hidden in the UI.
+            Connect your wallet, choose a tag, and start receiving crypto without
+            exposing your wallet address in the UI.
           </p>
         </div>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <StepChip number="1" label="Connect wallet" active={currentStep === 1} done={currentStep > 1} />
-          <StepChip number="2" label="Choose Privii tag" active={currentStep === 2} done={currentStep > 2} />
+          <StepChip number="2" label="Choose tag" active={currentStep === 2} done={currentStep > 2} />
           <StepChip number="3" label="Go live" active={currentStep === 3} done={currentStep === 3} />
         </div>
 
         {currentStep === 1 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1</p>
-              <h2 className="text-2xl font-semibold">Connect your wallet</h2>
-              <p className="text-sm leading-6 text-secondary">
-                Connect a supported Solana wallet to reserve your Privii tag and open
-                your dashboard.
-              </p>
-            </div>
-
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1</p>
+            <h2 className="mt-3 text-2xl font-semibold">Connect wallet</h2>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              Connect any supported Solana wallet to reserve your Privii tag.
+            </p>
             <div className="mt-6">
               <ConnectWalletButton />
             </div>
@@ -197,80 +189,69 @@ export function GetStartedFlow() {
             className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7"
             onSubmit={handleSubmit}
           >
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
-                <h2 className="text-2xl font-semibold">Choose your Privii tag</h2>
-                <p className="text-sm leading-6 text-secondary">
-                  Connected as {truncateWalletAddress(walletAddress)}.
-                </p>
-              </div>
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
+            <h2 className="mt-3 text-2xl font-semibold">Choose your Privii tag</h2>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              Connected as {truncateWalletAddress(walletAddress)}.
+            </p>
 
-              <label className="block space-y-2">
-                <span className="text-sm text-secondary">Choose your Privii tag</span>
-                <Input
-                  placeholder="prince"
-                  value={tag}
-                  maxLength={24}
-                  onChange={(event) => setTag(event.target.value.toLowerCase().replace(/\s+/g, ""))}
-                />
-              </label>
+            <label className="mt-6 block space-y-2">
+              <span className="text-sm text-secondary">Choose your Privii tag</span>
+              <Input
+                placeholder="prince"
+                value={tag}
+                maxLength={24}
+                onChange={(event) =>
+                  setTag(event.target.value.toLowerCase().replace(/\s+/g, ""))
+                }
+              />
+            </label>
 
-              <div className="rounded-2xl border border-border bg-card/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-secondary">Preview</p>
-                <p className="mt-2 text-2xl font-semibold tracking-tight text-primary">
-                  {tagPreview}
-                </p>
-              </div>
-
-              <p
-                className={`text-sm ${
-                  availability === "taken"
-                    ? "text-red-400"
-                    : availability === "available"
-                      ? "text-[#22C55E]"
-                      : "text-secondary"
-                }`}
-              >
-                {availabilityCopy}
-              </p>
-
-              {error ? <p className="text-sm text-red-400">{error}</p> : null}
-
-              <Button
-                className="w-full"
-                disabled={!isTagValid || availability === "taken" || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                    Registering...
-                  </span>
-                ) : (
-                  "Get Started"
-                )}
-              </Button>
+            <div className="mt-5 rounded-2xl border border-border bg-card/70 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-secondary">Preview</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{tagPreview}</p>
             </div>
+
+            <p
+              className={`mt-4 text-sm ${
+                availability === "taken"
+                  ? "text-red-400"
+                  : availability === "available"
+                    ? "text-[#22C55E]"
+                    : "text-secondary"
+              }`}
+            >
+              {availabilityCopy}
+            </p>
+
+            {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+
+            <Button
+              className="mt-6 w-full"
+              disabled={!isTagValid || availability === "taken" || isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Registering...
+                </span>
+              ) : (
+                "Get Started"
+              )}
+            </Button>
           </form>
         ) : null}
 
         {currentStep === 3 && createdTag ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
-              <h2 className="text-3xl font-semibold tracking-tight">Your Privii is live</h2>
-              <p className="text-sm leading-6 text-secondary">
-                Share your tag anywhere and receive crypto without exposing your wallet
-                address in the UI.
-              </p>
-            </div>
-
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight">Your Privii is live</h2>
             <div className="mt-6 space-y-4 rounded-[24px] border border-border bg-card/70 p-5">
               <IdentityRow label="Primary identity" value={`${createdTag.tag}.privii.cash`} />
               <IdentityRow label="Fallback link" value={`privii.xyz/${createdTag.tag}`} />
             </div>
 
-            <div className="mt-6 grid gap-4">
+            <div className="mt-6 space-y-4">
               <Button className="w-full" onClick={handleCopy}>
                 {copied ? (
                   <span className="flex items-center gap-2">
@@ -318,7 +299,7 @@ function StepChip({
 }) {
   return (
     <div
-      className={`rounded-2xl border px-4 py-3 text-left ${
+      className={`rounded-2xl border px-4 py-3 ${
         active
           ? "border-accent/30 bg-accent/10"
           : done

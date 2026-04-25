@@ -21,13 +21,11 @@ export type PayLinkResponse = {
   status: "active" | "expired";
 };
 
-export type PriviiTagStatus = "active";
-
 export type PriviiTagRecord = {
   tag: string;
   ownerWallet: string;
   createdAt: string;
-  status: PriviiTagStatus;
+  status: "active";
   primaryUrl: string;
   fallbackUrl: string;
   stealthEnabled: boolean;

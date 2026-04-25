@@ -4,12 +4,12 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { PayLinkPaymentClient } from "@/components/pay/paylink-payment-client";
-import { TagProfileClient } from "@/components/public/tag-profile-client";
+import { TagPaymentClient } from "@/components/public/tag-payment-client";
 import { Card } from "@/components/ui/card";
 import type { PriviiTagRecord } from "@/lib/types";
 import { normalizePriviiTag } from "@/lib/utils";
 
-type RouteState =
+type State =
   | { kind: "loading" }
   | { kind: "tag"; record: PriviiTagRecord }
   | { kind: "paylink" }
@@ -17,12 +17,12 @@ type RouteState =
 
 export function PublicRouteResolver({ tag }: { tag: string }) {
   const normalizedTag = normalizePriviiTag(tag);
-  const [state, setState] = useState<RouteState>({ kind: "loading" });
+  const [state, setState] = useState<State>({ kind: "loading" });
 
   useEffect(() => {
     let cancelled = false;
 
-    async function resolveRoute() {
+    async function resolve() {
       setState({ kind: "loading" });
 
       const tagResponse = await fetch(`/api/tags/${normalizedTag}`, {
@@ -48,13 +48,12 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
 
       if (payLinkResponse.ok) {
         setState({ kind: "paylink" });
-        return;
+      } else {
+        setState({ kind: "missing" });
       }
-
-      setState({ kind: "missing" });
     }
 
-    resolveRoute();
+    resolve();
 
     return () => {
       cancelled = true;
@@ -74,11 +73,11 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
 
   if (state.kind === "missing") {
     return (
-      <Card className="mx-auto max-w-xl rounded-[32px] p-6 sm:p-8">
+      <Card className="mx-auto max-w-xl space-y-3 rounded-[32px] p-7">
         <h1 className="text-2xl font-semibold tracking-tight">Privii tag not found.</h1>
-        <p className="mt-3 text-sm leading-6 text-secondary">
-          This tag does not exist yet. Register your own Privii tag to start receiving
-          crypto with a cleaner public identity.
+        <p className="text-sm leading-6 text-secondary">
+          This tag does not exist yet. Use Get Started to register your own Privii tag,
+          or open a one-time PayLink directly for testing.
         </p>
       </Card>
     );
@@ -88,5 +87,5 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
     return <PayLinkPaymentClient tag={normalizedTag} />;
   }
 
-  return <TagProfileClient record={state.record} />;
+  return <TagPaymentClient record={state.record} />;
 }

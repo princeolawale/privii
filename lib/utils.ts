@@ -64,7 +64,7 @@ export function formatAmount(amount: string | null, token: string) {
 }
 
 export function buildPaymentUrl(tag: string) {
-  return `${getBaseUrl()}/${tag}`;
+  return `${getBaseUrl()}/pay/${tag}`;
 }
 
 export function buildPrimaryTagUrl(tag: string) {
@@ -96,12 +96,9 @@ export function extractTagFromHost(host: string | null) {
 
   if (
     normalizedHost === PRIVII_ROOT_DOMAIN ||
-    normalizedHost === `www.${PRIVII_ROOT_DOMAIN}`
+    normalizedHost === `www.${PRIVII_ROOT_DOMAIN}` ||
+    !normalizedHost.endsWith(`.${PRIVII_ROOT_DOMAIN}`)
   ) {
-    return null;
-  }
-
-  if (!normalizedHost.endsWith(`.${PRIVII_ROOT_DOMAIN}`)) {
     return null;
   }
 
