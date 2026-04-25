@@ -1,37 +1,29 @@
-import Link from "next/link";
-
-import { APP_NAME } from "@/lib/constants";
+import { Send } from "lucide-react";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border pt-8">
-      <div className="flex flex-col gap-8 text-sm text-secondary md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <p className="text-base font-semibold text-primary">{APP_NAME}</p>
-          <p>Private crypto payments via links.</p>
-        </div>
-
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div className="flex gap-4">
-            <Link href="/" className="transition hover:text-primary">
-              Home
-            </Link>
-            <Link href="/create" className="transition hover:text-primary">
-              Create
-            </Link>
-            <Link href="/#how-it-works" className="transition hover:text-primary">
-              How it Works
-            </Link>
-          </div>
-
-          <div className="flex gap-4">
-            <a href="https://x.com/" target="_blank" rel="noreferrer" className="transition hover:text-primary">
-              X
-            </a>
-            <a href="https://t.me/" target="_blank" rel="noreferrer" className="transition hover:text-primary">
-              Telegram
-            </a>
-          </div>
+    <footer className="mt-16 border-t border-border/80 pt-10">
+      <div className="flex flex-col items-center justify-center gap-6 pb-4 text-center">
+        <p className="text-sm text-secondary">2026 Privii. All rights reserved.</p>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://x.com/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Privii on X"
+            className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-secondary transition hover:border-white/20 hover:text-primary"
+          >
+            <span className="text-2xl font-medium text-primary">X</span>
+          </a>
+          <a
+            href="https://t.me/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Privii on Telegram"
+            className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-card text-secondary transition hover:border-white/20 hover:text-primary"
+          >
+            <Send className="h-6 w-6" />
+          </a>
         </div>
       </div>
     </footer>

@@ -1,11 +1,18 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { AtSign, Copy, ExternalLink, LoaderCircle, MessageCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  EyeOff,
+  LoaderCircle,
+  MessageCircle,
+  Shield,
+} from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
-import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,9 +48,16 @@ export function PayLinkForm() {
   const [copied, setCopied] = useState(false);
 
   const recipientWallet = useMemo(() => publicKey?.toBase58() ?? "", [publicKey]);
+  const normalizedTag = tag.trim().toLowerCase();
+  const isTagValid = /^[a-z0-9-]{3,32}$/.test(normalizedTag);
+  const canCreate = connected && Boolean(recipientWallet) && isTagValid && !isLoading;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canCreate) {
+      return;
+    }
+
     setError(null);
     setIsLoading(true);
     setCreatedLink(null);
@@ -55,7 +69,7 @@ export function PayLinkForm() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          tag,
+          tag: normalizedTag,
           amount: amount || null,
           token,
           type,
@@ -99,59 +113,76 @@ export function PayLinkForm() {
     const xUrl = buildXShareUrl(createdLink.url, createdLink.link.tag);
 
     return (
-      <div className="mx-auto w-full max-w-3xl">
-        <Card className="overflow-hidden p-0">
-          <div className="border-b border-border p-6 sm:p-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.24em] text-accent">Privii PayLink</p>
-                <h1 className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
-                  {formatAmount(createdLink.link.amount, createdLink.link.token)}
-                </h1>
-                <p className="text-base text-secondary">@{createdLink.link.tag}</p>
-              </div>
-              <div className="inline-flex w-fit rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
-                Active / Private
-              </div>
-            </div>
+      <div className="mx-auto w-full max-w-xl pt-8 sm:pt-12">
+        <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-6 pt-20 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-8 sm:pt-24">
+          <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
+            <TokenBadge token={createdLink.link.token} />
+            <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
+              ACTIVE
+            </span>
           </div>
 
-          <div className="space-y-6 p-6 sm:p-8">
-            <div className="rounded-[24px] border border-border bg-background/80 p-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <PreviewItem label="Link" value={createdLink.url.replace(/^https?:\/\//, "")} />
-                <PreviewItem label="Creator" value="Hidden" />
-                <PreviewItem label="Status" value="Active / Private" />
-                <PreviewItem label="User tag" value={`@${createdLink.link.tag}`} />
-              </div>
+          <div className="space-y-8">
+            <div className="space-y-4 text-center">
+              <p className="text-xs uppercase tracking-[0.34em] text-secondary">
+                Payment Request
+              </p>
+              <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
+                {createdLink.link.amount ?? "Custom"}{" "}
+                <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
+                  {createdLink.link.token}
+                </span>
+              </h1>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Button type="button" variant="secondary" className="w-full" onClick={handleCopy}>
-                <Copy className="mr-2 h-4 w-4" />
-                {copied ? "Copied" : "Copy link"}
+            <div className="border-t border-border/80" />
+
+            <div className="space-y-5 text-sm text-secondary">
+              <PreviewRow label="Ref ID / Tag" value={`@${createdLink.link.tag}`} />
+              <PreviewRow
+                label="Link"
+                value={createdLink.url.replace(/^https?:\/\//, "")}
+                compact
+              />
+              <PreviewRow
+                label="Creator"
+                value="Hidden"
+                icon={<EyeOff className="h-4 w-4 text-accent" />}
+              />
+              <PreviewRow
+                label="Status"
+                value="Private"
+                icon={<Shield className="h-4 w-4 text-accent" />}
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <ShareCircle href={xUrl} label="Share on X">
+                <span className="text-lg font-medium">X</span>
+              </ShareCircle>
+              <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
+                <MessageCircle className="h-5 w-5" />
+              </ShareCircle>
+              <button
+                type="button"
+                aria-label="Copy PayLink"
+                className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+                onClick={handleCopy}
+              >
+                {copied ? <Check className="h-5 w-5 text-accent" /> : <Copy className="h-5 w-5" />}
+              </button>
+            </div>
+
+            <Link href={`/${createdLink.link.tag}`}>
+              <Button className="h-16 w-full rounded-[22px] text-xl font-medium">
+                Pay Now
+                <ArrowRight className="ml-3 h-5 w-5" />
               </Button>
-              <a href={whatsappUrl} target="_blank" rel="noreferrer">
-                <Button type="button" variant="secondary" className="w-full">
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  WhatsApp
-                </Button>
-              </a>
-              <a href={xUrl} target="_blank" rel="noreferrer">
-                <Button type="button" variant="secondary" className="w-full">
-                  <AtSign className="mr-2 h-4 w-4" />
-                  X
-                </Button>
-              </a>
-              <Link href={`/${createdLink.link.tag}`}>
-                <Button type="button" className="w-full">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Pay Now
-                </Button>
-              </Link>
-            </div>
+            </Link>
+
+            <p className="text-center text-sm text-secondary">Powered by Privii</p>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -238,14 +269,24 @@ export function PayLinkForm() {
 
           <label className="space-y-2">
             <span className="text-sm text-secondary">Recipient wallet</span>
-            <Input disabled value={connected ? recipientWallet : "Connect wallet to autofill"} />
+            <Input disabled value={connected ? recipientWallet : ""} placeholder="Wallet autofills when connected" />
           </label>
+
+          {!connected ? (
+            <p className="text-sm text-secondary">
+              Connect wallet from the header to autofill recipient.
+            </p>
+          ) : null}
+
+          {!isTagValid && normalizedTag.length > 0 ? (
+            <p className="text-sm text-secondary">
+              Use 3-32 lowercase letters, numbers, or hyphens.
+            </p>
+          ) : null}
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-          {!connected ? <ConnectWalletButton className="!w-full" /> : null}
-
-          <Button className="w-full" disabled={!connected || !recipientWallet || isLoading}>
+          <Button className="w-full" disabled={!canCreate}>
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -306,11 +347,58 @@ export function PayLinkForm() {
   );
 }
 
-function PreviewItem({ label, value }: { label: string; value: string }) {
+function TokenBadge({ token }: { token: PayLinkToken }) {
   return (
-    <div className="space-y-1">
-      <p className="text-xs uppercase tracking-[0.2em] text-secondary">{label}</p>
-      <p className="break-all text-sm font-medium text-primary">{value}</p>
+    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2563EB] text-3xl font-semibold text-white">
+        {token === "USDC" ? "$" : "S"}
+      </div>
     </div>
+  );
+}
+
+function PreviewRow({
+  label,
+  value,
+  icon,
+  compact = false
+}: {
+  label: string;
+  value: string;
+  icon?: ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span>{label}</span>
+      <span
+        className={`flex items-center gap-2 text-right text-primary ${compact ? "max-w-[210px] truncate sm:max-w-[260px]" : ""}`}
+      >
+        {icon}
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ShareCircle({
+  href,
+  label,
+  children
+}: {
+  href: string;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+    >
+      {children}
+    </a>
   );
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { PageShell } from "@/components/layout/page-shell";
-import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -22,14 +21,13 @@ export default function HomePage() {
               Create a PayLink. Share it. Get paid instantly.
             </p>
           </div>
-          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="flex items-center justify-center">
             <Link href="/create">
               <Button className="w-full min-w-[200px] sm:w-auto">
                 Create PayLink
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <ConnectWalletButton />
           </div>
         </div>
       </section>

@@ -43,14 +43,17 @@ export function SiteHeader() {
           <ConnectWalletButton />
         </nav>
 
-        <button
-          aria-expanded={open}
-          aria-label="Toggle menu"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-white/15 hover:bg-white/[0.03] md:hidden"
-          onClick={() => setOpen((current) => !current)}
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ConnectWalletButton className="!h-10 !px-4 !text-sm" />
+          <button
+            aria-expanded={open}
+            aria-label="Toggle menu"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-white/15 hover:bg-white/[0.03]"
+            onClick={() => setOpen((current) => !current)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </header>
 
       <div
@@ -60,9 +63,6 @@ export function SiteHeader() {
         )}
       >
         <div className="rounded-[28px] border border-border bg-card p-4">
-          <div className="mb-4">
-            <ConnectWalletButton className="!w-full" />
-          </div>
           <div className="flex flex-col gap-2">
             {navItems.map((item) => (
               <Link
@@ -93,8 +93,9 @@ export function SiteHeader() {
               Telegram
             </a>
             <Link href="/create" onClick={() => setOpen(false)}>
-              <Button className="mt-2 w-full">Create PayLink</Button>
+              <Button className="mt-3 w-full">Create PayLink</Button>
             </Link>
+            <ConnectWalletButton className="!w-full !justify-center" />
           </div>
         </div>
       </div>
