@@ -1,4 +1,4 @@
-# PayLinks
+# Privii
 
 PayLinks is a dark-mode MVP for creating Solana payment links backed by Vercel KV. Users connect Phantom, create a shareable `/pay/[slug]` link, and accept SOL or USDC payments without exposing the recipient wallet in the UI.
 
