@@ -8,9 +8,9 @@ import { Card } from "@/components/ui/card";
 export default async function SuccessPage({
   searchParams
 }: {
-  searchParams: Promise<{ tx?: string; slug?: string }>;
+  searchParams: Promise<{ tx?: string; tag?: string }>;
 }) {
-  const { tx, slug } = await searchParams;
+  const { tx, tag } = await searchParams;
   const explorerUrl = tx
     ? `https://solscan.io/tx/${encodeURIComponent(tx)}`
     : null;
@@ -24,7 +24,7 @@ export default async function SuccessPage({
         <div className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight">Payment complete</h1>
           <p className="text-sm leading-6 text-secondary">
-            The transaction has been submitted to Solana. You can share the link again
+            The transaction has been submitted to Solana. You can reopen the Privii link
             or inspect the transaction hash below.
           </p>
         </div>
@@ -37,8 +37,8 @@ export default async function SuccessPage({
         ) : null}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          {slug ? (
-            <Link href={`/pay/${slug}`}>
+          {tag ? (
+            <Link href={`/${tag}`}>
               <Button variant="secondary" className="w-full sm:w-auto">
                 View PayLink
               </Button>

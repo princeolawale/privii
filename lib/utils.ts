@@ -19,8 +19,8 @@ export function getBaseUrl() {
   return "http://localhost:3000";
 }
 
-export function generateRandomSlug() {
-  return `pl-${Math.random().toString(36).slice(2, 10)}`;
+export function generateRandomTag() {
+  return `privii-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function expiryToTimestamp(option: PayLinkExpiryOption) {
@@ -52,4 +52,20 @@ export function formatAmount(amount: string | null, token: string) {
   }
 
   return `${amount} ${token}`;
+}
+
+export function buildPaymentUrl(tag: string) {
+  return `${getBaseUrl()}/${tag}`;
+}
+
+export function buildWhatsAppShareUrl(url: string, tag: string) {
+  return `https://wa.me/?text=${encodeURIComponent(
+    `Pay me privately with my Privii link: ${url} (@${tag})`
+  )}`;
+}
+
+export function buildXShareUrl(url: string, tag: string) {
+  return `https://x.com/intent/tweet?text=${encodeURIComponent(
+    `Get paid in crypto with my Privii link ${url} @${tag}`
+  )}`;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -28,10 +28,10 @@ import type { PayLinkResponse } from "@/lib/types";
 import { formatAmount } from "@/lib/utils";
 
 type Props = {
-  slug: string;
+  tag: string;
 };
 
-export function PayLinkPaymentClient({ slug }: Props) {
+export function PayLinkPaymentClient({ tag }: Props) {
   const router = useRouter();
   const { connection } = useConnection();
   const wallet = useWallet();
@@ -49,9 +49,9 @@ export function PayLinkPaymentClient({ slug }: Props) {
       setError(null);
 
       try {
-        const response = await fetch(`/api/links/${slug}`, {
-          cache: "no-store"
-        });
+          const response = await fetch(`/api/links/${tag}`, {
+            cache: "no-store"
+          });
         const result = await response.json();
 
         if (!response.ok) {
@@ -77,7 +77,7 @@ export function PayLinkPaymentClient({ slug }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [tag]);
 
   const enteredAmount = useMemo(() => {
     if (data?.link.amount) {
@@ -136,8 +136,8 @@ export function PayLinkPaymentClient({ slug }: Props) {
       await connection.confirmTransaction(signature, "confirmed");
 
       router.push(
-        `/success?tx=${encodeURIComponent(signature)}&slug=${encodeURIComponent(
-          data.link.slug
+        `/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(
+          data.link.tag
         )}`
       );
     } catch (paymentError) {
@@ -187,14 +187,14 @@ export function PayLinkPaymentClient({ slug }: Props) {
               Send {formatAmount(data.link.amount, data.link.token)}
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-secondary">
-              Complete the payment with your Solana wallet. The recipient address is
-              securely used behind the scenes and isn&apos;t shown in this interface.
+              Complete the payment with any supported Solana wallet. The recipient
+              address is used behind the scenes and stays hidden from the public UI.
             </p>
           </div>
         </div>
 
         <div className="grid gap-4 rounded-3xl border border-border bg-background/70 p-5 sm:grid-cols-3">
-          <Metric label="Slug" value={data.link.slug} />
+          <Metric label="User tag" value={`@${data.link.tag}`} />
           <Metric label="Token" value={data.link.token} />
           <Metric label="Status" value={isExpired ? "Expired" : "Active"} />
         </div>
@@ -234,7 +234,7 @@ export function PayLinkPaymentClient({ slug }: Props) {
 
       <Card className="space-y-4 p-6">
         <div>
-          <p className="text-sm text-secondary">Payment summary</p>
+          <p className="text-sm text-secondary">Privii summary</p>
           <p className="mt-2 text-2xl font-semibold text-primary">
             {formatAmount(data.link.amount, data.link.token)}
           </p>
@@ -250,6 +250,7 @@ export function PayLinkPaymentClient({ slug }: Props) {
             label="Wallet status"
             value={wallet.connected ? "Connected" : "Not connected"}
           />
+          <SummaryRow label="Creator" value="Hidden" />
         </div>
 
         {isExpired ? (
@@ -258,7 +259,13 @@ export function PayLinkPaymentClient({ slug }: Props) {
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-background/80 p-4 text-sm text-secondary">
-            Funds are sent directly on-chain from the payer wallet to the recipient wallet.
+            <span className="flex items-center gap-2 text-primary">
+              <Shield className="h-4 w-4 text-accent" />
+              Private recipient details
+            </span>
+            <p className="mt-2">
+              Funds are sent directly on-chain from the payer wallet to the recipient wallet.
+            </p>
           </div>
         )}
       </Card>

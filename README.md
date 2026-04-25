@@ -1,6 +1,6 @@
 # Privii
 
-PayLinks is a dark-mode MVP for creating Solana payment links backed by Vercel KV. Users connect Phantom, create a shareable `/pay/[slug]` link, and accept SOL or USDC payments without exposing the recipient wallet in the UI.
+Privii is a dark-mode MVP for creating Solana payment links backed by Vercel KV. Users connect a supported wallet, create a shareable `/{tag}` link, and accept SOL or USDC payments without exposing the recipient wallet in the UI.
 
 ## Stack
 
@@ -9,16 +9,16 @@ PayLinks is a dark-mode MVP for creating Solana payment links backed by Vercel K
 - Tailwind CSS
 - Vercel deployment
 - Vercel KV via `@vercel/kv`
-- Solana wallet support with Phantom and `@solana/wallet-adapter`
+- Solana wallet support with Phantom, Solflare, Backpack, Glow, and `@solana/wallet-adapter`
 
 ## Features
 
-- Connect Phantom wallet
-- Create permanent or expiring payment links
+- Connect a supported Solana wallet
+- Create permanent or expiring payment links with a Privii tag
 - Optional fixed amount or payer-entered custom amount
 - SOL and USDC payment support
 - KV-backed API routes for create and fetch
-- Responsive dark UI with copy-link and loading states
+- Responsive dark UI with post-create preview, copy/share actions, and loading states
 - Payment success page with transaction hash
 
 ## Environment variables
@@ -68,7 +68,7 @@ npm run dev
 ## API routes
 
 - `POST /api/links/create`
-- `GET /api/links/[slug]`
+- `GET /api/links/[slug]` (the route shape stays the same, but the value is now the Privii tag)
 
 ## Notes
 

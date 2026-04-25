@@ -3,7 +3,7 @@ export type PayLinkType = "permanent" | "expiring";
 export type PayLinkExpiryOption = "none" | "1h" | "24h" | "7d";
 
 export type PayLinkRecord = {
-  slug: string;
+  tag: string;
   amount: string | null;
   token: PayLinkToken;
   type: PayLinkType;

@@ -1,0 +1,17 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#000000"/>
+  <circle cx="981" cy="108" r="220" fill="#7C5CFF" fill-opacity="0.16"/>
+  <circle cx="142" cy="554" r="170" fill="#7C5CFF" fill-opacity="0.1"/>
+  <rect x="60" y="60" width="1080" height="510" rx="36" fill="#111111" stroke="#1F1F1F"/>
+  <text x="110" y="200" fill="#A1A1AA" font-family="Inter, Arial, sans-serif" font-size="30" letter-spacing="4">PRIVII</text>
+  <text x="110" y="305" fill="white" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">
+    Get paid in crypto
+  </text>
+  <text x="110" y="390" fill="white" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">
+    with a simple link
+  </text>
+  <text x="110" y="468" fill="#A1A1AA" font-family="Inter, Arial, sans-serif" font-size="34">
+    Create a PayLink. Share it. Get paid instantly.
+  </text>
+  <rect x="110" y="510" width="170" height="4" rx="2" fill="#7C5CFF"/>
+</svg>

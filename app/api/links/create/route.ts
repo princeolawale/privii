@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
-import { savePayLink, slugExists } from "@/lib/paylinks";
+import { savePayLink, tagExists } from "@/lib/paylinks";
 import type {
   PayLinkExpiryOption,
   PayLinkRecord,
   PayLinkToken,
   PayLinkType
 } from "@/lib/types";
-import { expiryToTimestamp, generateRandomSlug, getBaseUrl } from "@/lib/utils";
+import { buildPaymentUrl, expiryToTimestamp, generateRandomTag } from "@/lib/utils";
 
 type CreatePayload = {
+  tag?: string;
   slug?: string;
   amount?: string | null;
   token?: PayLinkToken;
@@ -22,13 +23,13 @@ type CreatePayload = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreatePayload;
-    const requestedSlug = body.slug?.trim().toLowerCase();
-    const slug = requestedSlug || generateRandomSlug();
+    const requestedTag = body.tag?.trim().toLowerCase() || body.slug?.trim().toLowerCase();
+    const tag = requestedTag || generateRandomTag();
 
-    if (!/^[a-z0-9-]{3,32}$/.test(slug)) {
+    if (!/^[a-z0-9-]{3,32}$/.test(tag)) {
       return NextResponse.json(
         {
-          error: "Slug must be 3-32 characters and use lowercase letters, numbers, or hyphens."
+          error: "Privii tag must be 3-32 characters and use lowercase letters, numbers, or hyphens."
         },
         { status: 400 }
       );
@@ -50,9 +51,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (await slugExists(slug)) {
+    if (await tagExists(tag)) {
       return NextResponse.json(
-        { error: "That slug is already taken." },
+        { error: "That Privii tag is already taken." },
         { status: 409 }
       );
     }
@@ -74,7 +75,7 @@ export async function POST(request: Request) {
     const expiresAt = expiryToTimestamp(expiryOption);
 
     const link: PayLinkRecord = {
-      slug,
+      tag,
       amount: body.amount?.toString() || null,
       token: body.token === "SOL" ? "SOL" : "USDC",
       type,
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       link,
-      url: `${getBaseUrl()}/pay/${link.slug}`
+      url: buildPaymentUrl(link.tag)
     });
   } catch (error) {
     return NextResponse.json(

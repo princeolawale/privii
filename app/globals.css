@@ -8,6 +8,7 @@
 
 html {
   background: #000000;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -32,4 +33,17 @@ a {
 .wallet-adapter-button {
   font-family: inherit !important;
   box-shadow: none !important;
+}
+
+.wallet-adapter-button-trigger {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: #111111 !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: rgba(255, 255, 255, 0.06) !important;
 }
