@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { useOwnerTag } from "@/components/solana/use-owner-tag";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/lib/constants";
@@ -26,16 +27,21 @@ export function SiteHeader({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { hasTag } = useOwnerTag();
+  const navItems = hasTag
+    ? [
+        { href: "/", label: "Home" },
+        { href: "/create", label: "Create PayLink" },
+        { href: "/dashboard", label: "Dashboard" }
+      ]
+    : baseNavItems;
 
   return (
     <>
       <header className="mb-12 flex items-center justify-between">
         <Link
           href="/"
-          className={cn(
-            "font-semibold tracking-tight text-primary",
-            largeLogo ? "text-[2.35rem]" : "text-[1.6rem]"
-          )}
+          className="text-[2.15rem] font-semibold tracking-tight text-primary sm:text-[2.15rem]"
         >
           {APP_NAME}
         </Link>
@@ -53,6 +59,11 @@ export function SiteHeader({
               {item.label}
             </Link>
           ))}
+          {!hasTag ? (
+            <Link href="/get-started">
+              <Button className="min-w-[140px]">Get Started</Button>
+            </Link>
+          ) : null}
           {!hideWalletButton ? <ConnectWalletButton /> : null}
         </nav>
 
@@ -89,6 +100,15 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
+            {!hasTag ? (
+              <Link
+                href="/get-started"
+                className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                Get Started
+              </Link>
+            ) : null}
             <div className="border-t border-white/8 pt-5">
               <div className="grid grid-cols-2 gap-3">
                 <a
@@ -113,9 +133,11 @@ export function SiteHeader({
                 </a>
               </div>
             </div>
-            <Link href="/get-started" onClick={() => setOpen(false)}>
-              <Button className="w-full">Get Started</Button>
-            </Link>
+            {hasTag ? null : (
+              <Link href="/get-started" onClick={() => setOpen(false)}>
+                <Button className="w-full">Get Started</Button>
+              </Link>
+            )}
             {!hideWalletButton ? <ConnectWalletButton className="!w-full" /> : null}
           </div>
         </div>
@@ -123,3 +145,10 @@ export function SiteHeader({
     </>
   );
 }
+
+const baseNavItems = [
+  { href: "/", label: "Home" },
+  { href: "/get-started", label: "Get Started" },
+  { href: "/create", label: "Create PayLink" },
+  { href: "/dashboard", label: "Dashboard" }
+];

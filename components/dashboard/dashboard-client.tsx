@@ -1,25 +1,34 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { Check, Copy, ExternalLink, LoaderCircle, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { PayLinkRecord, PriviiTagRecord } from "@/lib/types";
-import { truncateWalletAddress } from "@/lib/utils";
+import {
+  buildFallbackTagUrl,
+  buildXShareUrl,
+  truncateWalletAddress
+} from "@/lib/utils";
 
 export function DashboardClient() {
   const router = useRouter();
+  const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [payTarget, setPayTarget] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [balance, setBalance] = useState<string | null>(null);
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -61,6 +70,84 @@ export function DashboardClient() {
 
     fetchData();
   }, [walletAddress]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchBalance() {
+      if (!publicKey) {
+        setBalance(null);
+        return;
+      }
+
+      setIsBalanceLoading(true);
+
+      try {
+        const lamports = await connection.getBalance(publicKey, "confirmed");
+
+        if (!cancelled) {
+          setBalance((lamports / 1_000_000_000).toFixed(3));
+        }
+      } catch {
+        if (!cancelled) {
+          setBalance(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsBalanceLoading(false);
+        }
+      }
+    }
+
+    fetchBalance();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connection, publicKey]);
+
+  const publicUrl = useMemo(() => {
+    if (!tagRecord) {
+      return null;
+    }
+
+    if (typeof window === "undefined") {
+      return buildFallbackTagUrl(tagRecord.tag);
+    }
+
+    return `${window.location.origin}/${tagRecord.tag}`;
+  }, [tagRecord]);
+
+  async function handleCopyTagLink() {
+    if (!publicUrl) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
+
+  async function handleShareTag() {
+    if (!tagRecord || !publicUrl) {
+      return;
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Privii tag",
+          text: `Pay me with my Privii tag @${tagRecord.tag}`,
+          url: publicUrl
+        });
+        return;
+      } catch {
+        // Fall back to external share link below.
+      }
+    }
+
+    window.open(buildXShareUrl(publicUrl, tagRecord.tag), "_blank", "noopener,noreferrer");
+  }
 
   function handlePaySomeone(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -121,7 +208,9 @@ export function DashboardClient() {
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <Card className="rounded-[32px] p-6 sm:p-8">
         <p className="text-xs uppercase tracking-[0.24em] text-secondary">Dashboard</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">Your Privii</h1>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+          {tagRecord ? "Your Privii tag is ready" : "Dashboard"}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-secondary">
           Connected as {truncateWalletAddress(walletAddress)}.
         </p>
@@ -130,25 +219,61 @@ export function DashboardClient() {
           <p className="mt-6 text-sm text-secondary">Loading your tag...</p>
         ) : tagRecord ? (
           <div className="mt-6 space-y-6">
-            <div className="rounded-[24px] border border-border bg-background/60 p-5">
-              <p className="text-xs uppercase tracking-[0.2em] text-secondary">Registered tag</p>
-              <p className="mt-2 text-3xl font-semibold tracking-tight text-primary">
-                {tagRecord.tag}.privii.cash
-              </p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <LinkDetail label="Primary link" value={tagRecord.primaryUrl} />
-                <LinkDetail label="Fallback link" value={tagRecord.fallbackUrl} />
+            <div className="rounded-[28px] border border-border bg-background/60 p-5 sm:p-6">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+                    Public payment identity
+                  </p>
+                  <p className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
+                    @{tagRecord.tag}
+                  </p>
+                  <p className="break-all text-sm text-secondary sm:text-base">
+                    {publicUrl}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-secondary">
+                    Wallet balance
+                  </p>
+                  <p className="mt-2 text-xl font-semibold text-primary">
+                    {isBalanceLoading ? (
+                      <span className="flex items-center gap-2 text-sm text-secondary">
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        Loading
+                      </span>
+                    ) : balance ? (
+                      `${balance} SOL`
+                    ) : (
+                      "Balance unavailable"
+                    )}
+                  </p>
+                </div>
               </div>
-              <div className="mt-5 flex flex-col gap-4 sm:flex-row">
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={async () => navigator.clipboard.writeText(tagRecord.fallbackUrl)}
-                >
-                  Copy tag link
+
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+                <Button className="w-full sm:w-auto" onClick={handleCopyTagLink}>
+                  {copied ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+                <Button variant="secondary" className="w-full sm:w-auto" onClick={handleShareTag}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Share
                 </Button>
                 <Link href={`/${tagRecord.tag}`}>
                   <Button variant="secondary" className="w-full sm:w-auto">
                     Open tag page
+                    <ExternalLink className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -202,11 +327,10 @@ export function DashboardClient() {
               </div>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <Placeholder title="Incoming payments" />
-              <Placeholder title="Claimable balance" />
-              <Placeholder title="Payment history" />
-            </div>
+            <Card className="rounded-[24px] p-5">
+              <p className="text-lg font-medium text-primary">Payment History</p>
+              <p className="mt-3 text-sm text-secondary">No payments yet</p>
+            </Card>
           </div>
         ) : (
           <div className="mt-6 rounded-[24px] border border-border bg-background/60 p-5">
@@ -221,23 +345,5 @@ export function DashboardClient() {
         )}
       </Card>
     </div>
-  );
-}
-
-function LinkDetail({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs uppercase tracking-[0.2em] text-secondary">{label}</p>
-      <p className="break-all text-sm text-primary">{value}</p>
-    </div>
-  );
-}
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <Card className="rounded-[24px] p-5">
-      <p className="text-lg font-medium text-primary">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-secondary">Private claim flow coming soon.</p>
-    </Card>
   );
 }

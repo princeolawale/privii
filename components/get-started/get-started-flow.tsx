@@ -1,23 +1,23 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Check, Copy, LoaderCircle } from "lucide-react";
-import Link from "next/link";
+import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
+import { useOwnerTag } from "@/components/solana/use-owner-tag";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast-provider";
-import type { PriviiTagRecord } from "@/lib/types";
 import { isValidPriviiTag, normalizePriviiTag, truncateWalletAddress } from "@/lib/utils";
 
 export function GetStartedFlow() {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
   const { showToast } = useToast();
+  const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tag, setTag] = useState("");
   const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken">(
@@ -25,40 +25,22 @@ export function GetStartedFlow() {
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [createdTag, setCreatedTag] = useState<PriviiTagRecord | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [justCreated, setJustCreated] = useState(false);
 
   const normalizedTag = normalizePriviiTag(tag);
   const isTagValid = isValidPriviiTag(normalizedTag);
   const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
-  const currentStep = createdTag ? 3 : connected ? 2 : 1;
+  const currentStep = justCreated ? 3 : connected ? 2 : 1;
 
   useEffect(() => {
-    async function fetchOwnerTag() {
-      if (!walletAddress) {
-        return;
-      }
-
-      const response = await fetch(`/api/tags/by-owner/${encodeURIComponent(walletAddress)}`, {
-        cache: "no-store"
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const result = (await response.json()) as { tag: PriviiTagRecord };
-      setCreatedTag(result.tag);
-      setTag(result.tag.tag);
-      setAvailability("available");
+    if (hasTag && tagRecord && !justCreated) {
+      router.replace("/dashboard");
     }
-
-    fetchOwnerTag();
-  }, [walletAddress]);
+  }, [hasTag, justCreated, router, tagRecord]);
 
   useEffect(() => {
     async function checkTag() {
-      if (!normalizedTag || !isTagValid || createdTag?.tag === normalizedTag) {
+      if (!normalizedTag || !isTagValid || tagRecord?.tag === normalizedTag) {
         setAvailability("idle");
         return;
       }
@@ -74,7 +56,7 @@ export function GetStartedFlow() {
 
     const timeout = window.setTimeout(checkTag, 300);
     return () => window.clearTimeout(timeout);
-  }, [createdTag?.tag, isTagValid, normalizedTag]);
+  }, [tagRecord?.tag, isTagValid, normalizedTag]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,9 +86,11 @@ export function GetStartedFlow() {
         throw new Error(result.error || "Unable to register Privii tag.");
       }
 
-      setCreatedTag(result.tag);
+      setJustCreated(true);
       showToast("Your Privii is live");
-      router.push("/dashboard");
+      window.setTimeout(() => {
+        router.push("/dashboard");
+      }, 700);
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -116,16 +100,6 @@ export function GetStartedFlow() {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  async function handleCopy() {
-    if (!createdTag) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(createdTag.fallbackUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
   }
 
   const availabilityCopy = useMemo(() => {
@@ -151,6 +125,26 @@ export function GetStartedFlow() {
 
     return "Choose the payment identity you want people to remember.";
   }, [availability, isTagValid, normalizedTag]);
+
+  if (connected && isTagLoading) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <Card className="rounded-[32px] p-6 sm:p-8">
+          <p className="text-sm text-secondary">Checking your Privii setup...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (connected && hasTag && !justCreated) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <Card className="rounded-[32px] p-6 sm:p-8">
+          <p className="text-sm text-secondary">Opening your dashboard...</p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -245,42 +239,12 @@ export function GetStartedFlow() {
           </form>
         ) : null}
 
-        {currentStep === 3 && createdTag ? (
+        {currentStep === 3 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight">Your Privii is live</h2>
-            <div className="mt-6 space-y-4 rounded-[24px] border border-border bg-card/70 p-5">
-              <IdentityRow label="Primary identity" value={`${createdTag.tag}.privii.cash`} />
-              <IdentityRow label="Fallback link" value={`privii.xyz/${createdTag.tag}`} />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <Button className="w-full" onClick={handleCopy}>
-                {copied ? (
-                  <span className="flex items-center gap-2">
-                    <Check className="h-4 w-4" />
-                    Copied
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Copy className="h-4 w-4" />
-                    Copy Privii tag link
-                  </span>
-                )}
-              </Button>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Link href={`/${createdTag.tag}`}>
-                  <Button variant="secondary" className="w-full">
-                    View my Privii
-                  </Button>
-                </Link>
-                <Link href="/dashboard">
-                  <Button variant="secondary" className="w-full">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              </div>
+            <div className="mt-6 rounded-[24px] border border-border bg-card/70 p-5">
+              <p className="text-base text-secondary">Redirecting to your dashboard...</p>
             </div>
           </div>
         ) : null}
@@ -312,15 +276,6 @@ function StepChip({
     >
       <p className="text-xs uppercase tracking-[0.2em] text-secondary">{number}</p>
       <p className="mt-2 text-sm font-medium text-primary">{label}</p>
-    </div>
-  );
-}
-
-function IdentityRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-xs uppercase tracking-[0.2em] text-secondary">{label}</p>
-      <p className="break-all text-base font-medium text-primary">{value}</p>
     </div>
   );
 }
