@@ -39,26 +39,18 @@ type PaymentHistoryItem = Pick<
   direction: "sent" | "received";
 };
 
-type BadgeTone = "accent" | "success" | "warning" | "danger" | "neutral";
-
 export function DashboardClient() {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
-  const [payments, setPayments] = useState<
-    PaymentHistoryItem[]
-  >([]);
+  const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
-  const confirmedReceivedCount = payments.filter(
-    (payment) => payment.direction === "received" && payment.status === "confirmed"
-  ).length;
-  const sentCount = payments.filter((payment) => payment.direction === "sent").length;
 
   useEffect(() => {
     async function fetchData() {
@@ -107,7 +99,9 @@ export function DashboardClient() {
           setHistoryError(null);
         } else {
           setPayments([]);
-          const result = (await paymentsResponse.json().catch(() => ({ error: "Unable to load payment history." }))) as {
+          const result = (await paymentsResponse
+            .json()
+            .catch(() => ({ error: "Unable to load payment history." }))) as {
             error?: string;
           };
           setHistoryError(result.error || "Unable to load payment history.");
@@ -229,7 +223,7 @@ export function DashboardClient() {
     <div className="mx-auto flex w-full max-w-4xl justify-center pt-4 sm:pt-6">
       <div className="w-full space-y-8">
         {isLoading ? (
-          <Card className="flex min-h-[240px] items-center justify-center rounded-[32px] border border-white/8 bg-card/90 shadow-[0_25px_80px_rgba(0,0,0,0.35)]">
+          <Card className="flex min-h-[240px] items-center justify-center rounded-[32px]">
             <div className="flex items-center gap-3 text-secondary">
               <LoaderCircle className="h-5 w-5 animate-spin" />
               Loading dashboard
@@ -237,26 +231,8 @@ export function DashboardClient() {
           </Card>
         ) : tagRecord ? (
           <>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <SummaryCard
-                label="Registered Tag"
-                value={`@${tagRecord.tag}`}
-                detail="Your payment identity"
-              />
-              <SummaryCard
-                label="Payment Links"
-                value={String(links.length)}
-                detail="Links available"
-              />
-              <SummaryCard
-                label="Confirmed Received"
-                value={String(confirmedReceivedCount)}
-                detail="Payments confirmed on-chain"
-              />
-            </div>
-
             <div className="flex justify-center">
-              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] border border-white/8 bg-card/80 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.24)] sm:grid-cols-4">
+              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] border border-border bg-card/80 p-2 sm:grid-cols-4">
                 <TabButton
                   active={activeTab === "tag"}
                   icon={<UserRound className="h-4 w-4" />}
@@ -285,7 +261,7 @@ export function DashboardClient() {
             </div>
 
             {activeTab === "tag" ? (
-              <Card className="rounded-[32px] border border-white/8 bg-card/95 px-6 py-8 text-center shadow-[0_25px_80px_rgba(0,0,0,0.34)] sm:px-10 sm:py-10">
+              <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                   Your Privii tag is ready
@@ -293,7 +269,7 @@ export function DashboardClient() {
                 <p className="mt-3 text-sm text-secondary">
                   Connected as {truncateWalletAddress(walletAddress)}
                 </p>
-                <p className="mx-auto mt-6 max-w-2xl break-all rounded-[24px] border border-white/8 bg-background/60 px-5 py-5 text-2xl font-medium text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] sm:text-3xl">
+                <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
                 </p>
                 <div className="mt-8 flex items-center justify-center gap-4">
@@ -317,10 +293,13 @@ export function DashboardClient() {
             ) : null}
 
             {activeTab === "links" ? (
-              <Card className="rounded-[32px] border border-white/8 bg-card/95 px-6 py-8 shadow-[0_25px_80px_rgba(0,0,0,0.34)] sm:px-8 sm:py-8">
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="text-2xl font-semibold tracking-tight">Payment Links</h2>
+                    <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
+                      Payment Links
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your links</h2>
                     <p className="mt-2 text-sm text-secondary">
                       Manage the PayLinks you&apos;ve already created.
                     </p>
@@ -335,18 +314,13 @@ export function DashboardClient() {
                     links.map((link) => (
                       <div
                         key={link.tag}
-                        className="rounded-[24px] border border-white/8 bg-background/60 p-5 transition hover:border-white/14 hover:bg-background/75"
+                        className="rounded-[24px] border border-border bg-background/60 p-5"
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                              <p className="text-lg font-medium text-primary">
-                                {link.ownerTag ? `@${link.ownerTag}` : link.tag}
-                              </p>
-                              <StatusBadge tone={link.type === "permanent" ? "accent" : "neutral"}>
-                                {link.type === "permanent" ? "Permalink" : "Expiring"}
-                              </StatusBadge>
-                            </div>
+                            <p className="text-lg font-medium text-primary">
+                              {link.ownerTag ? `@${link.ownerTag}` : link.tag}
+                            </p>
                             <p className="text-sm text-secondary">
                               {link.paymentPurpose || "General payment"} •{" "}
                               {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
@@ -361,31 +335,19 @@ export function DashboardClient() {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-[24px] border border-dashed border-white/10 bg-background/40 p-6 text-center">
-                      <p className="text-sm text-secondary">No payment links yet</p>
-                    </div>
+                    <p className="text-sm text-secondary">No payment links yet</p>
                   )}
                 </div>
               </Card>
             ) : null}
 
             {activeTab === "history" ? (
-              <Card className="rounded-[32px] border border-white/8 bg-card/95 px-6 py-8 shadow-[0_25px_80px_rgba(0,0,0,0.34)] sm:px-8 sm:py-8">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
-                      Payment History
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight">Activity</h2>
-                    <p className="mt-2 text-sm text-secondary">
-                      Received payments appear only after confirmed on-chain. Sent payments show every lifecycle state.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-secondary">
-                    <span>{confirmedReceivedCount} received</span>
-                    <span className="text-white/20">•</span>
-                    <span>{sentCount} sent</span>
-                  </div>
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
+                    Payment History
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">Activity</h2>
                 </div>
                 <div className="mt-6 space-y-4">
                   {historyError ? (
@@ -394,20 +356,15 @@ export function DashboardClient() {
                     payments.map((payment) => (
                       <div
                         key={payment.id}
-                        className="rounded-[24px] border border-white/8 bg-background/60 p-5 transition hover:border-white/14 hover:bg-background/75"
+                        className="rounded-[24px] border border-border bg-background/60 p-5"
                       >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <StatusBadge tone={payment.direction === "received" ? "accent" : "neutral"}>
-                                {payment.direction === "sent" ? "Sent" : "Received"}
-                              </StatusBadge>
-                              <StatusBadge tone={statusTone(payment.status)}>
-                                {formatPaymentStatus(payment.status)}
-                              </StatusBadge>
-                            </div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="space-y-1">
                             <p className="text-lg font-medium text-primary">
-                              {payment.amount || "Pending"} {payment.asset}
+                              <span className="text-accent/90">
+                                {payment.direction === "sent" ? "Sent" : "Received"}
+                              </span>{" "}
+                              • {payment.amount || "Pending"} {payment.asset}
                             </p>
                             <p className="text-sm text-secondary">
                               {formatPaymentStatus(payment.status)} •{" "}
@@ -420,45 +377,37 @@ export function DashboardClient() {
                               {truncateCounterparty(payment, walletAddress)}
                             </p>
                           </div>
-                          <div className="flex items-center gap-3">
-                            {payment.tx_signature ? (
-                              <a
-                                href={`https://solscan.io/tx/${payment.tx_signature}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex"
-                              >
-                                <Button variant="secondary" className="w-full sm:w-auto">
-                                  View on Solscan
-                                </Button>
-                              </a>
-                            ) : (
-                              <span className="rounded-full border border-white/8 bg-white/[0.03] px-3 py-2 text-xs text-secondary">
-                                Awaiting signature
-                              </span>
-                            )}
-                          </div>
+                          {payment.tx_signature ? (
+                            <a
+                              href={`https://solscan.io/tx/${payment.tx_signature}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex"
+                            >
+                              <Button variant="secondary" className="w-full sm:w-auto">
+                                View on Solscan
+                              </Button>
+                            </a>
+                          ) : null}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-[24px] border border-dashed border-white/10 bg-background/40 p-6 text-center">
-                      <p className="text-sm text-secondary">No payments yet.</p>
-                    </div>
+                    <p className="text-sm text-secondary">No payments yet</p>
                   )}
                 </div>
               </Card>
             ) : null}
 
             {activeTab === "pay" ? (
-              <Card className="rounded-[32px] border border-white/8 bg-card/95 px-6 py-8 shadow-[0_25px_80px_rgba(0,0,0,0.34)] sm:px-8 sm:py-8">
-                <div className="space-y-2">
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+                <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-accent/90">Quick Pay</p>
-                  <h2 className="text-2xl font-semibold tracking-tight">Pay Someone</h2>
-                  <p className="text-sm leading-6 text-secondary">
-                    Paste a tag or payment link and continue with the existing payment flow.
-                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">Pay Someone</h2>
                 </div>
+                <p className="mt-2 text-sm leading-6 text-secondary">
+                  Paste a tag or payment link and continue with the existing payment flow.
+                </p>
                 <form className="mt-6 flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
                   <Input
                     value={payTarget}
@@ -471,7 +420,7 @@ export function DashboardClient() {
             ) : null}
           </>
         ) : (
-          <Card className="rounded-[32px] border border-white/8 bg-card/95 px-6 py-8 shadow-[0_25px_80px_rgba(0,0,0,0.34)] sm:px-8 sm:py-8">
+          <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">
               No Privii tag yet. Register your payment identity to unlock your dashboard.
@@ -502,7 +451,7 @@ function TabButton({
       type="button"
       className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium transition ${
         active
-          ? "bg-white/[0.08] text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+          ? "bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(124,92,255,0.16)]"
           : "text-secondary hover:bg-white/[0.03] hover:text-primary"
       }`}
       onClick={onClick}
@@ -558,46 +507,6 @@ function IconActionLink({
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <Card className="rounded-[28px] border border-white/8 bg-card/90 px-5 py-5 shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
-      <p className="text-xs uppercase tracking-[0.24em] text-accent/90">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-primary">{value}</p>
-      <p className="mt-2 text-sm text-secondary">{detail}</p>
-    </Card>
-  );
-}
-
-function StatusBadge({
-  children,
-  tone,
-}: {
-  children: ReactNode;
-  tone: BadgeTone;
-}) {
-  const styles = {
-    accent: "border-accent/20 bg-accent/10 text-accent",
-    success: "border-emerald-500/20 bg-emerald-500/10 text-emerald-300",
-    warning: "border-amber-500/20 bg-amber-500/10 text-amber-300",
-    danger: "border-red-500/20 bg-red-500/10 text-red-300",
-    neutral: "border-white/10 bg-white/[0.04] text-secondary",
-  } as const;
-
-  return (
-    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${styles[tone]}`}>
-      {children}
-    </span>
-  );
-}
-
 function formatPaymentStatus(status: PaymentRecord["status"]) {
   switch (status) {
     case "initialized":
@@ -612,22 +521,6 @@ function formatPaymentStatus(status: PaymentRecord["status"]) {
       return "Expired";
     default:
       return "Pending";
-  }
-}
-
-function statusTone(status: PaymentRecord["status"]): BadgeTone {
-  switch (status) {
-    case "confirmed":
-      return "success";
-    case "failed":
-      return "danger";
-    case "expired":
-      return "warning";
-    case "submitted":
-      return "accent";
-    case "initialized":
-    default:
-      return "neutral";
   }
 }
 
