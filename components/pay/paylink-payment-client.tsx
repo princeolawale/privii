@@ -5,10 +5,9 @@ import {
   ArrowRight,
   Check,
   Copy,
-  EyeOff,
   LoaderCircle,
-  Send,
-  Shield
+  ExternalLink,
+  Send
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -56,6 +55,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +107,11 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     };
   }, [kind, tag]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
 
@@ -118,7 +123,10 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return customAmount;
   }, [customAmount, data]);
 
-  const isExpired = data?.kind === "paylink" ? data.status === "expired" : false;
+  const isExpired =
+    data?.kind === "paylink"
+      ? data.status === "expired" || (data.link.expiresAt ? data.link.expiresAt <= now : false)
+      : false;
   const recipientWallet =
     data?.kind === "paylink" ? data.link.recipientWallet : data?.kind === "tag" ? data.tagRecord.ownerWallet : null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
@@ -261,81 +269,49 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
   const shareTag = data.kind === "tag" ? data.tagRecord.tag : data.link.tag;
   const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
-  const whatsappUrl = buildWhatsAppShareUrl(currentUrl, shareTag);
-  const xUrl = buildXShareUrl(currentUrl, shareTag);
-  const amountLabel =
-    data.kind === "paylink"
-      ? data.link.amount
-        ? `${data.link.amount} ${data.link.token}`
-        : "Custom amount"
-      : "Custom amount";
-  const linkTypeLabel =
-    data.kind === "tag"
-      ? "Privii tag"
-      : data.link.type === "permanent"
-        ? "Permalink"
-        : "Expiring link";
   const expiryLabel =
     data.kind === "tag"
       ? "No expiry"
       : data.link.type === "permanent"
         ? "No expiry"
-        : formatExpiryLabel(data.link.expiresAt);
+        : formatExpiryLabel(data.link.expiresAt, now);
   const shouldShowCustomAmount =
     !isCreator && !isExpired && (data.kind === "tag" || !data.link.amount);
+  const title =
+    data.kind === "tag"
+      ? `Pay @${data.tagRecord.tag}`
+      : data.link.amount
+        ? `Pay ${data.link.amount} ${data.link.token}`
+        : "Send payment";
+  const subtitle =
+    data.kind === "tag"
+      ? "Choose an amount and complete the payment."
+      : data.link.amount
+        ? "Complete this payment with your connected wallet."
+        : "Enter an amount and complete the payment.";
 
   return (
-    <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
+    <div className="mx-auto w-full max-w-xl pt-16 sm:pt-20">
       <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
           <TokenBadge token={paymentToken} />
-          <span className="mt-3 inline-flex items-center rounded-full bg-[#22C55E] px-4 py-1 text-xs font-semibold tracking-[0.18em] text-black">
-            ACTIVE
-          </span>
         </div>
 
-          <div className="space-y-9">
+        <div className="space-y-8">
+          <div className="flex justify-end">
+            <ExpiryPill expired={isExpired} label={isExpired ? "Expired" : expiryLabel} />
+          </div>
+
           <div className="space-y-4 text-center">
             <p className="text-xs uppercase tracking-[0.34em] text-secondary">
               {data.kind === "tag" ? "Privii tag" : "Payment Request"}
             </p>
-            {data.kind === "tag" ? (
-              <>
-                <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-                  Send crypto
-                </h1>
-                <p className="text-base text-secondary sm:text-lg">to @{data.tagRecord.tag}</p>
-              </>
-            ) : (
-              <h1 className="text-5xl font-semibold tracking-tight text-primary sm:text-6xl">
-                {data.link.amount ? data.link.amount : "Custom"}{" "}
-                <span className="text-4xl font-medium text-primary/90 sm:text-5xl">
-                  {data.link.amount ? data.link.token : "amount"}
-                </span>
-              </h1>
-            )}
-          </div>
-
-          <div className="border-t border-border/80" />
-
-          <div className="space-y-6 text-sm text-secondary">
-            <PreviewRow
-              label={data.kind === "tag" ? "Tag" : "Ref ID"}
-              value={data.kind === "tag" ? `@${data.tagRecord.tag}` : data.link.ownerTag ? `@${data.link.ownerTag}` : data.link.tag}
-            />
-            <PreviewRow label="Amount" value={amountLabel} />
-            <PreviewRow label="Link type" value={linkTypeLabel} />
-            <PreviewRow label="Expiry" value={expiryLabel} />
-            <PreviewRow
-              label="Creator"
-              value="Hidden"
-              icon={<EyeOff className="h-4 w-4 text-accent" />}
-            />
-            <PreviewRow
-              label="Status"
-              value={isExpired ? "Expired" : "Private"}
-              icon={<Shield className="h-4 w-4 text-accent" />}
-            />
+            <h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">
+              {title}
+            </h1>
+            <p className="mx-auto max-w-md text-sm leading-6 text-secondary sm:text-base">
+              {subtitle}
+            </p>
           </div>
 
           {shouldShowCustomAmount ? (
@@ -363,6 +339,13 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
                 </label>
               ) : null}
             </div>
+          ) : data.kind === "paylink" && data.link.amount ? (
+            <div className="rounded-[24px] border border-border bg-background/60 px-5 py-4 text-center">
+              <p className="text-sm text-secondary">Amount</p>
+              <p className="mt-2 text-2xl font-semibold text-primary">
+                {data.link.amount} {data.link.token}
+              </p>
+            </div>
           ) : null}
 
           {!wallet.connected && !isCreator && !isExpired ? (
@@ -377,39 +360,40 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             <p className="text-sm text-red-400">This payment link has expired</p>
           ) : null}
 
-          <div className="flex items-center justify-center gap-4 pt-6">
-            <ShareCircle href={xUrl} label="Share on X">
-              <span className="text-base font-medium">X</span>
-            </ShareCircle>
-            <ShareCircle href={whatsappUrl} label="Share on WhatsApp">
-              <Send className="h-4 w-4" />
-            </ShareCircle>
-            <button
-              type="button"
-              aria-label="Copy PayLink"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
-              onClick={handleCopy}
-            >
-              {copied ? <Check className="h-4 w-4 text-accent" /> : <Copy className="h-4 w-4" />}
-            </button>
-          </div>
-
           {isCreator ? (
-            <Button
-              className="mt-8 w-full"
-              onClick={handleShare}
-            >
-              Share PayLink
-              <ArrowRight className="ml-3 h-5 w-5" />
-            </Button>
+            <>
+              <div className="flex items-center justify-center gap-4 pt-2">
+                <IconActionButton
+                  label={copied ? "Copied" : "Copy"}
+                  icon={copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  onClick={handleCopy}
+                />
+                <IconActionLink
+                  href={buildXShareUrl(currentUrl, shareTag)}
+                  label="Share on X"
+                  icon={<span className="text-sm font-medium">X</span>}
+                />
+                <IconActionLink
+                  href={buildWhatsAppShareUrl(currentUrl, shareTag)}
+                  label="Share on WhatsApp"
+                  icon={<Send className="h-4 w-4" />}
+                />
+                <IconActionLink
+                  href={currentUrl}
+                  label="Open payment page"
+                  icon={<ExternalLink className="h-4 w-4" />}
+                />
+              </div>
+
+              <Button className="w-full" onClick={handleShare}>
+                Share PayLink
+                <ArrowRight className="ml-3 h-5 w-5" />
+              </Button>
+            </>
           ) : null}
 
           {!isCreator && !isExpired ? (
-            <Button
-              className="mt-8 w-full"
-              disabled={!canPay || isPaying}
-              onClick={handlePay}
-            >
+            <Button className="w-full" disabled={!canPay || isPaying} onClick={handlePay}>
               {isPaying ? (
                 <span className="flex items-center gap-2">
                   <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -429,8 +413,6 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
               This is your PayLink. Share it instead of paying yourself.
             </p>
           ) : null}
-
-          <p className="text-center text-sm text-secondary">Powered by Privii</p>
         </div>
       </div>
     </div>
@@ -447,38 +429,36 @@ function TokenBadge({ token }: { token: PayLinkToken }) {
   );
 }
 
-function PreviewRow({
-  label,
-  value,
+function IconActionButton({
   icon,
-  compact = false
+  label,
+  onClick
 }: {
+  icon: ReactNode;
   label: string;
-  value: string;
-  icon?: ReactNode;
-  compact?: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <span>{label}</span>
-      <span
-        className={`flex items-center gap-2 text-right text-primary ${compact ? "max-w-[210px] truncate sm:max-w-[260px]" : ""}`}
-      >
-        {icon}
-        {value}
-      </span>
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      onClick={onClick}
+    >
+      {icon}
+    </button>
   );
 }
 
-function ShareCircle({
+function IconActionLink({
   href,
+  icon,
   label,
-  children
 }: {
   href: string;
+  icon: ReactNode;
   label: string;
-  children: ReactNode;
 }) {
   return (
     <a
@@ -486,38 +466,54 @@ function ShareCircle({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
+      title={label}
       className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
     >
-      {children}
+      {icon}
     </a>
   );
 }
 
-function formatExpiryLabel(expiresAt: number | null) {
+function ExpiryPill({ label, expired }: { label: string; expired?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+        expired
+          ? "border-white/10 bg-white/[0.03] text-secondary"
+          : "border-accent/20 bg-accent/10 text-accent"
+      }`}
+    >
+      {expired ? "This payment link has expired" : label}
+    </span>
+  );
+}
+
+function formatExpiryLabel(expiresAt: number | null, now: number) {
   if (!expiresAt) {
     return "No expiry";
   }
 
-  const diff = expiresAt - Date.now();
+  const diff = expiresAt - now;
 
   if (diff <= 0) {
     return "Expires soon";
   }
 
-  const minutes = Math.floor(diff / (60 * 1000));
-  const days = Math.floor(minutes / (60 * 24));
-  const hours = Math.floor((minutes % (60 * 24)) / 60);
-  const remainingMinutes = minutes % 60;
+  const totalSeconds = Math.max(Math.floor(diff / 1000), 0);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
   if (days > 0) {
     return `Expires in ${days}d ${hours}h`;
   }
 
   if (hours > 0) {
-    return `Expires in ${hours}h ${remainingMinutes}m`;
+    return `Expires in ${hours}h ${String(minutes).padStart(2, "0")}m`;
   }
 
-  return remainingMinutes <= 5 ? "Expires soon" : `Expires in ${Math.max(remainingMinutes, 1)}m`;
+  return `Expires in ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
 async function addUsdcTransfer({
