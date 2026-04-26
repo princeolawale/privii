@@ -12,6 +12,7 @@ type PaymentInitPayload = {
   tag?: string;
   asset?: PayLinkToken;
   expectedAmount?: string;
+  payerWallet?: string;
 };
 
 function resolveTagRecipientWallet(record: {
@@ -26,6 +27,15 @@ export async function POST(request: Request) {
     const body = (await request.json()) as PaymentInitPayload;
     const kind = body.kind === "tag" ? "tag" : "paylink";
     const tag = normalizePriviiTag(body.tag ?? "");
+    const payerWallet = body.payerWallet?.trim() || null;
+
+    if (payerWallet) {
+      try {
+        new PublicKey(payerWallet);
+      } catch {
+        return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
+      }
+    }
 
     if (!tag) {
       return NextResponse.json({ error: "Payment link not found" }, { status: 400 });
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
         recipientWallet,
         asset,
         expectedAmount,
+        payerWallet,
       });
       await savePayment(payment);
 
@@ -119,6 +130,7 @@ export async function POST(request: Request) {
       asset,
       expectedAmount,
       status: isExpired(link.expiresAt) ? "expired" : "initialized",
+      payerWallet,
     });
     await savePayment(payment);
 

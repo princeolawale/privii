@@ -20,9 +20,23 @@ export async function GET(
   }
 
   const payments = await getPaymentsByWallet(normalizedWallet);
+  const visiblePayments = payments.filter((payment) => {
+    const isSent = payment.payer_wallet === normalizedWallet;
+    const isReceived = payment.recipient_wallet === normalizedWallet;
+
+    if (isSent) {
+      return true;
+    }
+
+    if (isReceived) {
+      return Boolean(payment.tx_signature) && payment.status === "confirmed";
+    }
+
+    return false;
+  });
 
   return NextResponse.json({
-    payments: payments.map((payment) => ({
+    payments: visiblePayments.map((payment) => ({
       id: payment.id,
       amount: payment.amount,
       asset: payment.asset,
@@ -33,12 +47,7 @@ export async function GET(
       confirmed_at: payment.confirmed_at,
       payer_wallet: payment.payer_wallet,
       recipient_wallet: payment.recipient_wallet,
-      direction:
-        payment.recipient_wallet === normalizedWallet
-          ? "received"
-          : payment.payer_wallet === normalizedWallet
-            ? "sent"
-            : "received",
+      direction: payment.payer_wallet === normalizedWallet ? "sent" : "received",
     })),
   });
 }

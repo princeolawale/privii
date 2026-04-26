@@ -101,6 +101,7 @@ export function createPaymentRecord(input: {
   asset: PayLinkToken;
   expectedAmount: string;
   status?: PaymentStatus;
+  payerWallet?: string | null;
 }) {
   const now = new Date().toISOString();
 
@@ -108,7 +109,7 @@ export function createPaymentRecord(input: {
     id: crypto.randomUUID(),
     tag: input.tag,
     recipient_wallet: input.recipientWallet,
-    payer_wallet: null,
+    payer_wallet: input.payerWallet ?? null,
     asset: input.asset,
     amount: null,
     expected_amount: input.expectedAmount,

@@ -173,7 +173,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             kind: data.kind,
             tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
             asset: paymentToken,
-            expectedAmount: initAmount
+            expectedAmount: initAmount,
+            payerWallet: wallet.publicKey?.toBase58() ?? null
           })
         });
 
