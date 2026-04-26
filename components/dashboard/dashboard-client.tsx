@@ -1,21 +1,28 @@
 "use client";
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Check, Copy, ExternalLink, LoaderCircle, Send } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  History,
+  Link2,
+  LoaderCircle,
+  Send,
+  UserRound
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { PayLinkRecord, PriviiTagRecord } from "@/lib/types";
-import {
-  buildFallbackTagUrl,
-  buildXShareUrl,
-  truncateWalletAddress
-} from "@/lib/utils";
+import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
+
+type DashboardTab = "tag" | "links" | "history" | "pay";
 
 export function DashboardClient() {
   const router = useRouter();
@@ -29,6 +36,7 @@ export function DashboardClient() {
   const [copied, setCopied] = useState(false);
   const [balance, setBalance] = useState<string | null>(null);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
 
   useEffect(() => {
     async function fetchData() {
@@ -142,7 +150,7 @@ export function DashboardClient() {
         });
         return;
       } catch {
-        // Fall back to external share link below.
+        // Fall through to external share.
       }
     }
 
@@ -172,7 +180,7 @@ export function DashboardClient() {
         return;
       }
     } catch {
-      // Not a URL, treat as slug/tag below.
+      // Not a full URL, handle as path or tag below.
     }
 
     if (value.includes("/pay/")) {
@@ -194,156 +202,289 @@ export function DashboardClient() {
 
   if (!connected) {
     return (
-      <Card className="mx-auto max-w-2xl space-y-4 rounded-[32px] p-6 sm:p-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm leading-6 text-secondary">
-          Connect your wallet to view your Privii tag and future payment history.
-        </p>
-        <ConnectWalletButton />
-      </Card>
+      <div className="mx-auto flex w-full max-w-3xl justify-center pt-10 sm:pt-14">
+        <Card className="w-full rounded-[32px] p-6 text-center sm:p-8">
+          <div className="space-y-4">
+            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="mx-auto max-w-lg text-sm leading-6 text-secondary">
+              Connect your wallet to manage your Privii tag, payment links, and payment
+              activity.
+            </p>
+            <div className="flex justify-center pt-2">
+              <ConnectWalletButton />
+            </div>
+          </div>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6">
-      <Card className="rounded-[32px] p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.24em] text-secondary">Dashboard</p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-          {tagRecord ? "Your Privii tag is ready" : "Dashboard"}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-secondary">
-          Connected as {truncateWalletAddress(walletAddress)}.
-        </p>
-
+    <div className="mx-auto flex w-full max-w-4xl justify-center pt-10 sm:pt-14">
+      <div className="w-full space-y-8">
         {isLoading ? (
-          <p className="mt-6 text-sm text-secondary">Loading your tag...</p>
+          <Card className="flex min-h-[240px] items-center justify-center rounded-[32px]">
+            <div className="flex items-center gap-3 text-secondary">
+              <LoaderCircle className="h-5 w-5 animate-spin" />
+              Loading dashboard
+            </div>
+          </Card>
         ) : tagRecord ? (
-          <div className="mt-6 space-y-6">
-            <div className="rounded-[28px] border border-border bg-background/60 p-5 sm:p-6">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-                    Public payment identity
-                  </p>
-                  <p className="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
-                    @{tagRecord.tag}
-                  </p>
-                  <p className="break-all text-sm text-secondary sm:text-base">
-                    {publicUrl}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-border bg-card/60 px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-                    Wallet balance
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-primary">
-                    {isBalanceLoading ? (
-                      <span className="flex items-center gap-2 text-sm text-secondary">
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        Loading
-                      </span>
-                    ) : balance ? (
-                      `${balance} SOL`
-                    ) : (
-                      "Balance unavailable"
-                    )}
-                  </p>
+          <>
+            <Card className="rounded-[36px] border-white/10 bg-card/90 px-6 py-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
+              <div className="space-y-4">
+                <p className="text-sm text-secondary">
+                  Connected as {truncateWalletAddress(walletAddress)}
+                </p>
+                <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+                  Your Privii tag is ready
+                </h1>
+                <p className="mx-auto max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                  {publicUrl}
+                </p>
+                <div className="flex items-center justify-center gap-3 pt-2 text-sm text-secondary">
+                  <span>Wallet balance</span>
+                  <span className="h-1 w-1 rounded-full bg-white/20" />
+                  <span>
+                    {isBalanceLoading
+                      ? "Loading..."
+                      : balance
+                        ? `${balance} SOL`
+                        : "Balance unavailable"}
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
-                <Button className="w-full sm:w-auto" onClick={handleCopyTagLink}>
-                  {copied ? (
-                    <>
-                      <Check className="mr-2 h-4 w-4" />
-                      Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy
-                    </>
-                  )}
-                </Button>
-                <Button variant="secondary" className="w-full sm:w-auto" onClick={handleShareTag}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Share
-                </Button>
-                <Link href={`/${tagRecord.tag}`}>
-                  <Button variant="secondary" className="w-full sm:w-auto">
-                    Open tag page
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
+              <div className="mt-8 flex items-center justify-center gap-4">
+                <IconActionButton
+                  label={copied ? "Copied" : "Copy"}
+                  icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                  onClick={handleCopyTagLink}
+                />
+                <IconActionLink
+                  href={publicUrl ?? "#"}
+                  label="Open"
+                  icon={<ExternalLink className="h-5 w-5" />}
+                />
+                <IconActionButton
+                  label="Share"
+                  icon={<Send className="h-5 w-5" />}
+                  onClick={handleShareTag}
+                />
+              </div>
+            </Card>
+
+            <div className="flex justify-center">
+              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] border border-border bg-card/80 p-2 sm:grid-cols-4">
+                <TabButton
+                  active={activeTab === "tag"}
+                  icon={<UserRound className="h-4 w-4" />}
+                  label="My Tag"
+                  onClick={() => setActiveTab("tag")}
+                />
+                <TabButton
+                  active={activeTab === "links"}
+                  icon={<Link2 className="h-4 w-4" />}
+                  label="Payment Links"
+                  onClick={() => setActiveTab("links")}
+                />
+                <TabButton
+                  active={activeTab === "history"}
+                  icon={<History className="h-4 w-4" />}
+                  label="Payment History"
+                  onClick={() => setActiveTab("history")}
+                />
+                <TabButton
+                  active={activeTab === "pay"}
+                  icon={<Send className="h-4 w-4" />}
+                  label="Pay Someone"
+                  onClick={() => setActiveTab("pay")}
+                />
               </div>
             </div>
 
-            <Card className="rounded-[24px] p-5">
-              <p className="text-lg font-medium text-primary">Pay someone</p>
-              <p className="mt-2 text-sm leading-6 text-secondary">
-                Paste a tag, tag URL, or PayLink and we&apos;ll open the existing payment
-                page.
-              </p>
-              <form className="mt-4 flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
-                <Input
-                  value={payTarget}
-                  placeholder="prince or https://privii.xyz/prince"
-                  onChange={(event) => setPayTarget(event.target.value)}
-                />
-                <Button className="w-full sm:w-auto">Open</Button>
-              </form>
-            </Card>
+            {activeTab === "tag" ? (
+              <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
+                <p className="text-sm uppercase tracking-[0.2em] text-secondary">My Tag</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Your Privii tag is ready
+                </h2>
+                <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                  {publicUrl}
+                </p>
+                <div className="mt-8 flex items-center justify-center gap-4">
+                  <IconActionButton
+                    label={copied ? "Copied" : "Copy"}
+                    icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                    onClick={handleCopyTagLink}
+                  />
+                  <IconActionLink
+                    href={publicUrl ?? "#"}
+                    label="Open"
+                    icon={<ExternalLink className="h-5 w-5" />}
+                  />
+                  <IconActionButton
+                    label="Share"
+                    icon={<Send className="h-5 w-5" />}
+                    onClick={handleShareTag}
+                  />
+                </div>
+              </Card>
+            ) : null}
 
-            <Card className="rounded-[24px] p-5">
-              <p className="text-lg font-medium text-primary">Created PayLinks</p>
-              <div className="mt-4 space-y-4">
-                {links.length ? (
-                  links.map((link) => (
-                    <div
-                      key={link.tag}
-                      className="rounded-2xl border border-border bg-background/60 p-4"
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-primary">
-                            {link.ownerTag ? `@${link.ownerTag}` : link.tag}
-                          </p>
-                          <p className="text-sm text-secondary">
-                            {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
-                          </p>
+            {activeTab === "links" ? (
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight">Payment Links</h2>
+                    <p className="mt-2 text-sm text-secondary">
+                      Manage the PayLinks you&apos;ve already created.
+                    </p>
+                  </div>
+                  <Link href="/create">
+                    <Button className="w-full sm:w-auto">Create PayLink</Button>
+                  </Link>
+                </div>
+
+                <div className="mt-8 space-y-4">
+                  {links.length ? (
+                    links.map((link) => (
+                      <div
+                        key={link.tag}
+                        className="rounded-[24px] border border-border bg-background/60 p-5"
+                      >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="space-y-1">
+                            <p className="text-lg font-medium text-primary">
+                              {link.ownerTag ? `@${link.ownerTag}` : link.tag}
+                            </p>
+                            <p className="text-sm text-secondary">
+                              {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
+                            </p>
+                          </div>
+                          <Link href={`/pay/${link.tag}`}>
+                            <Button variant="secondary" className="w-full sm:w-auto">
+                              Open PayLink
+                            </Button>
+                          </Link>
                         </div>
-                        <Link href={`/pay/${link.tag}`}>
-                          <Button variant="secondary" className="w-full sm:w-auto">
-                            Open PayLink
-                          </Button>
-                        </Link>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-secondary">No PayLinks created yet.</p>
-                )}
-              </div>
-            </Card>
+                    ))
+                  ) : (
+                    <p className="text-sm text-secondary">No payment links yet</p>
+                  )}
+                </div>
+              </Card>
+            ) : null}
 
-            <Card className="rounded-[24px] p-5">
-              <p className="text-lg font-medium text-primary">Payment History</p>
-              <p className="mt-3 text-sm text-secondary">No payments yet</p>
-            </Card>
-          </div>
+            {activeTab === "history" ? (
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+                <h2 className="text-2xl font-semibold tracking-tight">Payment History</h2>
+                <p className="mt-6 text-sm text-secondary">No payments yet</p>
+              </Card>
+            ) : null}
+
+            {activeTab === "pay" ? (
+              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+                <h2 className="text-2xl font-semibold tracking-tight">Pay Someone</h2>
+                <p className="mt-2 text-sm leading-6 text-secondary">
+                  Paste a tag or payment link and continue with the existing payment flow.
+                </p>
+                <form className="mt-6 flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
+                  <Input
+                    value={payTarget}
+                    placeholder="prince or https://privii.xyz/prince"
+                    onChange={(event) => setPayTarget(event.target.value)}
+                  />
+                  <Button className="w-full sm:w-auto">Continue</Button>
+                </form>
+              </Card>
+            ) : null}
+          </>
         ) : (
-          <div className="mt-6 rounded-[24px] border border-border bg-background/60 p-5">
-            <p className="text-lg font-medium text-primary">No Privii tag yet</p>
-            <p className="mt-2 text-sm leading-6 text-secondary">
-              Start onboarding to register your payment identity.
+          <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+            <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">
+              No Privii tag yet. Register your payment identity to unlock your dashboard.
             </p>
-            <Link href="/get-started" className="mt-5 inline-flex">
+            <Link href="/get-started" className="mt-6 inline-flex">
               <Button>Get Started</Button>
             </Link>
-          </div>
+          </Card>
         )}
-      </Card>
+      </div>
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  icon,
+  label,
+  onClick
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium transition ${
+        active
+          ? "bg-white/[0.08] text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+          : "text-secondary hover:bg-white/[0.03] hover:text-primary"
+      }`}
+      onClick={onClick}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function IconActionButton({
+  icon,
+  label,
+  onClick
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/60 text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+    >
+      {icon}
+    </button>
+  );
+}
+
+function IconActionLink({
+  href,
+  icon,
+  label
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/60 text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+      aria-label={label}
+      title={label}
+    >
+      {icon}
+    </a>
   );
 }
