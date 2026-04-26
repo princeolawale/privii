@@ -41,7 +41,7 @@ export function SiteHeader({
       <header className="mb-12 flex items-center justify-between">
         <Link
           href="/"
-          className="text-[2.15rem] font-semibold tracking-tight text-primary sm:text-[2.15rem]"
+          className="text-[2rem] font-semibold tracking-tight text-primary sm:text-[2rem]"
         >
           {APP_NAME}
         </Link>

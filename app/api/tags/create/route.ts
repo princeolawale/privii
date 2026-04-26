@@ -25,8 +25,7 @@ export async function POST(request: Request) {
     if (!isValidPriviiTag(tag)) {
       return NextResponse.json(
         {
-          error:
-            "Privii tag must be 3-24 characters and use lowercase letters, numbers, or hyphens."
+          error: "Use lowercase letters, numbers, or hyphens only"
         },
         { status: 400 }
       );
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
 
     if ((await priviiTagExists(tag)) || (await tagExists(tag))) {
       return NextResponse.json(
-        { error: "That Privii tag is already taken." },
+        { error: "This Privii tag is already taken" },
         { status: 409 }
       );
     }

@@ -19,7 +19,7 @@ export function HeroActions() {
       </Link>
       <Link href="/create">
         <Button variant="secondary" className="w-full min-w-[200px] sm:w-auto">
-          Create Payment Link
+          Create PayLink
         </Button>
       </Link>
     </div>

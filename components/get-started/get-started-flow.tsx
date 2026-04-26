@@ -83,7 +83,7 @@ export function GetStartedFlow() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Unable to register Privii tag.");
+        throw new Error(result.error || "Unable to create your Privii tag.");
       }
 
       setJustCreated(true);
@@ -95,7 +95,7 @@ export function GetStartedFlow() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : "Unable to register Privii tag."
+          : "Unable to create your Privii tag."
       );
     } finally {
       setIsSubmitting(false);
@@ -108,7 +108,7 @@ export function GetStartedFlow() {
     }
 
     if (!isTagValid) {
-      return "Use 3-24 lowercase letters, numbers, or hyphens.";
+      return "Use lowercase letters, numbers, or hyphens only";
     }
 
     if (availability === "checking") {
@@ -116,7 +116,7 @@ export function GetStartedFlow() {
     }
 
     if (availability === "taken") {
-      return "That Privii tag is already taken.";
+      return "This Privii tag is already taken";
     }
 
     if (availability === "available") {
@@ -157,8 +157,7 @@ export function GetStartedFlow() {
             Register your Privii tag
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-            Connect your wallet, choose a tag, and start receiving crypto without
-            exposing your wallet address in the UI.
+            Connect your wallet, choose a tag, and start getting paid with Privii.
           </p>
         </div>
 

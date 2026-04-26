@@ -11,7 +11,7 @@ export async function GET(
   const link = await getPayLink(slug);
 
   if (!link) {
-    return NextResponse.json({ error: "PayLink not found." }, { status: 404 });
+    return NextResponse.json({ error: "Payment link not found" }, { status: 404 });
   }
 
   return NextResponse.json({

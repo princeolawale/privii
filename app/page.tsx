@@ -23,37 +23,75 @@ export default async function HomePage() {
       <section className="flex min-h-[68vh] flex-col items-center justify-center pb-20 pt-8 text-center">
         <div className="space-y-8">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent">
-            Private crypto payment tags
+            Tags and PayLinks
           </div>
           <div className="space-y-4">
             <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-              Get paid with tags and links
+              Crypto payments made simple
             </h1>
             <p className="mx-auto max-w-xl text-base leading-7 text-secondary sm:text-lg">
-              Create your Privii tag, share payment links, and receive crypto without
-              sending your wallet address.
+              Create a tag. Share a link. Get paid in seconds.
             </p>
           </div>
           <HeroActions />
         </div>
       </section>
 
-      <section className="mx-auto mb-20 grid max-w-5xl gap-4 md:grid-cols-3" id="how-it-works">
+      <section className="mx-auto mb-10 max-w-5xl text-center" id="how-it-works">
+        <div className="space-y-3">
+          <p className="text-xs uppercase tracking-[0.24em] text-accent">How It Works</p>
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            Three steps to get paid
+          </h2>
+        </div>
+      </section>
+
+      <section className="mx-auto mb-20 grid max-w-5xl gap-4 md:grid-cols-3">
         <StepCard
           step="1"
-          title="Register your Privii tag"
-          copy="Claim the payment identity you want people to remember."
+          title="Create your Privii tag"
+          copy="Set the payment identity people can remember."
         />
         <StepCard
           step="2"
-          title="Share your payment identity"
-          copy="Drop your tag into chat, socials, or your next invoice."
+          title="Share your tag or PayLink"
+          copy="Use a tag for always-on payments or a link for one request."
         />
         <StepCard
           step="3"
-          title="Receive crypto through Privii"
-          copy="Accept crypto while your wallet stays hidden in the public UI."
+          title="Receive crypto instantly"
+          copy="Let anyone pay you in a few quick taps."
         />
+      </section>
+
+      <section className="mx-auto mb-20 grid max-w-5xl gap-4 md:grid-cols-2">
+        <Card className="space-y-4 p-6">
+          <p className="text-xs uppercase tracking-[0.24em] text-accent">Tags + PayLinks</p>
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-xl font-medium text-primary">Tags are permanent</h3>
+              <p className="mt-1 text-sm text-secondary">
+                Use your tag as your always-on payment identity.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xl font-medium text-primary">PayLinks are flexible</h3>
+              <p className="mt-1 text-sm text-secondary">
+                Create fixed or temporary requests when you need them.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="space-y-4 p-6">
+          <p className="text-xs uppercase tracking-[0.24em] text-accent">Built For Web3 Users</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MiniCard title="Creators" copy="Share payment handles anywhere." />
+            <MiniCard title="Freelancers" copy="Send clean payment requests fast." />
+            <MiniCard title="Communities" copy="Collect treasury payments with links." />
+            <MiniCard title="Traders" copy="Move fast with simple payment routing." />
+          </div>
+        </Card>
       </section>
     </PageShell>
   );
@@ -78,5 +116,14 @@ function StepCard({
         <p className="text-sm leading-6 text-secondary">{copy}</p>
       </div>
     </Card>
+  );
+}
+
+function MiniCard({ title, copy }: { title: string; copy: string }) {
+  return (
+    <div className="rounded-[22px] border border-border bg-background/60 p-4 text-left">
+      <h3 className="text-lg font-medium text-primary">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-secondary">{copy}</p>
+    </div>
   );
 }

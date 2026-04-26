@@ -90,7 +90,7 @@ export function PayLinkForm() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : "Something went wrong."
+          : "Unable to create PayLink."
       );
     } finally {
       setIsLoading(false);
@@ -318,13 +318,13 @@ export function PayLinkForm() {
 
           {!connected ? (
             <p className="text-sm text-secondary">
-              Connect wallet from the header to autofill recipient.
+              Please connect your wallet first
             </p>
           ) : null}
 
           {!isTagValid && normalizedTag.length > 0 ? (
             <p className="text-sm text-secondary">
-              Use 3-32 lowercase letters, numbers, or hyphens.
+              Use lowercase letters, numbers, or hyphens only
             </p>
           ) : null}
 

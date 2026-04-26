@@ -71,7 +71,9 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || "Unable to load PayLink.");
+          throw new Error(
+            result.error || (kind === "tag" ? "Privii tag not found" : "Payment link not found")
+          );
         }
 
         if (!cancelled) {
@@ -87,8 +89,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             fetchError instanceof Error
               ? fetchError.message
               : kind === "tag"
-                ? "Unable to load tag."
-                : "Unable to load link."
+                ? "Privii tag not found"
+                : "Payment link not found"
           );
         }
       } finally {
@@ -161,14 +163,19 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   }
 
   async function handlePay() {
-    if (!data || !wallet.publicKey || !wallet.sendTransaction) {
+    if (!data) {
+      return;
+    }
+
+    if (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction) {
+      setError("Please connect your wallet first");
       return;
     }
 
     const amountNumber = Number(enteredAmount);
 
-    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setError("Enter a valid amount before paying.");
+    if (!enteredAmount || !Number.isFinite(amountNumber) || amountNumber <= 0) {
+      setError("Enter an amount to continue");
       return;
     }
 
@@ -183,11 +190,18 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
 
       if (paymentToken === "SOL") {
+        const balanceLamports = await connection.getBalance(wallet.publicKey, "confirmed");
+        const requiredLamports = Math.round(amountNumber * LAMPORTS_PER_SOL);
+
+        if (balanceLamports < requiredLamports) {
+          throw new Error("Insufficient wallet balance");
+        }
+
         transaction.add(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
             toPubkey: recipient,
-            lamports: Math.round(amountNumber * LAMPORTS_PER_SOL)
+            lamports: requiredLamports
           })
         );
       } else {
@@ -211,8 +225,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     } catch (paymentError) {
       setError(
         paymentError instanceof Error
-          ? paymentError.message
-          : "Transaction failed."
+          ? getReadablePaymentError(paymentError.message)
+          : "Payment failed. Please try again"
       );
     } finally {
       setIsPaying(false);
@@ -234,7 +248,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return (
       <Card className="space-y-3">
         <h1 className="text-2xl font-semibold">
-          {kind === "tag" ? "Privii tag not found." : "Link unavailable"}
+          {kind === "tag" ? "Privii tag not found" : "Payment link not found"}
         </h1>
         <p className="text-sm text-secondary">{error}</p>
       </Card>
@@ -353,12 +367,15 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
           {!wallet.connected && !isCreator && !isExpired ? (
             <div className="space-y-3">
-              <p className="text-sm text-secondary">Connect wallet to continue.</p>
+              <p className="text-sm text-secondary">Please connect your wallet first</p>
               <ConnectWalletButton className="!w-full" />
             </div>
           ) : null}
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
+          {isExpired ? (
+            <p className="text-sm text-red-400">This payment link has expired</p>
+          ) : null}
 
           <div className="flex items-center justify-center gap-4 pt-6">
             <ShareCircle href={xUrl} label="Share on X">
@@ -518,6 +535,19 @@ async function addUsdcTransfer({
 }) {
   const senderAta = getAssociatedTokenAddressSync(USDC_MINT_ADDRESS, sender);
   const recipientAta = getAssociatedTokenAddressSync(USDC_MINT_ADDRESS, recipient);
+  let senderAccount;
+
+  try {
+    senderAccount = await getAccount(connection, senderAta);
+  } catch {
+    throw new Error("Insufficient wallet balance");
+  }
+
+  const requiredAmount = BigInt(Math.round(amount * 1_000_000));
+
+  if (senderAccount.amount < requiredAmount) {
+    throw new Error("Insufficient wallet balance");
+  }
 
   try {
     await getAccount(connection, recipientAta);
@@ -538,10 +568,28 @@ async function addUsdcTransfer({
       USDC_MINT_ADDRESS,
       recipientAta,
       sender,
-      Math.round(amount * 1_000_000),
+      Number(requiredAmount),
       6,
       [],
       TOKEN_PROGRAM_ID
     )
   );
+}
+
+function getReadablePaymentError(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("insufficient") ||
+    normalized.includes("no record of a prior credit") ||
+    normalized.includes("attempt to debit")
+  ) {
+    return "Insufficient wallet balance";
+  }
+
+  if (normalized.includes("user rejected") || normalized.includes("cancelled")) {
+    return "Payment failed. Please try again";
+  }
+
+  return "Payment failed. Please try again";
 }

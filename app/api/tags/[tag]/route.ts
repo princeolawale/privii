@@ -11,7 +11,7 @@ export async function GET(
   const record = await getPriviiTag(normalizePriviiTag(tag));
 
   if (!record) {
-    return NextResponse.json({ error: "Privii tag not found." }, { status: 404 });
+    return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
   }
 
   return NextResponse.json({ tag: record });

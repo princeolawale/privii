@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     if (!/^[a-z0-9-]{3,32}$/.test(tag)) {
       return NextResponse.json(
         {
-          error: "Privii tag must be 3-32 characters and use lowercase letters, numbers, or hyphens."
+          error: "Use lowercase letters, numbers, or hyphens only"
         },
         { status: 400 }
       );
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
     if ((await tagExists(tag)) || (await priviiTagExists(tag))) {
       return NextResponse.json(
-        { error: "That Privii tag is already taken." },
+        { error: "This Privii tag is already taken" },
         { status: 409 }
       );
     }

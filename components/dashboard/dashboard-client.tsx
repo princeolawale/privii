@@ -1,6 +1,6 @@
 "use client";
 
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import {
   Check,
   Copy,
@@ -26,7 +26,6 @@ type DashboardTab = "tag" | "links" | "history" | "pay";
 
 export function DashboardClient() {
   const router = useRouter();
-  const { connection } = useConnection();
   const { publicKey, connected } = useWallet();
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
@@ -34,8 +33,6 @@ export function DashboardClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
-  const [balance, setBalance] = useState<string | null>(null);
-  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
 
   useEffect(() => {
@@ -78,41 +75,6 @@ export function DashboardClient() {
 
     fetchData();
   }, [walletAddress]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchBalance() {
-      if (!publicKey) {
-        setBalance(null);
-        return;
-      }
-
-      setIsBalanceLoading(true);
-
-      try {
-        const lamports = await connection.getBalance(publicKey, "confirmed");
-
-        if (!cancelled) {
-          setBalance((lamports / 1_000_000_000).toFixed(3));
-        }
-      } catch {
-        if (!cancelled) {
-          setBalance(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsBalanceLoading(false);
-        }
-      }
-    }
-
-    fetchBalance();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [connection, publicKey]);
 
   const publicUrl = useMemo(() => {
     if (!tagRecord) {
@@ -231,49 +193,6 @@ export function DashboardClient() {
           </Card>
         ) : tagRecord ? (
           <>
-            <Card className="rounded-[36px] border-white/10 bg-card/90 px-6 py-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
-              <div className="space-y-4">
-                <p className="text-sm text-secondary">
-                  Connected as {truncateWalletAddress(walletAddress)}
-                </p>
-                <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-                  Your Privii tag is ready
-                </h1>
-                <p className="mx-auto max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
-                  {publicUrl}
-                </p>
-                <div className="flex items-center justify-center gap-3 pt-2 text-sm text-secondary">
-                  <span>Wallet balance</span>
-                  <span className="h-1 w-1 rounded-full bg-white/20" />
-                  <span>
-                    {isBalanceLoading
-                      ? "Loading..."
-                      : balance
-                        ? `${balance} SOL`
-                        : "Balance unavailable"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <IconActionButton
-                  label={copied ? "Copied" : "Copy"}
-                  icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                  onClick={handleCopyTagLink}
-                />
-                <IconActionLink
-                  href={publicUrl ?? "#"}
-                  label="Open"
-                  icon={<ExternalLink className="h-5 w-5" />}
-                />
-                <IconActionButton
-                  label="Share"
-                  icon={<Send className="h-5 w-5" />}
-                  onClick={handleShareTag}
-                />
-              </div>
-            </Card>
-
             <div className="flex justify-center">
               <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] border border-border bg-card/80 p-2 sm:grid-cols-4">
                 <TabButton
@@ -309,6 +228,9 @@ export function DashboardClient() {
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                   Your Privii tag is ready
                 </h2>
+                <p className="mt-3 text-sm text-secondary">
+                  Connected as {truncateWalletAddress(walletAddress)}
+                </p>
                 <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
                 </p>
