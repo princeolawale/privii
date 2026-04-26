@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/get-started", label: "Get Started" },
   { href: "/create", label: "Create Link" },
   { href: "/dashboard", label: "Dashboard" }
 ];
@@ -95,15 +94,7 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
-            {!hasTag ? (
-              <Link
-                href="/get-started"
-                className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
-                onClick={() => setOpen(false)}
-              >
-                
-              </Link>
-            ) : null}
+      
             <div className="border-t border-white/8 pt-5">
               <div className="grid grid-cols-2 gap-3">
                 <a
@@ -136,7 +127,6 @@ export function SiteHeader({
 
 const baseNavItems = [
   { href: "/", label: "Home" },
-  { href: "/get-started", label: "Get Started" },
   { href: "/create", label: "Create Link" },
   { href: "/dashboard", label: "Dashboard" }
 ];

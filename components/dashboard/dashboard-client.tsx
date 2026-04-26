@@ -426,7 +426,7 @@ export function DashboardClient() {
               No Privii tag yet. Register your payment identity to unlock your dashboard.
             </p>
             <Link href="/get-started" className="mt-6 inline-flex">
-              <Button>Get Started</Button>
+              <Button></Button>
             </Link>
           </Card>
         )}
