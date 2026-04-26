@@ -118,8 +118,7 @@ export function SiteHeader({
                   className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 text-base font-medium text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
                   onClick={() => setOpen(false)}
                 >
-                  <span className="text-lg">X</span>
-                  <span>X</span>
+                  <span className="text-lg font-medium">X</span>
                 </a>
                 <a
                   href="https://t.me/"
@@ -133,12 +132,6 @@ export function SiteHeader({
                 </a>
               </div>
             </div>
-            {hasTag ? null : (
-              <Link href="/get-started" onClick={() => setOpen(false)}>
-                <Button className="w-full">Get Started</Button>
-              </Link>
-            )}
-            {!hideWalletButton ? <ConnectWalletButton className="!w-full" /> : null}
           </div>
         </div>
       </div>
