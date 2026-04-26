@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { BrandMark } from "@/components/layout/brand-mark";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
-import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -39,12 +39,7 @@ export function SiteHeader({
   return (
     <>
       <header className="mb-12 flex items-center justify-between">
-        <Link
-          href="/"
-          className="text-[2rem] font-semibold tracking-tight text-primary sm:text-[2rem]"
-        >
-          {APP_NAME}
-        </Link>
+        <BrandMark />
 
         <nav className="hidden items-center gap-6 text-sm text-secondary md:flex">
           {navItems.map((item) => (

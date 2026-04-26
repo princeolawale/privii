@@ -86,30 +86,3 @@ export function buildXShareUrl(url: string, tag: string) {
     `Get paid in crypto with my Privii link ${url} @${tag}`
   )}`;
 }
-
-export function extractTagFromHost(host: string | null) {
-  if (!host) {
-    return null;
-  }
-
-  const normalizedHost = host.toLowerCase().split(":")[0];
-
-  if (
-    normalizedHost === PRIVII_ROOT_DOMAIN ||
-    normalizedHost === `www.${PRIVII_ROOT_DOMAIN}` ||
-    !normalizedHost.endsWith(`.${PRIVII_ROOT_DOMAIN}`)
-  ) {
-    return null;
-  }
-
-  const subdomain = normalizedHost.slice(
-    0,
-    normalizedHost.length - (`.${PRIVII_ROOT_DOMAIN}`).length
-  );
-
-  if (!subdomain || subdomain.includes(".")) {
-    return null;
-  }
-
-  return normalizePriviiTag(subdomain);
-}

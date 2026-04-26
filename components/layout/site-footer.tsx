@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { Send } from "lucide-react";
 
-import { APP_NAME } from "@/lib/constants";
+import { BrandMark } from "@/components/layout/brand-mark";
 
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t border-border/80 pt-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 pb-6 text-center">
         <div className="space-y-3">
-          <Link href="/" className="text-3xl font-semibold tracking-tight text-primary">
-            {APP_NAME}
-          </Link>
+          <BrandMark size="footer" className="justify-center" />
           <p className="max-w-md text-sm leading-6 text-secondary">
             Simple crypto payments with tags and links.
           </p>

@@ -16,7 +16,7 @@ import { PageShell } from "@/components/layout/page-shell";
 import { PublicRouteResolver } from "@/components/public/public-route-resolver";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { extractTagFromHost } from "@/lib/utils";
+import { extractTagFromHost } from "@/lib/host";
 
 export default async function HomePage() {
   const requestHeaders = await headers();

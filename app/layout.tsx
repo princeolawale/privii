@@ -9,17 +9,24 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://privii.xyz"),
-  title: "Privii — Private Crypto Payment Tags",
+  title: "Privii — Crypto Payments with Tags and Links",
   description: APP_DESCRIPTION,
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-touch-icon.png"
+  },
   openGraph: {
-    title: "Privii — Private Crypto Payment Tags",
+    title: "Privii — Crypto Payments with Tags and Links",
     description: APP_DESCRIPTION,
+    url: "https://privii.xyz",
+    siteName: "Privii",
     type: "website",
     images: ["/social-card.png"]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Privii — Private Crypto Payment Tags",
+    title: "Privii — Crypto Payments with Tags and Links",
     description: APP_DESCRIPTION,
     images: ["/social-card.png"]
   }
