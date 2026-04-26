@@ -146,11 +146,6 @@ export default async function HomePage() {
             <Link href="/get-started">
               <Button className="w-full min-w-[200px] sm:w-auto">Get Started</Button>
             </Link>
-            <Link href="/create">
-              <Button variant="secondary" className="w-full min-w-[200px] sm:w-auto">
-                Create PayLink
-              </Button>
-            </Link>
           </div>
         </Card>
       </section>

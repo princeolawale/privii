@@ -13,6 +13,7 @@ import { USDC_MINT_ADDRESS, SOLANA_RPC_URL } from "@/lib/solana";
 import type { PaymentRecord, PaymentStatus, PayLinkToken } from "@/lib/types";
 
 const paymentKey = (id: string) => `payment:${id}`;
+const recipientIndexKey = (wallet: string) => `payment:recipient:${wallet}`;
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
 export async function getPayment(id: string) {
@@ -21,6 +22,12 @@ export async function getPayment(id: string) {
 
 export async function savePayment(payment: PaymentRecord) {
   await kv.set(paymentKey(payment.id), payment);
+  const existing = (await kv.get<string[]>(recipientIndexKey(payment.recipient_wallet))) ?? [];
+
+  if (!existing.includes(payment.id)) {
+    await kv.set(recipientIndexKey(payment.recipient_wallet), [...existing, payment.id]);
+  }
+
   return payment;
 }
 
@@ -42,6 +49,14 @@ export async function updatePayment(
 
   await savePayment(next);
   return next;
+}
+
+export async function getPaymentsByRecipient(wallet: string) {
+  const ids = (await kv.get<string[]>(recipientIndexKey(wallet))) ?? [];
+  const payments = await Promise.all(ids.map((id) => getPayment(id)));
+  return payments
+    .filter((payment): payment is PaymentRecord => Boolean(payment))
+    .sort((left, right) => right.created_at.localeCompare(left.created_at));
 }
 
 export function createPaymentRecord(input: {

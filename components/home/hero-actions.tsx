@@ -17,11 +17,6 @@ export function HeroActions() {
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </Link>
-      <Link href="/create">
-        <Button variant="secondary" className="w-full min-w-[200px] sm:w-auto">
-          Create PayLink
-        </Button>
-      </Link>
     </div>
   );
 }

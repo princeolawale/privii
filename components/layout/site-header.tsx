@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/", label: "Home" },
   { href: "/get-started", label: "Get Started" },
-  { href: "/create", label: "Create PayLink" },
+  { href: "/create", label: "Create Link" },
   { href: "/dashboard", label: "Dashboard" }
 ];
 
@@ -31,7 +31,7 @@ export function SiteHeader({
   const navItems = hasTag
     ? [
         { href: "/", label: "Home" },
-        { href: "/create", label: "Create PayLink" },
+        { href: "/create", label: "Create Link" },
         { href: "/dashboard", label: "Dashboard" }
       ]
     : baseNavItems;
@@ -137,6 +137,6 @@ export function SiteHeader({
 const baseNavItems = [
   { href: "/", label: "Home" },
   { href: "/get-started", label: "Get Started" },
-  { href: "/create", label: "Create PayLink" },
+  { href: "/create", label: "Create Link" },
   { href: "/dashboard", label: "Dashboard" }
 ];

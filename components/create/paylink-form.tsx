@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useOwnerTag } from "@/components/solana/use-owner-tag";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -28,15 +29,18 @@ type CreateResponse = {
     token: PayLinkToken;
     type: PayLinkType;
     expiresAt: number | null;
+    creatorTag?: string | null;
     ownerTag?: string | null;
+    paymentPurpose?: string | null;
   };
   url: string;
 };
 
 export function PayLinkForm() {
   const { publicKey, connected } = useWallet();
+  const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
   const { showToast } = useToast();
-  const [tag, setTag] = useState("");
+  const [paymentPurpose, setPaymentPurpose] = useState("");
   const [amount, setAmount] = useState("");
   const [token, setToken] = useState<PayLinkToken>("USDC");
   const [type, setType] = useState<PayLinkType>("permanent");
@@ -46,10 +50,11 @@ export function PayLinkForm() {
   const [createdLink, setCreatedLink] = useState<CreateResponse | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const recipientWallet = useMemo(() => publicKey?.toBase58() ?? "", [publicKey]);
-  const normalizedTag = tag.trim().toLowerCase();
-  const isTagValid = /^[a-z0-9-]{3,32}$/.test(normalizedTag);
-  const canCreate = connected && Boolean(recipientWallet) && isTagValid && !isLoading;
+  const creatorWallet = useMemo(() => publicKey?.toBase58() ?? "", [publicKey]);
+  const recipientWallet =
+    tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
+  const canCreate =
+    connected && hasTag && Boolean(creatorWallet) && Boolean(recipientWallet) && !isLoading;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,12 +73,12 @@ export function PayLinkForm() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          tag: normalizedTag,
           amount: amount || null,
           token,
           type,
           expiry: type === "expiring" ? expiry : "none",
-          recipientWallet
+          creatorWallet,
+          paymentPurpose
         })
       });
 
@@ -84,7 +89,6 @@ export function PayLinkForm() {
       }
 
       setCreatedLink(data);
-      setTag(data.link.tag);
       showToast("PayLink created successfully");
     } catch (submissionError) {
       setError(
@@ -134,6 +138,7 @@ export function PayLinkForm() {
     const amountLabel = createdLink.link.amount
       ? `${createdLink.link.amount} ${createdLink.link.token}`
       : "Custom amount";
+    const purposeLabel = createdLink.link.paymentPurpose || "General payment";
     const linkTypeLabel =
       createdLink.link.type === "permanent" ? "Permalink" : "Expiring link";
     const expiryLabel =
@@ -171,6 +176,7 @@ export function PayLinkForm() {
                 label={createdLink.link.ownerTag ? "User tag" : "Ref ID"}
                 value={createdLink.link.ownerTag ? `@${createdLink.link.ownerTag}` : createdLink.link.tag}
               />
+              <PreviewRow label="Payment purpose" value={purposeLabel} />
               <PreviewRow label="Amount" value={amountLabel} />
               <PreviewRow label="Link type" value={linkTypeLabel} />
               <PreviewRow label="Expiry" value={expiryLabel} />
@@ -236,111 +242,119 @@ export function PayLinkForm() {
             Create one-time PayLink
           </h1>
           <p className="max-w-xl text-sm leading-6 text-secondary">
-            Privii tags are your main identity. Use one-time PayLinks here when you need
-            a dedicated payment request for testing or a specific checkout.
+            This link will receive payments through your registered payment tag.
           </p>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="text-sm text-secondary">Privii tag</span>
-              <Input
-                placeholder="ola"
-                value={tag}
-                onChange={(event) => setTag(event.target.value.toLowerCase())}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-secondary">Amount (optional)</span>
-              <Input
-                inputMode="decimal"
-                placeholder="25"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-              />
-            </label>
+        {!connected ? (
+          <div className="space-y-4">
+            <p className="text-sm text-secondary">Please connect your wallet first</p>
           </div>
+        ) : null}
 
-          <div className="grid gap-5 sm:grid-cols-2">
+        {connected && isTagLoading ? (
+          <p className="text-sm text-secondary">Loading your payment tag</p>
+        ) : null}
+
+        {connected && !isTagLoading && !hasTag ? (
+          <div className="space-y-4">
+            <p className="text-sm text-secondary">Create your payment tag first.</p>
+            <Link href="/get-started" className="inline-flex">
+              <Button>Create your payment tag first</Button>
+            </Link>
+          </div>
+        ) : null}
+
+        {connected && hasTag ? (
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm text-secondary">Payment purpose</span>
+                <Input
+                  placeholder="Invoice"
+                  value={paymentPurpose}
+                  onChange={(event) => setPaymentPurpose(event.target.value)}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm text-secondary">Amount (optional)</span>
+                <Input
+                  inputMode="decimal"
+                  placeholder="25"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm text-secondary">Token</span>
+                <Select
+                  value={token}
+                  onChange={(event) => setToken(event.target.value as PayLinkToken)}
+                >
+                  <option value="USDC">USDC</option>
+                  <option value="SOL">SOL</option>
+                </Select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm text-secondary">Type</span>
+                <Select
+                  value={type}
+                  onChange={(event) => {
+                    const nextType = event.target.value as PayLinkType;
+                    setType(nextType);
+                    if (nextType === "permanent") {
+                      setExpiry("none");
+                    }
+                  }}
+                >
+                  <option value="permanent">Permanent</option>
+                  <option value="expiring">Expiring</option>
+                </Select>
+              </label>
+            </div>
+
             <label className="space-y-2">
-              <span className="text-sm text-secondary">Token</span>
+              <span className="text-sm text-secondary">Expiry</span>
               <Select
-                value={token}
-                onChange={(event) => setToken(event.target.value as PayLinkToken)}
+                disabled={type === "permanent"}
+                value={type === "permanent" ? "none" : expiry}
+                onChange={(event) => setExpiry(event.target.value as PayLinkExpiryOption)}
               >
-                <option value="USDC">USDC</option>
-                <option value="SOL">SOL</option>
+                <option value="none">None</option>
+                <option value="1h">1 hour</option>
+                <option value="24h">24 hours</option>
+                <option value="7d">7 days</option>
               </Select>
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm text-secondary">Type</span>
-              <Select
-                value={type}
-                onChange={(event) => {
-                  const nextType = event.target.value as PayLinkType;
-                  setType(nextType);
-                  if (nextType === "permanent") {
-                    setExpiry("none");
-                  }
-                }}
-              >
-                <option value="permanent">Permanent</option>
-                <option value="expiring">Expiring</option>
-              </Select>
+              <span className="text-sm text-secondary">Registered payment tag</span>
+              <Input
+                disabled
+                value={hasTag && tagRecord ? `@${tagRecord.tag}` : ""}
+                placeholder="Register a payment tag to create links"
+              />
             </label>
-          </div>
 
-          <label className="space-y-2">
-            <span className="text-sm text-secondary">Expiry</span>
-            <Select
-              disabled={type === "permanent"}
-              value={type === "permanent" ? "none" : expiry}
-              onChange={(event) => setExpiry(event.target.value as PayLinkExpiryOption)}
-            >
-              <option value="none">None</option>
-              <option value="1h">1 hour</option>
-              <option value="24h">24 hours</option>
-              <option value="7d">7 days</option>
-            </Select>
-          </label>
+            {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-          <label className="space-y-2">
-            <span className="text-sm text-secondary">Recipient wallet</span>
-            <Input
-              disabled
-              value={connected ? recipientWallet : ""}
-              placeholder="Wallet autofills when connected"
-            />
-          </label>
-
-          {!connected ? (
-            <p className="text-sm text-secondary">
-              Please connect your wallet first
-            </p>
-          ) : null}
-
-          {!isTagValid && normalizedTag.length > 0 ? (
-            <p className="text-sm text-secondary">
-              Use lowercase letters, numbers, or hyphens only
-            </p>
-          ) : null}
-
-          {error ? <p className="text-sm text-red-400">{error}</p> : null}
-
-          <Button className="w-full" disabled={!canCreate}>
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-                Creating...
-              </span>
-            ) : (
-              "Create one-time PayLink"
-            )}
-          </Button>
-        </form>
+            <Button className="w-full" disabled={!canCreate}>
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                  Creating...
+                </span>
+              ) : (
+                "Create Link"
+              )}
+            </Button>
+          </form>
+        ) : null}
       </Card>
     </div>
   );

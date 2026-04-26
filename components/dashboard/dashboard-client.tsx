@@ -19,7 +19,7 @@ import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { PayLinkRecord, PriviiTagRecord } from "@/lib/types";
+import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
 import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
@@ -30,6 +30,12 @@ export function DashboardClient() {
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
+  const [payments, setPayments] = useState<
+    Pick<
+      PaymentRecord,
+      "id" | "amount" | "asset" | "status" | "tx_signature" | "created_at" | "payer_wallet"
+    >[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
@@ -46,11 +52,14 @@ export function DashboardClient() {
       setIsLoading(true);
 
       try {
-        const [tagResponse, linksResponse] = await Promise.all([
+        const [tagResponse, linksResponse, paymentsResponse] = await Promise.all([
           fetch(`/api/tags/by-owner/${encodeURIComponent(walletAddress)}`, {
             cache: "no-store"
           }),
           fetch(`/api/links/by-owner/${encodeURIComponent(walletAddress)}`, {
+            cache: "no-store"
+          }),
+          fetch(`/api/payments/by-recipient/${encodeURIComponent(walletAddress)}`, {
             cache: "no-store"
           })
         ]);
@@ -67,6 +76,18 @@ export function DashboardClient() {
           setLinks(result.links);
         } else {
           setLinks([]);
+        }
+
+        if (paymentsResponse.ok) {
+          const result = (await paymentsResponse.json()) as {
+            payments: Pick<
+              PaymentRecord,
+              "id" | "amount" | "asset" | "status" | "tx_signature" | "created_at" | "payer_wallet"
+            >[];
+          };
+          setPayments(result.payments);
+        } else {
+          setPayments([]);
         }
       } finally {
         setIsLoading(false);
@@ -264,7 +285,7 @@ export function DashboardClient() {
                     </p>
                   </div>
                   <Link href="/create">
-                    <Button className="w-full sm:w-auto">Create PayLink</Button>
+                    <Button className="w-full sm:w-auto">Create Link</Button>
                   </Link>
                 </div>
 
@@ -281,6 +302,7 @@ export function DashboardClient() {
                               {link.ownerTag ? `@${link.ownerTag}` : link.tag}
                             </p>
                             <p className="text-sm text-secondary">
+                              {link.paymentPurpose || "General payment"} •{" "}
                               {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
                             </p>
                           </div>
@@ -302,7 +324,45 @@ export function DashboardClient() {
             {activeTab === "history" ? (
               <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
                 <h2 className="text-2xl font-semibold tracking-tight">Payment History</h2>
-                <p className="mt-6 text-sm text-secondary">No payments yet</p>
+                <div className="mt-6 space-y-4">
+                  {payments.length ? (
+                    payments.map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="rounded-[24px] border border-border bg-background/60 p-5"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="space-y-1">
+                            <p className="text-lg font-medium text-primary">
+                              {payment.amount || "Pending"} {payment.asset}
+                            </p>
+                            <p className="text-sm text-secondary">
+                              {formatPaymentStatus(payment.status)} •{" "}
+                              {new Date(payment.created_at).toLocaleString()}
+                            </p>
+                            <p className="text-sm text-secondary">
+                              From {payment.payer_wallet ? truncateWalletAddress(payment.payer_wallet) : "Unknown wallet"}
+                            </p>
+                          </div>
+                          {payment.tx_signature ? (
+                            <a
+                              href={`https://solscan.io/tx/${payment.tx_signature}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex"
+                            >
+                              <Button variant="secondary" className="w-full sm:w-auto">
+                                View on Solscan
+                              </Button>
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-secondary">No payments yet</p>
+                  )}
+                </div>
               </Card>
             ) : null}
 
@@ -409,4 +469,16 @@ function IconActionLink({
       {icon}
     </a>
   );
+}
+
+function formatPaymentStatus(status: PaymentRecord["status"]) {
+  if (status === "confirmed") {
+    return "Confirmed";
+  }
+
+  if (status === "failed" || status === "expired") {
+    return "Failed";
+  }
+
+  return "Pending";
 }
