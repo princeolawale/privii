@@ -126,28 +126,6 @@ export function DashboardClient() {
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
 
-  const qrPattern = useMemo(
-    () => [
-      "1110001110100011",
-      "1011101011101010",
-      "1011101110010111",
-      "1011101010110011",
-      "1110001011101110",
-      "0001110100111001",
-      "1110011110010111",
-      "1010110011100101",
-      "1101011110101110",
-      "0111001001110011",
-      "1110101111001010",
-      "1011100101110101",
-      "1010111110011100",
-      "1111001010101111",
-      "0010111101110010",
-      "1100101011001111"
-    ],
-    []
-  );
-
   async function handleCopyTagLink() {
     if (!publicUrl) {
       return;
@@ -224,7 +202,7 @@ export function DashboardClient() {
 
   if (!connected) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl justify-center pt-10 sm:pt-14">
+      <div className="mx-auto flex w-full max-w-3xl justify-center pt-4 sm:pt-6">
         <Card className="w-full rounded-[32px] p-6 text-center sm:p-8">
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
@@ -242,7 +220,7 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl justify-center pt-10 sm:pt-14">
+    <div className="mx-auto flex w-full max-w-4xl justify-center pt-4 sm:pt-6">
       <div className="w-full space-y-8">
         {isLoading ? (
           <Card className="flex min-h-[240px] items-center justify-center rounded-[32px]">
@@ -254,54 +232,30 @@ export function DashboardClient() {
         ) : tagRecord ? (
           <>
             <Card className="rounded-[36px] border-white/10 bg-card/90 px-6 py-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <p className="text-sm text-secondary">
                   Connected as {truncateWalletAddress(walletAddress)}
                 </p>
                 <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
                   Your Privii tag is ready
                 </h1>
+                <p className="mx-auto max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                  {publicUrl}
+                </p>
                 <div className="flex items-center justify-center gap-3 pt-2 text-sm text-secondary">
+                  <span>Wallet balance</span>
+                  <span className="h-1 w-1 rounded-full bg-white/20" />
                   <span>
-                    Wallet balance:{" "}
                     {isBalanceLoading
                       ? "Loading..."
                       : balance
                         ? `${balance} SOL`
-                        : "Wallet balance unavailable"}
+                        : "Balance unavailable"}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-7 flex justify-center">
-                <div className="rounded-[28px] border border-white/10 bg-background/70 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.35)]">
-                  <div className="relative">
-                    <div className="grid grid-cols-16 gap-[3px] rounded-[20px] bg-black p-3">
-                      {qrPattern.flatMap((row, rowIndex) =>
-                        row.split("").map((cell, cellIndex) => (
-                          <div
-                            key={`${rowIndex}-${cellIndex}`}
-                            className={`h-[10px] w-[10px] rounded-[3px] ${
-                              cell === "1" ? "bg-white" : "bg-white/10"
-                            }`}
-                          />
-                        ))
-                      )}
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#7C5CFF] shadow-[0_10px_30px_rgba(124,92,255,0.35)]">
-                        <span className="text-2xl font-semibold text-white">P</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <p className="mx-auto mt-7 max-w-2xl break-all text-xl font-medium text-primary sm:text-2xl">
-                {publicUrl}
-              </p>
-
-              <div className="mt-6 flex items-center justify-center gap-4">
+              <div className="mt-8 flex items-center justify-center gap-4">
                 <IconActionButton
                   label={copied ? "Copied" : "Copy"}
                   icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
@@ -350,35 +304,12 @@ export function DashboardClient() {
             </div>
 
             {activeTab === "tag" ? (
-              <Card className="rounded-[32px] px-6 py-7 text-center sm:px-8 sm:py-8">
+              <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-secondary">My Tag</p>
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                   Your Privii tag is ready
                 </h2>
-                <div className="mt-6 flex justify-center">
-                  <div className="rounded-[24px] border border-white/10 bg-background/70 p-4">
-                    <div className="relative">
-                      <div className="grid grid-cols-16 gap-[3px] rounded-[18px] bg-black p-3">
-                        {qrPattern.flatMap((row, rowIndex) =>
-                          row.split("").map((cell, cellIndex) => (
-                            <div
-                              key={`tab-${rowIndex}-${cellIndex}`}
-                              className={`h-[8px] w-[8px] rounded-[3px] ${
-                                cell === "1" ? "bg-white" : "bg-white/10"
-                              }`}
-                            />
-                          ))
-                        )}
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#7C5CFF] shadow-[0_10px_30px_rgba(124,92,255,0.35)]">
-                          <span className="text-xl font-semibold text-white">P</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <p className="mx-auto mt-7 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
                 </p>
                 <div className="mt-8 flex items-center justify-center gap-4">
