@@ -32,7 +32,12 @@ import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { USDC_MINT_ADDRESS } from "@/lib/solana";
-import type { PayLinkResponse, PayLinkToken, PriviiTagRecord } from "@/lib/types";
+import type {
+  PayLinkResponse,
+  PayLinkToken,
+  PaymentRecord,
+  PriviiTagRecord
+} from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type Props = {
@@ -45,22 +50,22 @@ type PayTarget =
   | { kind: "tag"; tagRecord: PriviiTagRecord };
 
 type PaymentInit =
-  | {
-      kind: "paylink";
-      tag: string;
-      recipientWallet: string;
-      token: PayLinkToken;
-      amount: string | null;
-      expiresAt: number | null;
-      expired: boolean;
-    }
-  | {
-      kind: "tag";
-      tag: string;
-      recipientWallet: string;
-      expiresAt: null;
-      expired: false;
-    };
+  (PaymentRecord & {
+    kind: "paylink" | "tag";
+    recipientWallet: string;
+    token?: PayLinkToken;
+    expiresAt: number | null;
+    expired: boolean;
+  });
+
+type PaymentStage =
+  | "idle"
+  | "initializing"
+  | "awaiting_signature"
+  | "submitted"
+  | "confirming"
+  | "confirmed"
+  | "failed";
 
 export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
@@ -76,6 +81,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [paymentInit, setPaymentInit] = useState<PaymentInit | null>(null);
+  const [paymentStage, setPaymentStage] = useState<PaymentStage>("idle");
 
   useEffect(() => {
     let cancelled = false;
@@ -133,17 +139,29 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => window.clearInterval(interval);
   }, []);
 
+  const paymentToken = data?.kind === "tag" ? selectedToken : data?.kind === "paylink" ? data.link.token : "USDC";
+  const initAmount =
+    data?.kind === "paylink" && data.link.amount ? data.link.amount : customAmount.trim();
+  const needsAmountToInitialize =
+    data?.kind === "tag" || (data?.kind === "paylink" && !data.link.amount);
+  const canInitializePayment =
+    Boolean(data) &&
+    (!needsAmountToInitialize || (Boolean(initAmount) && Number(initAmount) > 0));
+
   useEffect(() => {
     let cancelled = false;
 
     async function initializePayment() {
-      if (!data) {
+      if (!data || !canInitializePayment) {
         setPaymentInit(null);
         setIsInitializingPayment(false);
+        setPaymentStage("idle");
         return;
       }
 
       setIsInitializingPayment(true);
+      setPaymentStage("initializing");
+      setError(null);
 
       try {
         const response = await fetch("/api/payments/init", {
@@ -153,7 +171,9 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
           },
           body: JSON.stringify({
             kind: data.kind,
-            tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag
+            tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+            asset: paymentToken,
+            expectedAmount: initAmount
           })
         });
 
@@ -165,11 +185,13 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
         if (!cancelled) {
           setPaymentInit(result.payment as PaymentInit);
+          setPaymentStage("idle");
         }
       } catch (initializationError) {
         console.error(initializationError);
         if (!cancelled) {
           setPaymentInit(null);
+          setPaymentStage("failed");
           setError(
             initializationError instanceof Error
               ? initializationError.message
@@ -188,7 +210,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [data]);
+  }, [canInitializePayment, data, initAmount, paymentToken]);
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
@@ -278,8 +300,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
     setError(null);
     setIsPaying(true);
-
-    const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
+    setPaymentStage("awaiting_signature");
 
     try {
       const recipient = new PublicKey(normalizedRecipientWallet);
@@ -315,6 +336,33 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       transaction.feePayer = wallet.publicKey;
 
       const signature = await wallet.sendTransaction(transaction, connection);
+      setPaymentStage("submitted");
+
+      const submitResponse = await fetch(`/api/payments/${paymentInit.id}/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          txSignature: signature,
+          payerWallet: wallet.publicKey.toBase58()
+        })
+      });
+      const submitResult = await submitResponse.json();
+
+      if (!submitResponse.ok) {
+        throw new Error(submitResult.error || "Payment failed. Please try again");
+      }
+
+      setPaymentStage("confirming");
+
+      const confirmed = await pollForConfirmedPayment(paymentInit.id);
+
+      if (!confirmed || confirmed.status !== "confirmed") {
+        throw new Error("Payment failed. Please try again");
+      }
+
+      setPaymentStage("confirmed");
       await connection.confirmTransaction(
         {
           signature,
@@ -339,6 +387,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
           ? getReadablePaymentError(paymentError.message)
           : "Payment failed. Please try again"
       );
+      setPaymentStage("failed");
     } finally {
       setIsPaying(false);
     }
@@ -371,7 +420,6 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   }
 
   const shareTag = data.kind === "tag" ? data.tagRecord.tag : data.link.tag;
-  const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
   const expiryLabel =
     data.kind === "tag"
       ? "No expiry"
@@ -476,8 +524,12 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
           {isInitializingPayment ? (
             <div className="flex items-center justify-center gap-2 text-sm text-secondary">
               <LoaderCircle className="h-4 w-4 animate-spin" />
-              Preparing payment
+              Initializing payment
             </div>
+          ) : null}
+
+          {paymentStageMessage(paymentStage) ? (
+            <p className="text-sm text-secondary">{paymentStageMessage(paymentStage)}</p>
           ) : null}
 
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
@@ -708,6 +760,60 @@ async function fetchLatestBlockhashWithRetry(connection: Connection) {
   } catch (error) {
     console.error("Blockhash fetch error:", error);
     return connection.getLatestBlockhash("confirmed");
+  }
+}
+
+async function pollForConfirmedPayment(paymentId: string) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const confirmResponse = await fetch(`/api/payments/${paymentId}/confirm`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    const confirmResult = await confirmResponse.json();
+
+    if (!confirmResponse.ok) {
+      throw new Error(confirmResult.error || "Payment failed. Please try again");
+    }
+
+    const payment = confirmResult.payment as PaymentRecord;
+
+    if (payment.status === "confirmed" || payment.status === "failed" || payment.status === "expired") {
+      return payment;
+    }
+
+    await new Promise((resolve) => window.setTimeout(resolve, 2000));
+  }
+
+  const statusResponse = await fetch(`/api/payments/${paymentId}`, {
+    cache: "no-store"
+  });
+  const statusResult = await statusResponse.json();
+
+  if (!statusResponse.ok) {
+    throw new Error(statusResult.error || "Payment failed. Please try again");
+  }
+
+  return statusResult.payment as PaymentRecord;
+}
+
+function paymentStageMessage(stage: PaymentStage) {
+  switch (stage) {
+    case "initializing":
+      return "Initializing payment";
+    case "awaiting_signature":
+      return "Awaiting wallet signature";
+    case "submitted":
+      return "Payment submitted";
+    case "confirming":
+      return "Confirming payment";
+    case "confirmed":
+      return "Payment confirmed";
+    case "failed":
+      return "Payment failed. Please try again";
+    default:
+      return null;
   }
 }
 

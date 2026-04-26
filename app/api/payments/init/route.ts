@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
+import { createPaymentRecord, parseDecimalAmount, savePayment } from "@/lib/payments";
 import { getPayLink } from "@/lib/paylinks";
 import { getPriviiTag } from "@/lib/tags";
+import type { PayLinkToken } from "@/lib/types";
 import { isExpired, normalizePriviiTag } from "@/lib/utils";
 
 type PaymentInitPayload = {
   kind?: "tag" | "paylink";
   tag?: string;
+  asset?: PayLinkToken;
+  expectedAmount?: string;
 };
 
 function resolveTagRecipientWallet(record: {
@@ -52,10 +56,25 @@ export async function POST(request: Request) {
         );
       }
 
+      const asset: PayLinkToken = body.asset === "SOL" ? "SOL" : "USDC";
+      const expectedAmount = body.expectedAmount?.trim() ?? "";
+
+      if (!parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) || Number(expectedAmount) <= 0) {
+        return NextResponse.json({ error: "Enter an amount to continue" }, { status: 400 });
+      }
+
+      const payment = createPaymentRecord({
+        tag: record.tag,
+        recipientWallet,
+        asset,
+        expectedAmount,
+      });
+      await savePayment(payment);
+
       return NextResponse.json({
         payment: {
+          ...payment,
           kind: "tag" as const,
-          tag: record.tag,
           recipientWallet,
           expiresAt: null,
           expired: false
@@ -87,10 +106,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const asset: PayLinkToken = link.token === "SOL" ? "SOL" : "USDC";
+    const expectedAmount = (link.amount?.trim() || body.expectedAmount?.trim() || "");
+
+    if (!parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) || Number(expectedAmount) <= 0) {
+      return NextResponse.json({ error: "Enter an amount to continue" }, { status: 400 });
+    }
+
+    const payment = createPaymentRecord({
+      tag: link.tag,
+      recipientWallet,
+      asset,
+      expectedAmount,
+      status: isExpired(link.expiresAt) ? "expired" : "initialized",
+    });
+    await savePayment(payment);
+
     return NextResponse.json({
       payment: {
+        ...payment,
         kind: "paylink" as const,
-        tag: link.tag,
         recipientWallet,
         token: link.token,
         amount: link.amount,
