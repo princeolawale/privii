@@ -44,6 +44,24 @@ type PayTarget =
   | { kind: "paylink"; link: PayLinkResponse["link"]; status: PayLinkResponse["status"] }
   | { kind: "tag"; tagRecord: PriviiTagRecord };
 
+type PaymentInit =
+  | {
+      kind: "paylink";
+      tag: string;
+      recipientWallet: string;
+      token: PayLinkToken;
+      amount: string | null;
+      expiresAt: number | null;
+      expired: boolean;
+    }
+  | {
+      kind: "tag";
+      tag: string;
+      recipientWallet: string;
+      expiresAt: null;
+      expired: false;
+    };
+
 export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
   const { connection } = useConnection();
@@ -52,10 +70,12 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const [customAmount, setCustomAmount] = useState("");
   const [selectedToken, setSelectedToken] = useState<PayLinkToken>("USDC");
   const [isFetching, setIsFetching] = useState(true);
+  const [isInitializingPayment, setIsInitializingPayment] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [paymentInit, setPaymentInit] = useState<PaymentInit | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,6 +133,63 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => window.clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initializePayment() {
+      if (!data) {
+        setPaymentInit(null);
+        setIsInitializingPayment(false);
+        return;
+      }
+
+      setIsInitializingPayment(true);
+
+      try {
+        const response = await fetch("/api/payments/init", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            kind: data.kind,
+            tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Payment failed. Please try again");
+        }
+
+        if (!cancelled) {
+          setPaymentInit(result.payment as PaymentInit);
+        }
+      } catch (initializationError) {
+        console.error(initializationError);
+        if (!cancelled) {
+          setPaymentInit(null);
+          setError(
+            initializationError instanceof Error
+              ? initializationError.message
+              : "Payment failed. Please try again"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsInitializingPayment(false);
+        }
+      }
+    }
+
+    void initializePayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data]);
+
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
 
@@ -124,18 +201,20 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return customAmount;
   }, [customAmount, data]);
 
-  const isExpired =
-    data?.kind === "paylink"
-      ? data.status === "expired" || (data.link.expiresAt ? data.link.expiresAt <= now : false)
-      : false;
-  const recipientWallet =
-    data?.kind === "paylink" ? data.link.recipientWallet : data?.kind === "tag" ? data.tagRecord.ownerWallet : null;
+  const isExpired = Boolean(
+    paymentInit?.expired ||
+      (data?.kind === "paylink" &&
+        (data.status === "expired" || (data.link.expiresAt ? data.link.expiresAt <= now : false)))
+  );
+  const recipientWallet = paymentInit?.recipientWallet ?? null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
   const connectedWalletAddress = wallet.publicKey?.toBase58().trim() ?? null;
   const isCreator =
     Boolean(connectedWalletAddress && normalizedRecipientWallet) &&
     connectedWalletAddress === normalizedRecipientWallet;
   const canPay =
+    Boolean(paymentInit) &&
+    !isInitializingPayment &&
     wallet.connected &&
     wallet.publicKey &&
     !isCreator &&
@@ -181,6 +260,15 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
+    if (!paymentInit || !normalizedRecipientWallet) {
+      setError(
+        data.kind === "tag"
+          ? "Recipient wallet not configured for this tag."
+          : "Payment failed. Please try again"
+      );
+      return;
+    }
+
     const amountNumber = Number(enteredAmount);
 
     if (!enteredAmount || !Number.isFinite(amountNumber) || amountNumber <= 0) {
@@ -194,9 +282,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
 
     try {
-      const recipient = new PublicKey(
-        data.kind === "tag" ? data.tagRecord.ownerWallet : data.link.recipientWallet
-      );
+      const recipient = new PublicKey(normalizedRecipientWallet);
       const transaction = new Transaction();
 
       if (paymentToken === "SOL") {
@@ -289,7 +375,9 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const expiryLabel =
     data.kind === "tag"
       ? "No expiry"
-      : data.link.type === "permanent"
+      : paymentInit?.expiresAt
+        ? formatExpiryLabel(paymentInit.expiresAt, now)
+        : data.link.type === "permanent"
         ? "No expiry"
         : formatExpiryLabel(data.link.expiresAt, now);
   const shouldShowCustomAmount =
@@ -382,6 +470,13 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             <div className="space-y-3">
               <p className="text-sm text-secondary">Please connect your wallet first</p>
               <ConnectWalletButton className="!w-full" />
+            </div>
+          ) : null}
+
+          {isInitializingPayment ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-secondary">
+              <LoaderCircle className="h-4 w-4 animate-spin" />
+              Preparing payment
             </div>
           ) : null}
 

@@ -25,6 +25,7 @@ export type PayLinkResponse = {
 export type PriviiTagRecord = {
   tag: string;
   ownerWallet: string;
+  recipientWallet?: string | null;
   createdAt: string;
   status: "active";
   primaryUrl: string;

@@ -66,6 +66,7 @@ export async function POST(request: Request) {
     const record: PriviiTagRecord = {
       tag,
       ownerWallet,
+      recipientWallet: ownerWallet,
       createdAt: new Date().toISOString(),
       status: "active",
       primaryUrl: buildPrimaryTagUrl(tag),
