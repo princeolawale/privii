@@ -23,6 +23,21 @@ import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types"
 import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
+type PaymentHistoryItem = Pick<
+  PaymentRecord,
+  | "id"
+  | "amount"
+  | "asset"
+  | "status"
+  | "tx_signature"
+  | "created_at"
+  | "updated_at"
+  | "confirmed_at"
+  | "payer_wallet"
+  | "recipient_wallet"
+> & {
+  direction: "sent" | "received";
+};
 
 export function DashboardClient() {
   const router = useRouter();
@@ -31,12 +46,10 @@ export function DashboardClient() {
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
   const [payments, setPayments] = useState<
-    Pick<
-      PaymentRecord,
-      "id" | "amount" | "asset" | "status" | "tx_signature" | "created_at" | "payer_wallet"
-    >[]
+    PaymentHistoryItem[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
@@ -46,6 +59,8 @@ export function DashboardClient() {
       if (!walletAddress) {
         setTagRecord(null);
         setLinks([]);
+        setPayments([]);
+        setHistoryError(null);
         return;
       }
 
@@ -59,7 +74,7 @@ export function DashboardClient() {
           fetch(`/api/links/by-owner/${encodeURIComponent(walletAddress)}`, {
             cache: "no-store"
           }),
-          fetch(`/api/payments/by-recipient/${encodeURIComponent(walletAddress)}`, {
+          fetch(`/api/payments/by-wallet/${encodeURIComponent(walletAddress)}`, {
             cache: "no-store"
           })
         ]);
@@ -80,14 +95,16 @@ export function DashboardClient() {
 
         if (paymentsResponse.ok) {
           const result = (await paymentsResponse.json()) as {
-            payments: Pick<
-              PaymentRecord,
-              "id" | "amount" | "asset" | "status" | "tx_signature" | "created_at" | "payer_wallet"
-            >[];
+            payments: PaymentHistoryItem[];
           };
           setPayments(result.payments);
+          setHistoryError(null);
         } else {
           setPayments([]);
+          const result = (await paymentsResponse.json().catch(() => ({ error: "Unable to load payment history." }))) as {
+            error?: string;
+          };
+          setHistoryError(result.error || "Unable to load payment history.");
         }
       } finally {
         setIsLoading(false);
@@ -325,7 +342,9 @@ export function DashboardClient() {
               <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
                 <h2 className="text-2xl font-semibold tracking-tight">Payment History</h2>
                 <div className="mt-6 space-y-4">
-                  {payments.length ? (
+                  {historyError ? (
+                    <p className="text-sm text-red-400">{historyError}</p>
+                  ) : payments.length ? (
                     payments.map((payment) => (
                       <div
                         key={payment.id}
@@ -334,14 +353,19 @@ export function DashboardClient() {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
                             <p className="text-lg font-medium text-primary">
-                              {payment.amount || "Pending"} {payment.asset}
+                              {payment.direction === "sent" ? "Sent" : "Received"} •{" "}
+                              {payment.amount || "Pending"}{" "}
+                              {payment.asset}
                             </p>
                             <p className="text-sm text-secondary">
                               {formatPaymentStatus(payment.status)} •{" "}
-                              {new Date(payment.created_at).toLocaleString()}
+                              {new Date(
+                                payment.confirmed_at || payment.updated_at || payment.created_at
+                              ).toLocaleString()}
                             </p>
                             <p className="text-sm text-secondary">
-                              From {payment.payer_wallet ? truncateWalletAddress(payment.payer_wallet) : "Unknown wallet"}
+                              {payment.direction === "sent" ? "To" : "From"}{" "}
+                              {truncateCounterparty(payment, walletAddress)}
                             </p>
                           </div>
                           {payment.tx_signature ? (
@@ -472,13 +496,33 @@ function IconActionLink({
 }
 
 function formatPaymentStatus(status: PaymentRecord["status"]) {
-  if (status === "confirmed") {
-    return "Confirmed";
+  switch (status) {
+    case "initialized":
+      return "Initialized";
+    case "submitted":
+      return "Submitted";
+    case "confirmed":
+      return "Confirmed";
+    case "failed":
+      return "Failed";
+    case "expired":
+      return "Expired";
+    default:
+      return "Pending";
+  }
+}
+
+function truncateCounterparty(payment: PaymentHistoryItem, walletAddress: string) {
+  const rawCounterparty =
+    payment.direction === "sent" ? payment.recipient_wallet : payment.payer_wallet;
+
+  if (!rawCounterparty) {
+    return "Unknown wallet";
   }
 
-  if (status === "failed" || status === "expired") {
-    return "Failed";
+  if (rawCounterparty === walletAddress) {
+    return "Your wallet";
   }
 
-  return "Pending";
+  return truncateWalletAddress(rawCounterparty);
 }

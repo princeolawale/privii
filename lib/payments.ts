@@ -14,6 +14,7 @@ import type { PaymentRecord, PaymentStatus, PayLinkToken } from "@/lib/types";
 
 const paymentKey = (id: string) => `payment:${id}`;
 const recipientIndexKey = (wallet: string) => `payment:recipient:${wallet}`;
+const payerIndexKey = (wallet: string) => `payment:payer:${wallet}`;
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
 export async function getPayment(id: string) {
@@ -22,10 +23,20 @@ export async function getPayment(id: string) {
 
 export async function savePayment(payment: PaymentRecord) {
   await kv.set(paymentKey(payment.id), payment);
-  const existing = (await kv.get<string[]>(recipientIndexKey(payment.recipient_wallet))) ?? [];
+  const existing = payment.recipient_wallet
+    ? (await kv.get<string[]>(recipientIndexKey(payment.recipient_wallet))) ?? []
+    : [];
 
-  if (!existing.includes(payment.id)) {
+  if (payment.recipient_wallet && !existing.includes(payment.id)) {
     await kv.set(recipientIndexKey(payment.recipient_wallet), [...existing, payment.id]);
+  }
+
+  if (payment.payer_wallet) {
+    const payerExisting = (await kv.get<string[]>(payerIndexKey(payment.payer_wallet))) ?? [];
+
+    if (!payerExisting.includes(payment.id)) {
+      await kv.set(payerIndexKey(payment.payer_wallet), [...payerExisting, payment.id]);
+    }
   }
 
   return payment;
@@ -57,6 +68,31 @@ export async function getPaymentsByRecipient(wallet: string) {
   return payments
     .filter((payment): payment is PaymentRecord => Boolean(payment))
     .sort((left, right) => right.created_at.localeCompare(left.created_at));
+}
+
+export async function getPaymentsByPayer(wallet: string) {
+  const ids = (await kv.get<string[]>(payerIndexKey(wallet))) ?? [];
+  const payments = await Promise.all(ids.map((id) => getPayment(id)));
+  return payments
+    .filter((payment): payment is PaymentRecord => Boolean(payment))
+    .sort((left, right) => right.created_at.localeCompare(left.created_at));
+}
+
+export async function getPaymentsByWallet(wallet: string) {
+  const [received, sent] = await Promise.all([
+    getPaymentsByRecipient(wallet),
+    getPaymentsByPayer(wallet),
+  ]);
+
+  const deduped = new Map<string, PaymentRecord>();
+
+  for (const payment of [...received, ...sent]) {
+    deduped.set(payment.id, payment);
+  }
+
+  return Array.from(deduped.values()).sort((left, right) =>
+    right.created_at.localeCompare(left.created_at)
+  );
 }
 
 export function createPaymentRecord(input: {
