@@ -84,6 +84,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
           }
         }
       } catch (fetchError) {
+        console.error(fetchError);
         if (!cancelled) {
           setError(
             fetchError instanceof Error
@@ -190,16 +191,17 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     setError(null);
     setIsPaying(true);
 
+    const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
+
     try {
       const recipient = new PublicKey(
         data.kind === "tag" ? data.tagRecord.ownerWallet : data.link.recipientWallet
       );
       const transaction = new Transaction();
-      const paymentToken = data.kind === "tag" ? selectedToken : data.link.token;
 
       if (paymentToken === "SOL") {
         const balanceLamports = await connection.getBalance(wallet.publicKey, "confirmed");
-        const requiredLamports = Math.round(amountNumber * LAMPORTS_PER_SOL);
+        const requiredLamports = Math.round(amountNumber * 1e9);
 
         if (balanceLamports < requiredLamports) {
           throw new Error("Insufficient wallet balance");
@@ -222,8 +224,19 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         });
       }
 
+      const blockhash = await fetchLatestBlockhashWithRetry(connection);
+      transaction.recentBlockhash = blockhash.blockhash;
+      transaction.feePayer = wallet.publicKey;
+
       const signature = await wallet.sendTransaction(transaction, connection);
-      await connection.confirmTransaction(signature, "confirmed");
+      await connection.confirmTransaction(
+        {
+          signature,
+          blockhash: blockhash.blockhash,
+          lastValidBlockHeight: blockhash.lastValidBlockHeight
+        },
+        "confirmed"
+      );
 
       router.push(
         `/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(
@@ -231,6 +244,10 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         )}`
       );
     } catch (paymentError) {
+      if (paymentToken === "SOL") {
+        console.error("SOL transfer error:", paymentError);
+      }
+      console.error(paymentError);
       setError(
         paymentError instanceof Error
           ? getReadablePaymentError(paymentError.message)
@@ -298,7 +315,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         </div>
 
         <div className="space-y-8">
-          <div className="flex justify-end">
+          <div className="flex justify-center">
             <ExpiryPill expired={isExpired} label={isExpired ? "Expired" : expiryLabel} />
           </div>
 
@@ -337,14 +354,27 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
                     <option value="SOL">SOL</option>
                   </Select>
                 </label>
-              ) : null}
+              ) : (
+                <label className="block space-y-2">
+                  <span className="text-sm text-secondary">Token</span>
+                  <Select value={data.link.token} disabled onChange={() => undefined}>
+                    <option value={data.link.token}>{data.link.token}</option>
+                  </Select>
+                </label>
+              )}
             </div>
           ) : data.kind === "paylink" && data.link.amount ? (
-            <div className="rounded-[24px] border border-border bg-background/60 px-5 py-4 text-center">
-              <p className="text-sm text-secondary">Amount</p>
-              <p className="mt-2 text-2xl font-semibold text-primary">
-                {data.link.amount} {data.link.token}
-              </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Amount to send</span>
+                <Input value={data.link.amount} disabled />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Token</span>
+                <Select value={data.link.token} disabled onChange={() => undefined}>
+                  <option value={data.link.token}>{data.link.token}</option>
+                </Select>
+              </label>
             </div>
           ) : null}
 
@@ -422,7 +452,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 function TokenBadge({ token }: { token: PayLinkToken }) {
   return (
     <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2563EB] text-3xl font-semibold text-white">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-3xl font-semibold text-white">
         {token === "USDC" ? "$" : "S"}
       </div>
     </div>
@@ -536,13 +566,18 @@ async function addUsdcTransfer({
   try {
     senderAccount = await getAccount(connection, senderAta);
   } catch {
-    throw new Error("Insufficient wallet balance");
+    throw new Error("USDC wallet not initialized");
   }
 
   const requiredAmount = BigInt(Math.round(amount * 1_000_000));
+  const solBalanceLamports = await connection.getBalance(sender, "confirmed");
+
+  if (solBalanceLamports < Math.round(0.002 * LAMPORTS_PER_SOL)) {
+    throw new Error("Insufficient SOL for transaction fees");
+  }
 
   if (senderAccount.amount < requiredAmount) {
-    throw new Error("Insufficient wallet balance");
+    throw new Error("Insufficient USDC balance");
   }
 
   try {
@@ -572,8 +607,29 @@ async function addUsdcTransfer({
   );
 }
 
+async function fetchLatestBlockhashWithRetry(connection: Connection) {
+  try {
+    return await connection.getLatestBlockhash("confirmed");
+  } catch (error) {
+    console.error("Blockhash fetch error:", error);
+    return connection.getLatestBlockhash("confirmed");
+  }
+}
+
 function getReadablePaymentError(message: string) {
   const normalized = message.toLowerCase();
+
+  if (normalized.includes("usdc wallet not initialized")) {
+    return "USDC wallet not initialized";
+  }
+
+  if (normalized.includes("insufficient usdc")) {
+    return "Insufficient USDC balance";
+  }
+
+  if (normalized.includes("insufficient sol")) {
+    return "Insufficient SOL for transaction fees";
+  }
 
   if (
     normalized.includes("insufficient") ||

@@ -6,16 +6,11 @@ import { cn } from "@/lib/utils";
 
 export function BrandMark({
   href = "/",
-  size = "default",
   className
 }: {
   href?: string;
-  size?: "default" | "footer";
   className?: string;
 }) {
-  const iconSize = size === "footer" ? 34 : 30;
-  const textClass = size === "footer" ? "text-3xl" : "text-[2rem] sm:text-[2rem]";
-
   return (
     <Link
       href={href}
@@ -24,11 +19,13 @@ export function BrandMark({
       <Image
         src="/icon.png"
         alt="Privii"
-        width={iconSize}
-        height={iconSize}
+        width={30}
+        height={30}
         className="rounded-full"
       />
-      <span className={cn("font-semibold tracking-tight", textClass)}>{APP_NAME}</span>
+      <span className="text-[2rem] font-semibold tracking-tight sm:text-[2rem]">
+        {APP_NAME}
+      </span>
     </Link>
   );
 }

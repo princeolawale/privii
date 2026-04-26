@@ -8,7 +8,7 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-border/80 pt-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 pb-6 text-center">
         <div className="space-y-3">
-          <BrandMark size="footer" className="justify-center" />
+          <BrandMark className="justify-center" />
           <p className="max-w-md text-sm leading-6 text-secondary">
             Simple crypto payments with tags and links.
           </p>
