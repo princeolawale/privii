@@ -101,7 +101,7 @@ export function SiteHeader({
                 className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
                 onClick={() => setOpen(false)}
               >
-                Get Started
+                
               </Link>
             ) : null}
             <div className="border-t border-white/8 pt-5">
