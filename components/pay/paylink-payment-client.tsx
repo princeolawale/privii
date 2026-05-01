@@ -31,6 +31,7 @@ import { getEvmPublicClient } from "@/lib/evm/client";
 import { getEvmTokenConfig } from "@/lib/evm/tokens";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { addUsdcTransfer, fetchLatestBlockhashWithRetry } from "@/lib/solana/client";
+import { resolveTagWalletType } from "@/lib/tags";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type {
@@ -151,24 +152,39 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!data || data.kind !== "paylink") {
+    if (!data) {
       return;
     }
 
-    const nextNetwork = data.link.network || "solana";
+    const nextNetwork =
+      data.kind === "tag"
+        ? resolveTagWalletType(data.tagRecord) === "solana"
+          ? "solana"
+          : "ethereum"
+        : data.link.walletType === "solana"
+          ? "solana"
+          : data.link.network || "ethereum";
     setSelectedNetwork(nextNetwork);
 
     const nextTokens = getNetworkTokenOptions(nextNetwork);
-    setSelectedToken(nextTokens.includes(data.link.token) ? data.link.token : nextTokens[0]);
+    setSelectedToken(
+      data.kind === "paylink" && nextTokens.includes(data.link.token) ? data.link.token : nextTokens[0]
+    );
   }, [data]);
 
-  const availableNetworkOptions: Array<{ value: PaymentNetwork; label: string }> = [
-    { value: "solana", label: "Solana" },
-    ...EVM_NETWORK_OPTIONS.map((option) => ({
-      value: option.key as PaymentNetwork,
-      label: option.label
-    }))
-  ];
+  const receiverWalletType =
+    data?.kind === "tag"
+      ? resolveTagWalletType(data.tagRecord)
+      : data?.kind === "paylink"
+        ? data.link.walletType || "solana"
+        : "solana";
+  const availableNetworkOptions: Array<{ value: PaymentNetwork; label: string }> =
+    receiverWalletType === "solana"
+      ? [{ value: "solana", label: "Solana" }]
+      : EVM_NETWORK_OPTIONS.map((option) => ({
+          value: option.key as PaymentNetwork,
+          label: option.label
+        }));
   const availableTokens =
     selectedNetwork === "solana"
       ? (["SOL", "USDC"] as PaymentAsset[])

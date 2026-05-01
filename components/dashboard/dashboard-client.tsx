@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
+import { resolveTagWalletAddress, resolveTagWalletType } from "@/lib/tags";
 import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
@@ -56,10 +57,6 @@ export function DashboardClient() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
-  const [isSavingEvmWallet, setIsSavingEvmWallet] = useState(false);
-  const [isSavingSolanaWallet, setIsSavingSolanaWallet] = useState(false);
-  const [evmWalletMessage, setEvmWalletMessage] = useState<string | null>(null);
-  const [solanaWalletMessage, setSolanaWalletMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
 
   useEffect(() => {
@@ -103,74 +100,44 @@ export function DashboardClient() {
 
         setTagRecord(currentTagRecord);
 
-        const historyWallets = new Set(
-          [
-            currentTagRecord.solanaWallet,
-            currentTagRecord.recipientWallet,
-            currentTagRecord.ownerWallet,
-            currentTagRecord.evmWallet
-          ].filter((value): value is string => Boolean(value))
-        );
+        const historyWallet = resolveTagWalletAddress(currentTagRecord);
 
-        const [linksResponses, paymentsResponses] = await Promise.all([
-          Promise.all(
-            [...historyWallets].map((owner) =>
-              fetch(`/api/links/by-owner/${encodeURIComponent(owner)}`, {
-                cache: "no-store"
-              })
-            )
-          ),
-          Promise.all(
-            [...historyWallets].map((owner) =>
-              fetch(`/api/payments/by-wallet/${encodeURIComponent(owner)}`, {
-                cache: "no-store"
-              })
-            )
-          )
+        if (!historyWallet) {
+          setLinks([]);
+          setPayments([]);
+          setHistoryError(null);
+          return;
+        }
+
+        const [linksResponse, paymentsResponse] = await Promise.all([
+          fetch(`/api/links/by-owner/${encodeURIComponent(historyWallet)}`, {
+            cache: "no-store"
+          }),
+          fetch(`/api/payments/by-wallet/${encodeURIComponent(historyWallet)}`, {
+            cache: "no-store"
+          })
         ]);
 
-        const linkResults = await Promise.all(
-          linksResponses.map(async (response) =>
-            response.ok ? ((await response.json()) as { links: PayLinkRecord[] }).links : []
-          )
-        );
-        const mergedLinks = new Map<string, PayLinkRecord>();
-
-        for (const ownerLinks of linkResults) {
-          for (const link of ownerLinks) {
-            mergedLinks.set(link.tag, link);
-          }
+        if (linksResponse.ok) {
+          const result = (await linksResponse.json()) as { links: PayLinkRecord[] };
+          setLinks(result.links);
+        } else {
+          setLinks([]);
         }
 
-        setLinks([...mergedLinks.values()]);
-
-        const paymentResults = await Promise.all(
-          paymentsResponses.map(async (response) => {
-            if (!response.ok) {
-              return { payments: [], error: "Unable to load payment history." };
-            }
-
-            return (await response.json()) as {
-              payments: PaymentHistoryItem[];
-              error?: string;
-            };
-          })
-        );
-
-        const mergedPayments = new Map<string, PaymentHistoryItem>();
-
-        for (const result of paymentResults) {
-          for (const payment of result.payments) {
-            mergedPayments.set(payment.id, payment);
-          }
+        if (paymentsResponse.ok) {
+          const result = (await paymentsResponse.json()) as { payments: PaymentHistoryItem[] };
+          setPayments(result.payments);
+          setHistoryError(null);
+        } else {
+          setPayments([]);
+          const result = (await paymentsResponse
+            .json()
+            .catch(() => ({ error: "Unable to load payment history." }))) as {
+            error?: string;
+          };
+          setHistoryError(result.error || "Unable to load payment history.");
         }
-
-        setPayments(
-          [...mergedPayments.values()].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
-        );
-        setHistoryError(paymentResults.find((result) => result.error)?.error ?? null);
       } finally {
         setIsLoading(false);
       }
@@ -190,20 +157,6 @@ export function DashboardClient() {
 
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
-  const tagOwnerAuthWallet =
-    (tagRecord &&
-      [
-        walletAddress && (tagRecord.ownerWallet === walletAddress || tagRecord.solanaWallet === walletAddress)
-          ? walletAddress
-          : null,
-        evmAddress && tagRecord.evmWallet === evmAddress ? evmAddress : null,
-        walletAddress && tagRecord.ownerWallet === walletAddress ? walletAddress : null,
-        evmAddress && tagRecord.ownerWallet === evmAddress ? evmAddress : null
-      ].find((value): value is string => Boolean(value))) ||
-    walletAddress ||
-    evmAddress ||
-    "";
-
   async function handleCopyTagLink() {
     if (!publicUrl) {
       return;
@@ -233,80 +186,6 @@ export function DashboardClient() {
     }
 
     window.open(buildXShareUrl(publicUrl, tagRecord.tag), "_blank", "noopener,noreferrer");
-  }
-
-  async function handleSaveEvmWallet() {
-    if (!tagRecord || !evmAddress || !tagOwnerAuthWallet) {
-      return;
-    }
-
-    setIsSavingEvmWallet(true);
-    setEvmWalletMessage(null);
-
-    try {
-      const response = await fetch(`/api/tags/${tagRecord.tag}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ownerWallet: tagOwnerAuthWallet,
-          evmWallet: evmAddress
-        })
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Unable to update Privii tag.");
-      }
-
-      setTagRecord(result.tag);
-      setEvmWalletMessage("EVM wallet saved");
-    } catch (error) {
-      console.error(error);
-      setEvmWalletMessage(
-        error instanceof Error ? error.message : "Unable to update Privii tag."
-      );
-    } finally {
-      setIsSavingEvmWallet(false);
-    }
-  }
-
-  async function handleSaveSolanaWallet() {
-    if (!tagRecord || !walletAddress || !tagOwnerAuthWallet) {
-      return;
-    }
-
-    setIsSavingSolanaWallet(true);
-    setSolanaWalletMessage(null);
-
-    try {
-      const response = await fetch(`/api/tags/${tagRecord.tag}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ownerWallet: tagOwnerAuthWallet,
-          solanaWallet: walletAddress
-        })
-      });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Unable to update Privii tag.");
-      }
-
-      setTagRecord(result.tag);
-      setSolanaWalletMessage("Solana wallet saved");
-    } catch (error) {
-      console.error(error);
-      setSolanaWalletMessage(
-        error instanceof Error ? error.message : "Unable to update Privii tag."
-      );
-    } finally {
-      setIsSavingSolanaWallet(false);
-    }
   }
 
   function handlePaySomeone(event: React.FormEvent<HTMLFormElement>) {
@@ -420,7 +299,7 @@ export function DashboardClient() {
                   Your Privii tag is ready
                 </h2>
                 <p className="mt-3 text-sm text-secondary">
-                  Connected as {truncateWalletAddress(walletAddress || evmAddress || tagRecord.ownerWallet)}
+                  Wallet type: {resolveTagWalletType(tagRecord) === "solana" ? "Solana" : "EVM"}
                 </p>
                 <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
@@ -446,45 +325,17 @@ export function DashboardClient() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-accent/90">
-                        Wallets
+                        Wallet
                       </p>
                       <p className="mt-2 text-sm text-secondary">
-                        Solana: {truncateWalletAddress(tagRecord.solanaWallet || tagRecord.recipientWallet || tagRecord.ownerWallet)}
-                      </p>
-                      <p className="mt-1 text-sm text-secondary">
-                        EVM: {tagRecord.evmWallet ? truncateWalletAddress(tagRecord.evmWallet) : "Not added"}
+                        {truncateWalletAddress(
+                          resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
+                        )}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <ConnectWalletButton className="!w-full sm:!w-auto" />
-                      {connected && walletAddress ? (
-                        <Button
-                          variant="secondary"
-                          className="w-full sm:w-auto"
-                          disabled={isSavingSolanaWallet}
-                          onClick={handleSaveSolanaWallet}
-                        >
-                          {isSavingSolanaWallet ? "Saving..." : tagRecord.solanaWallet ? "Update Solana wallet" : "Add Solana wallet"}
-                        </Button>
-                      ) : null}
-                      <EvmConnectWalletButton className="!w-full sm:!w-auto" />
-                      {evmConnected && evmAddress ? (
-                        <Button
-                          variant="secondary"
-                          className="w-full sm:w-auto"
-                          disabled={isSavingEvmWallet}
-                          onClick={handleSaveEvmWallet}
-                        >
-                          {isSavingEvmWallet ? "Saving..." : tagRecord.evmWallet ? "Update EVM wallet" : "Add EVM wallet"}
-                        </Button>
-                      ) : null}
-                    </div>
-                    {solanaWalletMessage ? (
-                      <p className="text-sm text-secondary">{solanaWalletMessage}</p>
-                    ) : null}
-                    {evmWalletMessage ? (
-                      <p className="text-sm text-secondary">{evmWalletMessage}</p>
-                    ) : null}
+                    <p className="text-sm text-secondary">
+                      This wallet receives payments for your Privii tag.
+                    </p>
                   </div>
                 </div>
               </Card>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
+import { isAddress } from "viem";
 
 import { getPaymentsByWallet } from "@/lib/payments";
 
@@ -10,21 +11,37 @@ export async function GET(
   const { wallet } = await params;
   const normalizedWallet = decodeURIComponent(wallet).trim();
 
-  try {
-    new PublicKey(normalizedWallet);
-  } catch {
+  const isSolanaAddress = (() => {
+    try {
+      new PublicKey(normalizedWallet);
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!isSolanaAddress && !isAddress(normalizedWallet)) {
     return NextResponse.json(
-      { error: "Wallet is not a valid Solana address." },
+      { error: "Wallet is not a valid address." },
       { status: 400 }
     );
   }
 
   const payments = await getPaymentsByWallet(normalizedWallet);
+  const matchesWallet = (value: string | null) =>
+    Boolean(value) &&
+    (isAddress(normalizedWallet) && value
+      ? value.toLowerCase() === normalizedWallet.toLowerCase()
+      : value === normalizedWallet);
   const visiblePayments = payments.filter((payment) => {
-    const isSent = payment.payer_wallet === normalizedWallet;
-    const isReceived = payment.recipient_wallet === normalizedWallet;
+    const isSent = matchesWallet(payment.payer_wallet);
+    const isReceived = matchesWallet(payment.recipient_wallet);
 
-    if (isSent || isReceived) {
+    if (isSent) {
+      return Boolean(payment.tx_signature) && payment.status === "confirmed";
+    }
+
+    if (isReceived) {
       return Boolean(payment.tx_signature) && payment.status === "confirmed";
     }
 
@@ -45,7 +62,7 @@ export async function GET(
       confirmed_at: payment.confirmed_at,
       payer_wallet: payment.payer_wallet,
       recipient_wallet: payment.recipient_wallet,
-      direction: payment.payer_wallet === normalizedWallet ? "sent" : "received",
+      direction: matchesWallet(payment.payer_wallet) ? "sent" : "received",
     })),
   });
 }

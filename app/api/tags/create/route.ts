@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 
 import { tagExists } from "@/lib/paylinks";
 import { getPriviiTagByOwner, priviiTagExists, savePriviiTag } from "@/lib/tags";
-import type { PriviiTagRecord } from "@/lib/types";
+import type { PriviiTagRecord, WalletType } from "@/lib/types";
 import {
   buildFallbackTagUrl,
   buildPrimaryTagUrl,
@@ -15,6 +15,7 @@ import {
 type CreateTagPayload = {
   tag?: string;
   ownerWallet?: string;
+  walletType?: WalletType;
   solanaWallet?: string | null;
   evmWallet?: string | null;
 };
@@ -23,9 +24,20 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateTagPayload;
     const tag = normalizePriviiTag(body.tag ?? "");
+    const requestedWalletType = body.walletType === "evm" ? "evm" : "solana";
     const solanaWallet = body.solanaWallet?.trim() || null;
     const evmWallet = body.evmWallet?.trim() || null;
-    const ownerWallet = body.ownerWallet?.trim() || solanaWallet || evmWallet || "";
+    const walletType =
+      requestedWalletType === "evm"
+        ? evmWallet
+          ? "evm"
+          : null
+        : solanaWallet
+          ? "solana"
+          : null;
+    const walletAddress =
+      walletType === "evm" ? evmWallet : walletType === "solana" ? solanaWallet : null;
+    const ownerWallet = body.ownerWallet?.trim() || walletAddress || "";
 
     if (!isValidPriviiTag(tag)) {
       return NextResponse.json(
@@ -36,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!solanaWallet && !evmWallet) {
+    if (!walletType || !walletAddress) {
       return NextResponse.json(
         { error: "Connect at least one wallet to continue" },
         { status: 400 }
@@ -86,9 +98,11 @@ export async function POST(request: Request) {
     const record: PriviiTagRecord = {
       tag,
       ownerWallet,
-      recipientWallet: solanaWallet,
-      solanaWallet,
-      evmWallet,
+      walletType,
+      walletAddress,
+      recipientWallet: walletType === "solana" ? solanaWallet : null,
+      solanaWallet: walletType === "solana" ? solanaWallet : null,
+      evmWallet: walletType === "evm" ? evmWallet : null,
       createdAt: new Date().toISOString(),
       status: "active",
       primaryUrl: buildPrimaryTagUrl(tag),

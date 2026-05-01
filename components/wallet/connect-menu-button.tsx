@@ -15,12 +15,10 @@ export function ConnectMenuButton({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
 
   const label =
-    connected && evmConnected
-      ? "Wallets connected"
-      : connected
-        ? "Solana connected"
-        : evmConnected
-          ? "EVM connected"
+    connected && publicKey
+      ? truncateWalletAddress(publicKey.toBase58())
+      : evmConnected && evmAddress
+        ? truncateWalletAddress(evmAddress)
           : "Connect";
 
   return (
@@ -38,20 +36,14 @@ export function ConnectMenuButton({ className }: { className?: string }) {
         <div className="absolute right-0 top-full z-50 mt-3 w-80 rounded-[28px] border border-border bg-card p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
           <div className="space-y-4">
             <div className="rounded-2xl border border-border bg-background/60 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-secondary">Solana</p>
-              <p className="mt-2 text-sm text-secondary">
-                {connected && publicKey ? truncateWalletAddress(publicKey.toBase58()) : "Not connected"}
-              </p>
+              <p className="text-xs uppercase tracking-[0.2em] text-secondary">Solana wallet</p>
               <div className="mt-3">
                 <ConnectWalletButton className="!w-full" />
               </div>
             </div>
 
             <div className="rounded-2xl border border-border bg-background/60 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-secondary">EVM</p>
-              <p className="mt-2 text-sm text-secondary">
-                {evmConnected && evmAddress ? truncateWalletAddress(evmAddress) : "Not connected"}
-              </p>
+              <p className="text-xs uppercase tracking-[0.2em] text-secondary">EVM wallet</p>
               <div className="mt-3">
                 <EvmConnectWalletButton className="!w-full" />
               </div>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useAccount } from "wagmi";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useAccount } from "wagmi";
 
 import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast-provider";
+import type { WalletType } from "@/lib/types";
 import { isValidPriviiTag, normalizePriviiTag, truncateWalletAddress } from "@/lib/utils";
 
 export function GetStartedFlow() {
@@ -21,8 +22,8 @@ export function GetStartedFlow() {
   const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const { showToast } = useToast();
   const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
-  const walletAddress = publicKey?.toBase58() ?? "";
-  const anyWalletConnected = connected || evmConnected;
+  const solanaAddress = publicKey?.toBase58() ?? "";
+  const [selectedWalletType, setSelectedWalletType] = useState<WalletType | null>(null);
   const [tag, setTag] = useState("");
   const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken">(
     "idle"
@@ -34,7 +35,19 @@ export function GetStartedFlow() {
   const normalizedTag = normalizePriviiTag(tag);
   const isTagValid = isValidPriviiTag(normalizedTag);
   const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
-  const currentStep = justCreated ? 3 : anyWalletConnected ? 2 : 1;
+  const isSelectedWalletConnected =
+    selectedWalletType === "solana"
+      ? connected && Boolean(solanaAddress)
+      : selectedWalletType === "evm"
+        ? evmConnected && Boolean(evmAddress)
+        : false;
+  const connectedAddress =
+    selectedWalletType === "solana"
+      ? solanaAddress
+      : selectedWalletType === "evm"
+        ? evmAddress ?? ""
+        : "";
+  const currentStep = justCreated ? 4 : !selectedWalletType ? 1 : isSelectedWalletConnected ? 3 : 2;
 
   useEffect(() => {
     if (hasTag && tagRecord && !justCreated) {
@@ -65,7 +78,7 @@ export function GetStartedFlow() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if ((!walletAddress && !evmAddress) || !isTagValid) {
+    if (!selectedWalletType || !connectedAddress || !isTagValid) {
       setError("Connect at least one wallet to continue");
       return;
     }
@@ -81,9 +94,10 @@ export function GetStartedFlow() {
         },
         body: JSON.stringify({
           tag: normalizedTag,
-          ownerWallet: walletAddress || evmAddress,
-          solanaWallet: walletAddress || null,
-          evmWallet: evmAddress || null
+          walletType: selectedWalletType,
+          ownerWallet: connectedAddress,
+          solanaWallet: selectedWalletType === "solana" ? connectedAddress : null,
+          evmWallet: selectedWalletType === "evm" ? connectedAddress : null
         })
       });
 
@@ -133,7 +147,7 @@ export function GetStartedFlow() {
     return "Choose the payment identity you want people to remember.";
   }, [availability, isTagValid, normalizedTag]);
 
-  if (anyWalletConnected && isTagLoading) {
+  if ((connected || evmConnected) && isTagLoading) {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <Card className="rounded-[32px] p-6 sm:p-8">
@@ -143,7 +157,7 @@ export function GetStartedFlow() {
     );
   }
 
-  if (anyWalletConnected && hasTag && !justCreated) {
+  if ((connected || evmConnected) && hasTag && !justCreated) {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <Card className="rounded-[32px] p-6 sm:p-8">
@@ -164,57 +178,89 @@ export function GetStartedFlow() {
             Register your Privii tag
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-            Connect at least one wallet, choose a tag, and start getting paid with Privii.
+            Choose one wallet path, claim your tag, and start receiving payments.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          <StepChip number="1" label="Connect wallet" active={currentStep === 1} done={currentStep > 1} />
-          <StepChip number="2" label="Choose tag" active={currentStep === 2} done={currentStep > 2} />
-          <StepChip number="3" label="Go live" active={currentStep === 3} done={currentStep === 3} />
+        <div className="mt-8 grid gap-3 sm:grid-cols-4">
+          <StepChip number="1" label="Choose wallet" active={currentStep === 1} done={currentStep > 1} />
+          <StepChip number="2" label="Connect wallet" active={currentStep === 2} done={currentStep > 2} />
+          <StepChip number="3" label="Choose tag" active={currentStep === 3} done={currentStep > 3} />
+          <StepChip number="4" label="Go live" active={currentStep === 4} done={currentStep === 4} />
         </div>
 
         {currentStep === 1 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1</p>
-            <h2 className="mt-3 text-2xl font-semibold">Connect at least one wallet</h2>
+            <h2 className="mt-3 text-2xl font-semibold">Choose wallet</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
-              Connect a Solana wallet, an EVM wallet, or both.
+              Pick the wallet ecosystem you want this Privii tag to use.
             </p>
+
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-border bg-card/70 p-4">
-                <p className="text-sm text-secondary">Connect Solana Wallet</p>
-                <div className="mt-3">
-                  <ConnectWalletButton className="!w-full" />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-card/70 p-4">
-                <p className="text-sm text-secondary">Connect EVM Wallet</p>
-                <div className="mt-3">
-                  <EvmConnectWalletButton className="!w-full" />
-                </div>
-              </div>
+              <button
+                type="button"
+                className={`rounded-2xl border p-5 text-left transition ${
+                  selectedWalletType === "solana"
+                    ? "border-accent/30 bg-accent/10"
+                    : "border-border bg-card/70 hover:border-white/15"
+                }`}
+                onClick={() => setSelectedWalletType("solana")}
+              >
+                <p className="text-lg font-medium text-primary">Solana wallet</p>
+                <p className="mt-2 text-sm text-secondary">
+                  Phantom, Solflare, Backpack, Glow
+                </p>
+              </button>
+              <button
+                type="button"
+                className={`rounded-2xl border p-5 text-left transition ${
+                  selectedWalletType === "evm"
+                    ? "border-accent/30 bg-accent/10"
+                    : "border-border bg-card/70 hover:border-white/15"
+                }`}
+                onClick={() => setSelectedWalletType("evm")}
+              >
+                <p className="text-lg font-medium text-primary">EVM wallet</p>
+                <p className="mt-2 text-sm text-secondary">
+                  MetaMask, Trust Wallet, WalletConnect-compatible wallets
+                </p>
+              </button>
             </div>
-            {!anyWalletConnected ? (
+          </div>
+        ) : null}
+
+        {currentStep === 2 ? (
+          <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
+            <h2 className="mt-3 text-2xl font-semibold">Connect wallet</h2>
+            <p className="mt-3 text-sm leading-6 text-secondary">
+              {selectedWalletType === "solana"
+                ? "Connect your Solana wallet to continue."
+                : "Connect your EVM wallet to continue."}
+            </p>
+            <div className="mt-6">
+              {selectedWalletType === "solana" ? (
+                <ConnectWalletButton className="!w-full sm:!w-auto" />
+              ) : (
+                <EvmConnectWalletButton className="!w-full sm:!w-auto" />
+              )}
+            </div>
+            {!isSelectedWalletConnected ? (
               <p className="mt-4 text-sm text-secondary">Connect at least one wallet to continue</p>
             ) : null}
           </div>
         ) : null}
 
-        {currentStep === 2 ? (
+        {currentStep === 3 ? (
           <form
             className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7"
             onSubmit={handleSubmit}
           >
-            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
             <h2 className="mt-3 text-2xl font-semibold">Choose your Privii tag</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
-              {[
-                walletAddress ? `Solana ${truncateWalletAddress(walletAddress)}` : null,
-                evmAddress ? `EVM ${truncateWalletAddress(evmAddress)}` : null
-              ]
-                .filter(Boolean)
-                .join(" • ")}
+              Connected as {truncateWalletAddress(connectedAddress)}.
             </p>
 
             <label className="mt-6 block space-y-2">
@@ -250,7 +296,7 @@ export function GetStartedFlow() {
 
             <Button
               className="mt-6 w-full"
-              disabled={!anyWalletConnected || !isTagValid || availability === "taken" || isSubmitting}
+              disabled={!isSelectedWalletConnected || !isTagValid || availability === "taken" || isSubmitting}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -264,9 +310,9 @@ export function GetStartedFlow() {
           </form>
         ) : null}
 
-        {currentStep === 3 ? (
+        {currentStep === 4 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
-            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 4</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight">Your Privii is live</h2>
             <div className="mt-6 rounded-[24px] border border-border bg-card/70 p-5">
               <p className="text-base text-secondary">Redirecting to your dashboard...</p>

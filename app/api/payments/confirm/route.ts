@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 
 import { confirmAndSavePayment, parseDecimalAmount } from "@/lib/payments";
 import { getPayLink } from "@/lib/paylinks";
-import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet } from "@/lib/tags";
+import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet, resolveTagWalletType } from "@/lib/tags";
 import type { PaymentAsset, PaymentNetwork } from "@/lib/types";
 import { isExpired, normalizePriviiTag } from "@/lib/utils";
 
@@ -52,6 +52,22 @@ export async function POST(request: Request) {
 
       if (!record) {
         return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
+      }
+
+      const walletType = resolveTagWalletType(record);
+
+      if (walletType === "solana" && network !== "solana") {
+        return NextResponse.json(
+          { error: "This user has not added a wallet for this network" },
+          { status: 422 }
+        );
+      }
+
+      if (walletType === "evm" && network === "solana") {
+        return NextResponse.json(
+          { error: "This user has not added a wallet for this network" },
+          { status: 422 }
+        );
       }
 
       const recipientWallet =
@@ -127,6 +143,22 @@ export async function POST(request: Request) {
 
     if (!link) {
       return NextResponse.json({ error: "Payment link not found" }, { status: 404 });
+    }
+
+    const walletType = link.walletType || "solana";
+
+    if (walletType === "solana" && network !== "solana") {
+      return NextResponse.json(
+        { error: "This user has not added a wallet for this network" },
+        { status: 422 }
+      );
+    }
+
+    if (walletType === "evm" && network === "solana") {
+      return NextResponse.json(
+        { error: "This user has not added a wallet for this network" },
+        { status: 422 }
+      );
     }
 
     if (isExpired(link.expiresAt)) {

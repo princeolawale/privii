@@ -12,7 +12,7 @@ import {
   Shield
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
@@ -22,7 +22,14 @@ import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast-provider";
 import { EVM_NETWORK_OPTIONS } from "@/lib/evm/chains";
 import { EVM_TOKENS } from "@/lib/evm/tokens";
-import type { PayLinkExpiryOption, PaymentAsset, PaymentNetwork, PayLinkType } from "@/lib/types";
+import { resolveTagWalletType } from "@/lib/tags";
+import type {
+  PayLinkExpiryOption,
+  PaymentAsset,
+  PaymentNetwork,
+  PayLinkType,
+  WalletType
+} from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type CreateResponse = {
@@ -56,21 +63,49 @@ export function PayLinkForm() {
   const [createdLink, setCreatedLink] = useState<CreateResponse | null>(null);
   const [copied, setCopied] = useState(false);
   const anyWalletConnected = connected || evmConnected;
+  const [creatorWalletType, setCreatorWalletType] = useState<WalletType>("solana");
 
-  const creatorWallet = useMemo(() => publicKey?.toBase58() || evmAddress || "", [evmAddress, publicKey]);
+  useEffect(() => {
+    if (hasTag && tagRecord) {
+      setCreatorWalletType(resolveTagWalletType(tagRecord));
+      return;
+    }
+
+    if (connected && !evmConnected) {
+      setCreatorWalletType("solana");
+      return;
+    }
+
+    if (evmConnected && !connected) {
+      setCreatorWalletType("evm");
+    }
+  }, [connected, evmConnected, hasTag, tagRecord]);
+
+  const activeWalletType: WalletType =
+    hasTag && tagRecord
+      ? resolveTagWalletType(tagRecord)
+      : creatorWalletType;
+  const creatorWallet = useMemo(
+    () =>
+      activeWalletType === "solana"
+        ? publicKey?.toBase58() || ""
+        : evmAddress || "",
+    [activeWalletType, evmAddress, publicKey]
+  );
   const recipientWallet =
     tagRecord?.solanaWallet?.trim() || tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
   const evmWallet = tagRecord?.evmWallet?.trim() || "";
   const availableTokens =
-    network === "solana"
+    activeWalletType === "solana"
       ? ["SOL", "USDC"]
-      : EVM_TOKENS[network].map((item) => item.symbol);
+      : EVM_TOKENS[network === "solana" ? "ethereum" : network].map((item) => item.symbol);
   const canCreate =
     (connected || evmConnected) &&
-    hasTag &&
     Boolean(creatorWallet) &&
     !isLoading &&
-    (network === "solana" ? Boolean(recipientWallet) : Boolean(evmWallet));
+    (activeWalletType === "solana"
+      ? (hasTag ? Boolean(recipientWallet) : Boolean(creatorWallet))
+      : (hasTag ? Boolean(evmWallet) : Boolean(creatorWallet)));
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -91,7 +126,7 @@ export function PayLinkForm() {
         body: JSON.stringify({
           amount: amount || null,
           token,
-          network,
+          network: activeWalletType === "solana" ? "solana" : network,
           type,
           expiry: type === "expiring" ? expiry : "none",
           creatorWallet,
@@ -270,7 +305,7 @@ export function PayLinkForm() {
             Create one-time PayLink
           </h1>
           <p className="max-w-xl text-sm leading-6 text-secondary">
-            This link will receive payments through your registered payment tag.
+            This link will receive payments through your registered payment tag or connected wallet.
           </p>
         </div>
 
@@ -284,17 +319,31 @@ export function PayLinkForm() {
           <p className="text-sm text-secondary">Loading your payment tag</p>
         ) : null}
 
-        {anyWalletConnected && !isTagLoading && !hasTag ? (
-          <div className="space-y-4">
-            <p className="text-sm text-secondary">Create your payment tag first.</p>
-            <Link href="/get-started" className="inline-flex">
-              <Button>Create your payment tag first</Button>
-            </Link>
-          </div>
-        ) : null}
-
-        {anyWalletConnected && hasTag ? (
+        {anyWalletConnected && !isTagLoading ? (
           <form className="space-y-5" onSubmit={handleSubmit}>
+            {!hasTag && connected && evmConnected ? (
+              <label className="space-y-2">
+                <span className="text-sm text-secondary">Wallet path</span>
+                <Select
+                  value={creatorWalletType}
+                  onChange={(event) => {
+                    const nextType = event.target.value as WalletType;
+                    setCreatorWalletType(nextType);
+                    if (nextType === "solana") {
+                      setNetwork("solana");
+                      setToken("USDC");
+                    } else {
+                      setNetwork("ethereum");
+                      setToken("ETH");
+                    }
+                  }}
+                >
+                  <option value="solana">Solana</option>
+                  <option value="evm">EVM</option>
+                </Select>
+              </label>
+            ) : null}
+
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-secondary">Payment purpose</span>
@@ -319,25 +368,27 @@ export function PayLinkForm() {
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-secondary">Network</span>
-                <Select
-                  value={network}
-                  onChange={(event) => {
-                    const nextNetwork = event.target.value as PaymentNetwork;
-                    setNetwork(nextNetwork);
-                    const nextTokens =
-                      nextNetwork === "solana"
-                        ? ["SOL", "USDC"]
-                        : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
-                    setToken(nextTokens[0] as PaymentAsset);
-                  }}
-                >
-                  <option value="solana">Solana</option>
-                  {EVM_NETWORK_OPTIONS.map((option) => (
-                    <option key={option.key} value={option.key}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                {activeWalletType === "solana" ? (
+                  <Input disabled value="Solana" />
+                ) : (
+                  <Select
+                    value={network === "solana" ? "ethereum" : network}
+                    onChange={(event) => {
+                      const nextNetwork = event.target.value as PaymentNetwork;
+                      setNetwork(nextNetwork);
+                      const nextTokens = EVM_TOKENS[nextNetwork as Exclude<PaymentNetwork, "solana">].map(
+                        (item) => item.symbol
+                      );
+                      setToken(nextTokens[0] as PaymentAsset);
+                    }}
+                  >
+                    {EVM_NETWORK_OPTIONS.map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                )}
               </label>
 
               <label className="space-y-2">
@@ -387,17 +438,25 @@ export function PayLinkForm() {
             </label>
 
             <label className="space-y-2">
-              <span className="text-sm text-secondary">Registered payment tag</span>
+              <span className="text-sm text-secondary">
+                {hasTag ? "Registered payment tag" : "Payment destination"}
+              </span>
               <Input
                 disabled
-                value={hasTag && tagRecord ? `@${tagRecord.tag}` : ""}
-                placeholder="Register a payment tag to create links"
+                value={
+                  hasTag && tagRecord
+                    ? `@${tagRecord.tag}`
+                    : activeWalletType === "solana"
+                      ? "Connected Solana wallet"
+                      : "Connected EVM wallet"
+                }
+                placeholder="Connected wallet"
               />
             </label>
 
-            {network !== "solana" && !evmWallet ? (
+            {activeWalletType === "evm" && hasTag && !evmWallet ? (
               <p className="text-sm text-secondary">
-                Add an EVM wallet in your dashboard before creating EVM payment links.
+                This user has not added a wallet for this network
               </p>
             ) : null}
 

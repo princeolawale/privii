@@ -6,12 +6,16 @@ export type PaymentStatus = "initialized" | "submitted" | "confirmed" | "failed"
 export type EvmNetwork = "ethereum" | "base" | "arbitrum" | "bsc";
 export type PaymentNetwork = "solana" | EvmNetwork;
 export type PaymentAsset = "SOL" | "USDC" | "USDT" | "ETH" | "BNB";
+export type WalletType = "solana" | "evm";
 
 export type PayLinkRecord = {
   tag: string;
   amount: string | null;
   token: PaymentAsset;
   network?: PaymentNetwork | null;
+  walletType?: WalletType | null;
+  receiverWallet?: string | null;
+  receiverTag?: string | null;
   type: PayLinkType;
   expiryOption: PayLinkExpiryOption;
   expiresAt: number | null;
@@ -33,6 +37,8 @@ export type PayLinkResponse = {
 export type PriviiTagRecord = {
   tag: string;
   ownerWallet: string;
+  walletType?: WalletType | null;
+  walletAddress?: string | null;
   recipientWallet?: string | null;
   solanaWallet?: string | null;
   evmWallet?: string | null;

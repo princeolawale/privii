@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 
 import { parseDecimalAmount } from "@/lib/payments";
 import { getPayLink } from "@/lib/paylinks";
-import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet } from "@/lib/tags";
+import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet, resolveTagWalletType } from "@/lib/tags";
 import type { PaymentAsset, PaymentNetwork } from "@/lib/types";
 import { isExpired, normalizePriviiTag } from "@/lib/utils";
 
@@ -43,13 +43,31 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
       }
 
+      const walletType = resolveTagWalletType(record);
+
       const network: PaymentNetwork =
         body.network === "ethereum" ||
         body.network === "base" ||
         body.network === "arbitrum" ||
         body.network === "bsc"
           ? body.network
-          : "solana";
+          : walletType === "solana"
+            ? "solana"
+            : "ethereum";
+
+      if (walletType === "solana" && network !== "solana") {
+        return NextResponse.json(
+          { error: "This user has not added a wallet for this network" },
+          { status: 422 }
+        );
+      }
+
+      if (walletType === "evm" && network === "solana") {
+        return NextResponse.json(
+          { error: "This user has not added a wallet for this network" },
+          { status: 422 }
+        );
+      }
       const asset: PaymentAsset =
         body.asset === "ETH" ||
         body.asset === "BNB" ||
@@ -123,13 +141,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Payment link not found" }, { status: 404 });
     }
 
+    const walletType = link.walletType || "solana";
     const network: PaymentNetwork =
       body.network === "ethereum" ||
       body.network === "base" ||
       body.network === "arbitrum" ||
       body.network === "bsc"
         ? body.network
-        : link.network || "solana";
+        : walletType === "solana"
+          ? "solana"
+          : link.network || "ethereum";
+
+    if (walletType === "solana" && network !== "solana") {
+      return NextResponse.json(
+        { error: "This user has not added a wallet for this network" },
+        { status: 422 }
+      );
+    }
+
+    if (walletType === "evm" && network === "solana") {
+      return NextResponse.json(
+        { error: "This user has not added a wallet for this network" },
+        { status: 422 }
+      );
+    }
     const asset: PaymentAsset =
       body.asset === "ETH" ||
       body.asset === "BNB" ||

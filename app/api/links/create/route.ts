@@ -3,13 +3,20 @@ import { PublicKey } from "@solana/web3.js";
 import { isAddress } from "viem";
 
 import { savePayLink, tagExists } from "@/lib/paylinks";
-import { getPriviiTagByOwner, priviiTagExists, resolveTagEvmWallet, resolveTagSolanaWallet } from "@/lib/tags";
+import {
+  getPriviiTagByOwner,
+  priviiTagExists,
+  resolveTagEvmWallet,
+  resolveTagSolanaWallet,
+  resolveTagWalletType
+} from "@/lib/tags";
 import type {
   PayLinkExpiryOption,
   PaymentAsset,
   PaymentNetwork,
   PayLinkRecord,
-  PayLinkType
+  PayLinkType,
+  WalletType
 } from "@/lib/types";
 import { buildPaymentUrl, expiryToTimestamp, generateRandomTag } from "@/lib/utils";
 
@@ -53,17 +60,31 @@ export async function POST(request: Request) {
     }
 
     const ownerTagRecord = await getPriviiTagByOwner(creatorWallet);
-
-    if (!ownerTagRecord) {
-      return NextResponse.json(
-        { error: "Create your payment tag first." },
-        { status: 403 }
-      );
-    }
+    const creatorWalletType: WalletType = ownerTagRecord
+      ? resolveTagWalletType(ownerTagRecord)
+      : isSolanaCreatorWallet
+        ? "solana"
+        : "evm";
 
     const network: PaymentNetwork = body.network === "ethereum" || body.network === "base" || body.network === "arbitrum" || body.network === "bsc"
       ? body.network
-      : "solana";
+      : creatorWalletType === "solana"
+        ? "solana"
+        : "ethereum";
+
+    if (creatorWalletType === "solana" && network !== "solana") {
+      return NextResponse.json(
+        { error: "This wallet path only supports Solana payment links." },
+        { status: 400 }
+      );
+    }
+
+    if (creatorWalletType === "evm" && network === "solana") {
+      return NextResponse.json(
+        { error: "This wallet path only supports EVM payment links." },
+        { status: 400 }
+      );
+    }
     const token: PaymentAsset =
       body.token === "ETH" || body.token === "BNB" || body.token === "USDT" || body.token === "USDC" || body.token === "SOL"
         ? body.token
@@ -73,9 +94,13 @@ export async function POST(request: Request) {
             ? "BNB"
             : "ETH";
     const recipientWallet =
-      network === "solana"
-        ? resolveTagSolanaWallet(ownerTagRecord) || null
-        : resolveTagEvmWallet(ownerTagRecord);
+      ownerTagRecord
+        ? network === "solana"
+          ? resolveTagSolanaWallet(ownerTagRecord) || null
+          : resolveTagEvmWallet(ownerTagRecord)
+        : creatorWalletType === "solana"
+          ? creatorWallet
+          : creatorWallet;
 
     if (!recipientWallet) {
       return NextResponse.json(
@@ -141,15 +166,18 @@ export async function POST(request: Request) {
       amount: body.amount?.toString() || null,
       token,
       network,
+      walletType: creatorWalletType,
+      receiverWallet: recipientWallet,
       type,
       expiryOption,
       expiresAt,
       recipientWallet,
       createdAt: Date.now(),
       creatorWallet,
-      creatorTag: ownerTagRecord.tag,
+      creatorTag: ownerTagRecord?.tag ?? null,
       paymentPurpose: body.paymentPurpose?.trim() || null,
-      ownerTag: ownerTagRecord.tag,
+      ownerTag: ownerTagRecord?.tag ?? null,
+      receiverTag: ownerTagRecord?.tag ?? null,
       stealthEnabled: false,
       stealthMode: "coming_soon"
     };
