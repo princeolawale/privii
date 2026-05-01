@@ -11,7 +11,7 @@ type SupportedNamespace = Extract<ChainNamespace, "solana" | "eip155">;
 export function UnifiedConnectButton({
   className,
   namespace,
-  label = "Connect Wallet"
+  label = "Connect"
 }: {
   className?: string;
   namespace?: SupportedNamespace;
@@ -46,7 +46,7 @@ export function UnifiedConnectButton({
   return (
     <button
       type="button"
-      className={`inline-flex min-h-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 text-base font-medium text-white transition hover:border-white/20 hover:bg-white/[0.07] ${className ?? ""}`}
+      className={`inline-flex min-h-14 items-center justify-center rounded-2xl border border-white bg-white px-5 text-base font-medium text-black shadow-[0_10px_30px_rgba(255,255,255,0.06)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-accent/30 ${className ?? ""}`}
       onClick={() =>
         open({
           namespace,

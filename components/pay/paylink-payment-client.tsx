@@ -81,6 +81,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
   const { connection } = useAppKitConnection();
   const solanaAccount = useAppKitAccount({ namespace: "solana" });
+  const evmAccount = useAppKitAccount({ namespace: "eip155" });
   const { walletProvider: solanaWalletProvider } = useAppKitProvider<{
     publicKey?: PublicKey;
     sendTransaction?: (transaction: Transaction, connection: Connection) => Promise<string>;
@@ -196,6 +197,22 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       : getNetworkTokenOptions(selectedNetwork);
   const paymentToken =
     availableTokens.includes(selectedToken) ? selectedToken : availableTokens[0];
+  const selectedEvmNetworkOption =
+    selectedNetwork === "solana" ? null : getEvmNetworkOption(selectedNetwork as EvmNetwork);
+  const activePaymentWallet = getActivePaymentWallet({
+    selectedNetwork,
+    solanaAddress: solanaAccount.address ?? null,
+    solanaConnected: Boolean(solanaAccount.isConnected && solanaAccount.address),
+    evmAddress: evmAccount.address ?? evmAddress ?? null,
+    evmConnected: Boolean((evmAccount.isConnected || evmConnected) && (evmAccount.address || evmAddress)),
+  });
+  const activePaymentWalletConnected = activePaymentWallet.connected;
+  const connectedEvmAddress = (evmAccount.address ?? evmAddress ?? "").trim();
+  const currentEvmChainId = evmChainId ?? null;
+  const isWrongEvmChain =
+    selectedNetwork !== "solana" &&
+    Boolean(activePaymentWalletConnected && selectedEvmNetworkOption) &&
+    currentEvmChainId !== selectedEvmNetworkOption?.chain.id;
   const initAmount =
     data?.kind === "paylink" && data.link.amount ? data.link.amount : customAmount.trim();
   const needsAmountToInitialize =
@@ -229,12 +246,12 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             kind: data.kind,
             tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
             asset: paymentToken,
-              network: selectedNetwork,
-              expectedAmount: initAmount,
-              payerWallet:
-                selectedNetwork === "solana"
+            network: selectedNetwork,
+            expectedAmount: initAmount,
+            payerWallet:
+              selectedNetwork === "solana"
                 ? solanaAccount.address ?? null
-                : evmAddress ?? null
+                : connectedEvmAddress || null
             })
           });
 
@@ -271,7 +288,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [canInitializePayment, data, evmAddress, initAmount, paymentToken, selectedNetwork, solanaAccount.address]);
+  }, [canInitializePayment, connectedEvmAddress, data, initAmount, paymentToken, selectedNetwork, solanaAccount.address]);
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
@@ -291,8 +308,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   );
   const recipientWallet = paymentInit?.recipientWallet ?? null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
-  const connectedWalletAddress = solanaAccount.address?.trim() ?? null;
-  const normalizedEvmAddress = evmAddress?.trim().toLowerCase() ?? null;
+  const connectedWalletAddress = (solanaAccount.address ?? "").trim() || null;
+  const normalizedEvmAddress = connectedEvmAddress.toLowerCase() || null;
   const isCreator =
     selectedNetwork === "solana"
       ? Boolean(connectedWalletAddress && normalizedRecipientWallet) &&
@@ -302,9 +319,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const canPay =
     Boolean(paymentInit) &&
     !isInitializingPayment &&
-    (selectedNetwork === "solana"
-      ? Boolean(solanaAccount.isConnected && solanaAccount.address)
-      : Boolean(evmConnected && evmAddress)) &&
+    activePaymentWalletConnected &&
+    !isWrongEvmChain &&
     !isCreator &&
     !isExpired &&
     Boolean(enteredAmount) &&
@@ -362,8 +378,13 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
-    if (selectedNetwork !== "solana" && !evmConnected) {
+    if (selectedNetwork !== "solana" && !activePaymentWalletConnected) {
       setError("Please connect your wallet first");
+      return;
+    }
+
+    if (selectedNetwork !== "solana" && isWrongEvmChain) {
+      setError("Please switch network");
       return;
     }
 
@@ -392,9 +413,9 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
               network: selectedNetwork as EvmNetwork,
               token: paymentToken,
               recipientWallet: normalizedRecipientWallet,
-              senderWallet: evmAddress ?? "",
+              senderWallet: connectedEvmAddress,
               amount: enteredAmount,
-              currentChainId: evmChainId ?? null,
+              currentChainId: currentEvmChainId,
               switchChainAsync,
             });
 
@@ -407,7 +428,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         network: selectedNetwork,
         asset: paymentToken,
         expectedAmount: enteredAmount,
-        payerWallet: selectedNetwork === "solana" ? solanaAccount.address! : evmAddress!,
+        payerWallet: selectedNetwork === "solana" ? solanaAccount.address! : connectedEvmAddress,
         txSignature: signature
       });
 
@@ -435,6 +456,25 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       setPaymentStage("failed");
     } finally {
       setIsPaying(false);
+    }
+  }
+
+  async function handleSwitchNetwork() {
+    if (selectedNetwork === "solana" || !selectedEvmNetworkOption) {
+      return;
+    }
+
+    if (!switchChainAsync) {
+      setError("Please switch network in your wallet");
+      return;
+    }
+
+    try {
+      setError(null);
+      await switchChainAsync({ chainId: selectedEvmNetworkOption.chain.id });
+    } catch (switchError) {
+      console.error(switchError);
+      setError("Please switch network in your wallet");
     }
   }
 
@@ -602,20 +642,20 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             </div>
           ) : null}
 
-          {selectedNetwork !== "solana" && !evmConnected && !isCreator && !isExpired ? (
+          {selectedNetwork !== "solana" && !activePaymentWalletConnected && !isCreator && !isExpired ? (
             <div className="space-y-3">
               <p className="text-sm text-secondary">Please connect your wallet first</p>
               <EvmConnectWalletButton className="!w-full" />
             </div>
           ) : null}
 
-          {selectedNetwork !== "solana" &&
-          evmConnected &&
-          evmChainId !== getEvmNetworkOption(selectedNetwork as EvmNetwork).chain.id &&
-          !isExpired ? (
-            <p className="text-sm text-secondary">
-              Please switch to {getEvmNetworkOption(selectedNetwork as EvmNetwork).label}
-            </p>
+          {selectedNetwork !== "solana" && isWrongEvmChain && !isExpired ? (
+            <div className="space-y-3">
+              <p className="text-sm text-secondary">Please switch network</p>
+              <Button className="w-full" onClick={handleSwitchNetwork}>
+                Switch to {selectedEvmNetworkOption?.label}
+              </Button>
+            </div>
           ) : null}
 
           {isInitializingPayment ? (
@@ -733,6 +773,26 @@ function getNetworkTokenSymbols(option: EvmNetworkOption): PaymentAsset[] {
   return ["BNB"];
 }
 
+function getActivePaymentWallet(input: {
+  selectedNetwork: PaymentNetwork;
+  solanaAddress: string | null;
+  solanaConnected: boolean;
+  evmAddress: string | null;
+  evmConnected: boolean;
+}) {
+  if (input.selectedNetwork === "solana") {
+    return {
+      address: input.solanaAddress?.trim() || null,
+      connected: input.solanaConnected && Boolean(input.solanaAddress)
+    };
+  }
+
+  return {
+    address: input.evmAddress?.trim() || null,
+    connected: input.evmConnected && Boolean(input.evmAddress)
+  };
+}
+
 async function sendSolanaPayment({
   connection,
   wallet,
@@ -817,11 +877,26 @@ async function sendEvmPayment({
   currentChainId: number | null;
   switchChainAsync?: ((args: { chainId: number }) => Promise<unknown>) | undefined;
 }) {
+  console.log("EVM payment debug", {
+    selectedNetwork: network,
+    selectedChainId: getEvmNetworkOption(network).chain.id,
+    connectedEvmAddress: senderWallet,
+    receiverWallet: recipientWallet,
+    token,
+    amount,
+    currentChainId
+  });
+
   const networkOption = getEvmNetworkOption(network);
   const tokenConfig = getEvmTokenConfig(network, token);
+  const parsedAmount = Number(amount);
 
   if (!tokenConfig) {
     throw new Error("Payment failed. Please try again");
+  }
+
+  if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    throw new Error("Enter an amount to continue");
   }
 
   if (!isAddress(recipientWallet)) {
@@ -1088,6 +1163,10 @@ function getReadablePaymentError(message: string) {
 
   if (normalized.includes("please switch network")) {
     return "Please switch network";
+  }
+
+  if (normalized.includes("switch network in your wallet")) {
+    return "Please switch network in your wallet";
   }
 
   if (
