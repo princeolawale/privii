@@ -1,6 +1,9 @@
 "use client";
 
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { getWalletClient } from "@wagmi/core";
+import { isAddress, parseUnits } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
 import {
   ArrowRight,
   Check,
@@ -18,21 +21,22 @@ import {
   SystemProgram,
   Transaction
 } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  createTransferCheckedInstruction,
-  getAccount,
-  getAssociatedTokenAddressSync
-} from "@solana/spl-token";
 
+import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
+import { evmConfig } from "@/components/evm/wallet-provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getEvmNetworkOption, type EvmNetworkOption, EVM_NETWORK_OPTIONS } from "@/lib/evm/chains";
+import { getEvmPublicClient } from "@/lib/evm/client";
+import { getEvmTokenConfig } from "@/lib/evm/tokens";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
+import { addUsdcTransfer, fetchLatestBlockhashWithRetry } from "@/lib/solana/client";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { USDC_MINT_ADDRESS } from "@/lib/solana";
 import type {
+  EvmNetwork,
+  PaymentAsset,
+  PaymentNetwork,
   PayLinkResponse,
   PayLinkToken,
   PriviiTagRecord
@@ -51,11 +55,12 @@ type PayTarget =
 type PaymentInit = {
   kind: "paylink" | "tag";
   tag: string;
-  asset: PayLinkToken;
+  asset: PaymentAsset;
+  network: PaymentNetwork;
   expectedAmount: string;
   payerWallet?: string | null;
   recipientWallet: string;
-  token?: PayLinkToken;
+  token?: PaymentAsset;
   amount?: string | null;
   expiresAt: number | null;
   expired: boolean;
@@ -74,9 +79,12 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
   const { connection } = useConnection();
   const wallet = useWallet();
+  const { address: evmAddress, isConnected: evmConnected, chainId: evmChainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [data, setData] = useState<PayTarget | null>(null);
   const [customAmount, setCustomAmount] = useState("");
-  const [selectedToken, setSelectedToken] = useState<PayLinkToken>("USDC");
+  const [selectedNetwork, setSelectedNetwork] = useState<PaymentNetwork>("solana");
+  const [selectedToken, setSelectedToken] = useState<PaymentAsset>("USDC");
   const [isFetching, setIsFetching] = useState(true);
   const [isInitializingPayment, setIsInitializingPayment] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
@@ -142,7 +150,31 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => window.clearInterval(interval);
   }, []);
 
-  const paymentToken = data?.kind === "tag" ? selectedToken : data?.kind === "paylink" ? data.link.token : "USDC";
+  useEffect(() => {
+    if (!data || data.kind !== "paylink") {
+      return;
+    }
+
+    const nextNetwork = data.link.network || "solana";
+    setSelectedNetwork(nextNetwork);
+
+    const nextTokens = getNetworkTokenOptions(nextNetwork);
+    setSelectedToken(nextTokens.includes(data.link.token) ? data.link.token : nextTokens[0]);
+  }, [data]);
+
+  const availableNetworkOptions: Array<{ value: PaymentNetwork; label: string }> = [
+    { value: "solana", label: "Solana" },
+    ...EVM_NETWORK_OPTIONS.map((option) => ({
+      value: option.key as PaymentNetwork,
+      label: option.label
+    }))
+  ];
+  const availableTokens =
+    selectedNetwork === "solana"
+      ? (["SOL", "USDC"] as PaymentAsset[])
+      : getNetworkTokenOptions(selectedNetwork);
+  const paymentToken =
+    availableTokens.includes(selectedToken) ? selectedToken : availableTokens[0];
   const initAmount =
     data?.kind === "paylink" && data.link.amount ? data.link.amount : customAmount.trim();
   const needsAmountToInitialize =
@@ -176,8 +208,12 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             kind: data.kind,
             tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
             asset: paymentToken,
+            network: selectedNetwork,
             expectedAmount: initAmount,
-            payerWallet: wallet.publicKey?.toBase58() ?? null
+            payerWallet:
+              selectedNetwork === "solana"
+                ? wallet.publicKey?.toBase58() ?? null
+                : evmAddress ?? null
           })
         });
 
@@ -214,7 +250,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [canInitializePayment, data, initAmount, paymentToken]);
+  }, [canInitializePayment, data, evmAddress, initAmount, paymentToken, selectedNetwork, wallet.publicKey]);
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
@@ -235,14 +271,19 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const recipientWallet = paymentInit?.recipientWallet ?? null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
   const connectedWalletAddress = wallet.publicKey?.toBase58().trim() ?? null;
+  const normalizedEvmAddress = evmAddress?.trim().toLowerCase() ?? null;
   const isCreator =
-    Boolean(connectedWalletAddress && normalizedRecipientWallet) &&
-    connectedWalletAddress === normalizedRecipientWallet;
+    selectedNetwork === "solana"
+      ? Boolean(connectedWalletAddress && normalizedRecipientWallet) &&
+        connectedWalletAddress === normalizedRecipientWallet
+      : Boolean(normalizedEvmAddress && normalizedRecipientWallet) &&
+        normalizedEvmAddress === (normalizedRecipientWallet?.toLowerCase() ?? null);
   const canPay =
     Boolean(paymentInit) &&
     !isInitializingPayment &&
-    wallet.connected &&
-    wallet.publicKey &&
+    (selectedNetwork === "solana"
+      ? Boolean(wallet.connected && wallet.publicKey)
+      : Boolean(evmConnected && evmAddress)) &&
     !isCreator &&
     !isExpired &&
     Boolean(enteredAmount) &&
@@ -281,17 +322,24 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
-    if (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction) {
+    if (!paymentInit || !normalizedRecipientWallet) {
+      setError(
+        data.kind === "tag"
+          ? selectedNetwork === "solana"
+            ? "Recipient wallet not configured for this tag."
+            : "This user has not added an EVM wallet yet"
+          : "Payment failed. Please try again"
+      );
+      return;
+    }
+
+    if (selectedNetwork === "solana" && (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction)) {
       setError("Please connect your wallet first");
       return;
     }
 
-    if (!paymentInit || !normalizedRecipientWallet) {
-      setError(
-        data.kind === "tag"
-          ? "Recipient wallet not configured for this tag."
-          : "Payment failed. Please try again"
-      );
+    if (selectedNetwork !== "solana" && !evmConnected) {
+      setError("Please connect your wallet first");
       return;
     }
 
@@ -307,57 +355,35 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     setPaymentStage("awaiting_signature");
 
     try {
-      const recipient = new PublicKey(normalizedRecipientWallet);
-      const transaction = new Transaction();
+      const signature =
+        selectedNetwork === "solana"
+          ? await sendSolanaPayment({
+              connection,
+              wallet,
+              recipientWallet: normalizedRecipientWallet,
+              amountNumber,
+              paymentToken: paymentToken as PayLinkToken,
+            })
+          : await sendEvmPayment({
+              network: selectedNetwork as EvmNetwork,
+              token: paymentToken,
+              recipientWallet: normalizedRecipientWallet,
+              senderWallet: evmAddress ?? "",
+              amount: enteredAmount,
+              currentChainId: evmChainId ?? null,
+              switchChainAsync,
+            });
 
-      if (paymentToken === "SOL") {
-        const balanceLamports = await connection.getBalance(wallet.publicKey, "confirmed");
-        const requiredLamports = Math.round(amountNumber * 1e9);
-
-        if (balanceLamports < requiredLamports) {
-          throw new Error("Insufficient wallet balance");
-        }
-
-        transaction.add(
-          SystemProgram.transfer({
-            fromPubkey: wallet.publicKey,
-            toPubkey: recipient,
-            lamports: requiredLamports
-          })
-        );
-      } else {
-        await addUsdcTransfer({
-          connection,
-          transaction,
-          sender: wallet.publicKey,
-          recipient,
-          amount: amountNumber
-        });
-      }
-
-      const blockhash = await fetchLatestBlockhashWithRetry(connection);
-      transaction.recentBlockhash = blockhash.blockhash;
-      transaction.feePayer = wallet.publicKey;
-
-      const signature = await wallet.sendTransaction(transaction, connection);
       setPaymentStage("submitted");
-      await connection.confirmTransaction(
-        {
-          signature,
-          blockhash: blockhash.blockhash,
-          lastValidBlockHeight: blockhash.lastValidBlockHeight
-        },
-        "confirmed"
-      );
-
       setPaymentStage("confirming");
 
       const confirmed = await pollForConfirmedPayment({
         kind: data.kind,
         tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+        network: selectedNetwork,
         asset: paymentToken,
         expectedAmount: enteredAmount,
-        payerWallet: wallet.publicKey.toBase58(),
+        payerWallet: selectedNetwork === "solana" ? wallet.publicKey!.toBase58() : evmAddress!,
         txSignature: signature
       });
 
@@ -428,9 +454,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const title =
     data.kind === "tag"
       ? `Pay @${data.tagRecord.tag}`
-      : data.link.amount
-        ? `Pay ${data.link.amount} ${data.link.token}`
-        : "Send payment";
+      : "Send payment";
   const subtitle =
     data.kind === "tag"
       ? "Choose an amount and complete the payment."
@@ -463,7 +487,26 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
           </div>
 
           {shouldShowCustomAmount ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Network</span>
+                <Select
+                  value={selectedNetwork}
+                  onChange={(event) => {
+                    const nextNetwork = event.target.value as PaymentNetwork;
+                    setSelectedNetwork(nextNetwork);
+                    const nextTokens = getNetworkTokenOptions(nextNetwork);
+                    setSelectedToken(nextTokens[0]);
+                  }}
+                >
+                  {availableNetworkOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+
               <label className="block space-y-2">
                 <span className="text-sm text-secondary">Amount to send</span>
                 <Input
@@ -474,46 +517,81 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
                 />
               </label>
 
-              {data.kind === "tag" ? (
-                <label className="block space-y-2">
-                  <span className="text-sm text-secondary">Token</span>
-                  <Select
-                    value={selectedToken}
-                    onChange={(event) => setSelectedToken(event.target.value as PayLinkToken)}
-                  >
-                    <option value="USDC">USDC</option>
-                    <option value="SOL">SOL</option>
-                  </Select>
-                </label>
-              ) : (
-                <label className="block space-y-2">
-                  <span className="text-sm text-secondary">Token</span>
-                  <Select value={data.link.token} disabled onChange={() => undefined}>
-                    <option value={data.link.token}>{data.link.token}</option>
-                  </Select>
-                </label>
-              )}
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Token</span>
+                <Select
+                  value={paymentToken}
+                  onChange={(event) => setSelectedToken(event.target.value as PaymentAsset)}
+                >
+                  {availableTokens.map((tokenOption) => (
+                    <option key={tokenOption} value={tokenOption}>
+                      {tokenOption}
+                    </option>
+                  ))}
+                </Select>
+              </label>
             </div>
           ) : data.kind === "paylink" && data.link.amount ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="block space-y-2">
+                <span className="text-sm text-secondary">Network</span>
+                <Select
+                  value={selectedNetwork}
+                  onChange={(event) => {
+                    const nextNetwork = event.target.value as PaymentNetwork;
+                    setSelectedNetwork(nextNetwork);
+                    const nextTokens = getNetworkTokenOptions(nextNetwork);
+                    setSelectedToken(nextTokens.includes(data.link.token) ? data.link.token : nextTokens[0]);
+                  }}
+                >
+                  {availableNetworkOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
               <label className="block space-y-2">
                 <span className="text-sm text-secondary">Amount to send</span>
                 <Input value={data.link.amount} disabled />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm text-secondary">Token</span>
-                <Select value={data.link.token} disabled onChange={() => undefined}>
-                  <option value={data.link.token}>{data.link.token}</option>
+                <Select
+                  value={paymentToken}
+                  onChange={(event) => setSelectedToken(event.target.value as PaymentAsset)}
+                >
+                  {availableTokens.map((tokenOption) => (
+                    <option key={tokenOption} value={tokenOption}>
+                      {tokenOption}
+                    </option>
+                  ))}
                 </Select>
               </label>
             </div>
           ) : null}
 
-          {!wallet.connected && !isCreator && !isExpired ? (
+          {selectedNetwork === "solana" && !wallet.connected && !isCreator && !isExpired ? (
             <div className="space-y-3">
               <p className="text-sm text-secondary">Please connect your wallet first</p>
               <ConnectWalletButton className="!w-full" />
             </div>
+          ) : null}
+
+          {selectedNetwork !== "solana" && !evmConnected && !isCreator && !isExpired ? (
+            <div className="space-y-3">
+              <p className="text-sm text-secondary">Please connect your wallet first</p>
+              <EvmConnectWalletButton className="!w-full" />
+            </div>
+          ) : null}
+
+          {selectedNetwork !== "solana" &&
+          evmConnected &&
+          evmChainId !== getEvmNetworkOption(selectedNetwork as EvmNetwork).chain.id &&
+          !isExpired ? (
+            <p className="text-sm text-secondary">
+              Please switch to {getEvmNetworkOption(selectedNetwork as EvmNetwork).label}
+            </p>
           ) : null}
 
           {isInitializingPayment ? (
@@ -591,14 +669,230 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   );
 }
 
-function TokenBadge({ token }: { token: PayLinkToken }) {
+function TokenBadge({ token }: { token: PaymentAsset }) {
   return (
     <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-3xl font-semibold text-white">
-        {token === "USDC" ? "$" : "S"}
+        {token === "USDC" || token === "USDT" ? "$" : token === "SOL" ? "S" : token.charAt(0)}
       </div>
     </div>
   );
+}
+
+function getNetworkTokenOptions(network: PaymentNetwork): PaymentAsset[] {
+  if (network === "solana") {
+    return ["SOL", "USDC"];
+  }
+
+  const option = EVM_NETWORK_OPTIONS.find((item) => item.key === network);
+
+  if (!option) {
+    return ["ETH"];
+  }
+
+  return getNetworkTokenSymbols(option);
+}
+
+function getNetworkTokenSymbols(option: EvmNetworkOption): PaymentAsset[] {
+  if (option.key === "ethereum") {
+    return ["ETH", "USDC", "USDT"];
+  }
+
+  if (option.key === "base") {
+    return ["ETH", "USDC"];
+  }
+
+  if (option.key === "arbitrum") {
+    return ["ETH", "USDC"];
+  }
+
+  return ["BNB"];
+}
+
+async function sendSolanaPayment({
+  connection,
+  wallet,
+  recipientWallet,
+  amountNumber,
+  paymentToken,
+}: {
+  connection: Connection;
+  wallet: ReturnType<typeof useWallet>;
+  recipientWallet: string;
+  amountNumber: number;
+  paymentToken: PayLinkToken;
+}) {
+  if (!wallet.publicKey || !wallet.sendTransaction) {
+    throw new Error("Please connect your wallet first");
+  }
+
+  const recipient = new PublicKey(recipientWallet);
+  const transaction = new Transaction();
+
+  if (paymentToken === "SOL") {
+    const balanceLamports = await connection.getBalance(wallet.publicKey, "confirmed");
+    const requiredLamports = Math.round(amountNumber * 1e9);
+
+    if (balanceLamports < requiredLamports) {
+      throw new Error("Insufficient wallet balance");
+    }
+
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: recipient,
+        lamports: requiredLamports
+      })
+    );
+  } else {
+    await addUsdcTransfer({
+      connection,
+      transaction,
+      sender: wallet.publicKey,
+      recipient,
+      amount: amountNumber
+    });
+  }
+
+  const blockhash = await fetchLatestBlockhashWithRetry(connection);
+  transaction.recentBlockhash = blockhash.blockhash;
+  transaction.feePayer = wallet.publicKey;
+
+  const signature = await wallet.sendTransaction(transaction, connection);
+  await connection.confirmTransaction(
+    {
+      signature,
+      blockhash: blockhash.blockhash,
+      lastValidBlockHeight: blockhash.lastValidBlockHeight
+    },
+    "confirmed"
+  );
+
+  return signature;
+}
+
+async function sendEvmPayment({
+  network,
+  token,
+  recipientWallet,
+  senderWallet,
+  amount,
+  currentChainId,
+  switchChainAsync,
+}: {
+  network: EvmNetwork;
+  token: PaymentAsset;
+  recipientWallet: string;
+  senderWallet: string;
+  amount: string;
+  currentChainId: number | null;
+  switchChainAsync?: ((args: { chainId: number }) => Promise<unknown>) | undefined;
+}) {
+  const networkOption = getEvmNetworkOption(network);
+  const tokenConfig = getEvmTokenConfig(network, token);
+
+  if (!tokenConfig) {
+    throw new Error("Payment failed. Please try again");
+  }
+
+  if (!isAddress(recipientWallet)) {
+    throw new Error("This user has not added an EVM wallet yet");
+  }
+
+  if (!isAddress(senderWallet)) {
+    throw new Error("Please connect your wallet first");
+  }
+
+  if (currentChainId !== networkOption.chain.id) {
+    if (!switchChainAsync) {
+      throw new Error("Please switch network");
+    }
+
+    try {
+      await switchChainAsync({ chainId: networkOption.chain.id });
+    } catch (error) {
+      console.error(error);
+      throw new Error("Please switch network in your wallet");
+    }
+  }
+
+  const walletClient = await getWalletClient(evmConfig, { chainId: networkOption.chain.id });
+
+  if (!walletClient) {
+    throw new Error("Please connect your wallet first");
+  }
+
+  const publicClient = getEvmPublicClient(network);
+  const atomicAmount = parseUnits(amount, tokenConfig.decimals);
+  const nativeBalance = await publicClient.getBalance({ address: senderWallet as `0x${string}` });
+
+  if (tokenConfig.isNative) {
+    const gas = await publicClient.estimateGas({
+      account: senderWallet as `0x${string}`,
+      to: recipientWallet as `0x${string}`,
+      value: atomicAmount
+    });
+    const gasPrice = await publicClient.getGasPrice();
+    const feeCost = gas * gasPrice;
+
+    if (nativeBalance < feeCost) {
+      throw new Error("Insufficient gas balance");
+    }
+
+    if (nativeBalance < atomicAmount + feeCost) {
+      throw new Error("Insufficient wallet balance");
+    }
+
+    return walletClient.sendTransaction({
+      account: senderWallet as `0x${string}`,
+      chain: networkOption.chain,
+      to: recipientWallet as `0x${string}`,
+      value: atomicAmount,
+      gas,
+    });
+  }
+
+  if (!tokenConfig.contractAddress) {
+    throw new Error("Payment failed. Please try again");
+  }
+
+  const tokenBalance = await publicClient.readContract({
+    address: tokenConfig.contractAddress,
+    abi: tokenConfig.abi!,
+    functionName: "balanceOf",
+    args: [senderWallet as `0x${string}`]
+  }) as bigint;
+
+  if (tokenBalance < atomicAmount) {
+    throw new Error("Insufficient token balance");
+  }
+
+  const gas = await publicClient.estimateContractGas({
+    address: tokenConfig.contractAddress,
+    abi: tokenConfig.abi!,
+    functionName: "transfer",
+    args: [recipientWallet as `0x${string}`, atomicAmount],
+    account: senderWallet as `0x${string}`,
+  });
+  const gasPrice = await publicClient.getGasPrice();
+  const feeCost = gas * gasPrice;
+
+  if (nativeBalance < feeCost) {
+    throw new Error("Insufficient gas balance");
+  }
+
+  const hash = await walletClient.writeContract({
+    account: senderWallet as `0x${string}`,
+    chain: networkOption.chain,
+    address: tokenConfig.contractAddress,
+    abi: tokenConfig.abi!,
+    functionName: "transfer",
+    args: [recipientWallet as `0x${string}`, atomicAmount],
+    gas,
+  });
+
+  await publicClient.waitForTransactionReceipt({ hash });
+  return hash;
 }
 
 function IconActionButton({
@@ -688,80 +982,11 @@ function formatExpiryLabel(expiresAt: number | null, now: number) {
   return `Expires in ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
-async function addUsdcTransfer({
-  connection,
-  transaction,
-  sender,
-  recipient,
-  amount
-}: {
-  connection: Connection;
-  transaction: Transaction;
-  sender: PublicKey;
-  recipient: PublicKey;
-  amount: number;
-}) {
-  const senderAta = getAssociatedTokenAddressSync(USDC_MINT_ADDRESS, sender);
-  const recipientAta = getAssociatedTokenAddressSync(USDC_MINT_ADDRESS, recipient);
-  let senderAccount;
-
-  try {
-    senderAccount = await getAccount(connection, senderAta);
-  } catch {
-    throw new Error("USDC wallet not initialized");
-  }
-
-  const requiredAmount = BigInt(Math.round(amount * 1_000_000));
-  const solBalanceLamports = await connection.getBalance(sender, "confirmed");
-
-  if (solBalanceLamports < Math.round(0.002 * LAMPORTS_PER_SOL)) {
-    throw new Error("Insufficient SOL for transaction fees");
-  }
-
-  if (senderAccount.amount < requiredAmount) {
-    throw new Error("Insufficient USDC balance");
-  }
-
-  try {
-    await getAccount(connection, recipientAta);
-  } catch {
-    transaction.add(
-      createAssociatedTokenAccountInstruction(
-        sender,
-        recipientAta,
-        recipient,
-        USDC_MINT_ADDRESS
-      )
-    );
-  }
-
-  transaction.add(
-    createTransferCheckedInstruction(
-      senderAta,
-      USDC_MINT_ADDRESS,
-      recipientAta,
-      sender,
-      Number(requiredAmount),
-      6,
-      [],
-      TOKEN_PROGRAM_ID
-    )
-  );
-}
-
-async function fetchLatestBlockhashWithRetry(connection: Connection) {
-  try {
-    return await connection.getLatestBlockhash("confirmed");
-  } catch (error) {
-    console.error("Blockhash fetch error:", error);
-    return connection.getLatestBlockhash("confirmed");
-  }
-}
-
 async function pollForConfirmedPayment(input: {
   kind: "tag" | "paylink";
   tag: string;
-  asset: PayLinkToken;
+  network: PaymentNetwork;
+  asset: PaymentAsset;
   expectedAmount: string;
   payerWallet: string;
   txSignature: string;
@@ -795,7 +1020,7 @@ function paymentStageMessage(stage: PaymentStage) {
     case "initializing":
       return "Initializing payment";
     case "awaiting_signature":
-      return "Awaiting wallet signature";
+      return "Confirm transaction in wallet";
     case "submitted":
       return "Payment submitted";
     case "confirming":
@@ -820,8 +1045,20 @@ function getReadablePaymentError(message: string) {
     return "Insufficient USDC balance";
   }
 
+  if (normalized.includes("insufficient token")) {
+    return "Insufficient token balance";
+  }
+
   if (normalized.includes("insufficient sol")) {
     return "Insufficient SOL for transaction fees";
+  }
+
+  if (normalized.includes("insufficient gas")) {
+    return "Insufficient gas balance";
+  }
+
+  if (normalized.includes("please switch network")) {
+    return "Please switch network";
   }
 
   if (
@@ -832,8 +1069,12 @@ function getReadablePaymentError(message: string) {
     return "Insufficient wallet balance";
   }
 
-  if (normalized.includes("user rejected") || normalized.includes("cancelled")) {
-    return "Payment failed. Please try again";
+  if (
+    normalized.includes("user rejected") ||
+    normalized.includes("rejected") ||
+    normalized.includes("cancelled")
+  ) {
+    return "Transaction rejected";
   }
 
   return "Payment failed. Please try again";

@@ -67,6 +67,8 @@ export async function POST(request: Request) {
       tag,
       ownerWallet,
       recipientWallet: ownerWallet,
+      solanaWallet: ownerWallet,
+      evmWallet: null,
       createdAt: new Date().toISOString(),
       status: "active",
       primaryUrl: buildPrimaryTagUrl(tag),

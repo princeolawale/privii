@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
+import { EvmWalletProvider } from "@/components/evm/wallet-provider";
 import { SolanaWalletProvider } from "@/components/solana/wallet-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { APP_DESCRIPTION } from "@/lib/constants";
@@ -40,9 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body>
-        <SolanaWalletProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </SolanaWalletProvider>
+        <EvmWalletProvider>
+          <SolanaWalletProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </SolanaWalletProvider>
+        </EvmWalletProvider>
       </body>
     </html>
   );

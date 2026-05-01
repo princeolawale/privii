@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.10",
     "@solana/spl-token": "^0.4.14",
     "@solana/wallet-adapter-backpack": "^0.1.14",
     "@solana/wallet-adapter-base": "^0.9.27",
@@ -19,13 +20,16 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-solflare": "^0.6.33",
     "@solana/web3.js": "^1.98.4",
+    "@tanstack/react-query": "^5.100.7",
     "@vercel/kv": "^3.0.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
     "next": "^15.5.15",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "viem": "^2.48.7",
+    "wagmi": "^2.19.5"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",

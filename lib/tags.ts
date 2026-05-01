@@ -27,6 +27,25 @@ export async function priviiTagExists(tag: string) {
 
 export async function savePriviiTag(record: PriviiTagRecord) {
   await kv.set(tagKey(record.tag), record);
-  await kv.set(ownerKey(record.ownerWallet), record.tag);
+  await kv.set(ownerKey(resolveTagSolanaWallet(record)), record.tag);
   return record;
+}
+
+export function resolveTagSolanaWallet(record: {
+  solanaWallet?: string | null;
+  recipientWallet?: string | null;
+  ownerWallet?: string | null;
+}) {
+  return (
+    record.solanaWallet?.trim() ||
+    record.recipientWallet?.trim() ||
+    record.ownerWallet?.trim() ||
+    ""
+  );
+}
+
+export function resolveTagEvmWallet(record: {
+  evmWallet?: string | null;
+}) {
+  return record.evmWallet?.trim() || null;
 }

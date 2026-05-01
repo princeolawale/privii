@@ -19,14 +19,17 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast-provider";
-import type { PayLinkExpiryOption, PayLinkToken, PayLinkType } from "@/lib/types";
+import { EVM_NETWORK_OPTIONS } from "@/lib/evm/chains";
+import { EVM_TOKENS } from "@/lib/evm/tokens";
+import type { PayLinkExpiryOption, PaymentAsset, PaymentNetwork, PayLinkType } from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
 type CreateResponse = {
   link: {
     tag: string;
     amount: string | null;
-    token: PayLinkToken;
+    token: PaymentAsset;
+    network?: PaymentNetwork | null;
     type: PayLinkType;
     expiresAt: number | null;
     creatorTag?: string | null;
@@ -42,7 +45,8 @@ export function PayLinkForm() {
   const { showToast } = useToast();
   const [paymentPurpose, setPaymentPurpose] = useState("");
   const [amount, setAmount] = useState("");
-  const [token, setToken] = useState<PayLinkToken>("USDC");
+  const [network, setNetwork] = useState<PaymentNetwork>("solana");
+  const [token, setToken] = useState<PaymentAsset>("USDC");
   const [type, setType] = useState<PayLinkType>("permanent");
   const [expiry, setExpiry] = useState<PayLinkExpiryOption>("none");
   const [isLoading, setIsLoading] = useState(false);
@@ -53,8 +57,17 @@ export function PayLinkForm() {
   const creatorWallet = useMemo(() => publicKey?.toBase58() ?? "", [publicKey]);
   const recipientWallet =
     tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
+  const evmWallet = tagRecord?.evmWallet?.trim() || "";
+  const availableTokens =
+    network === "solana"
+      ? ["SOL", "USDC"]
+      : EVM_TOKENS[network].map((item) => item.symbol);
   const canCreate =
-    connected && hasTag && Boolean(creatorWallet) && Boolean(recipientWallet) && !isLoading;
+    connected &&
+    hasTag &&
+    Boolean(creatorWallet) &&
+    !isLoading &&
+    (network === "solana" ? Boolean(recipientWallet) : Boolean(evmWallet));
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,6 +88,7 @@ export function PayLinkForm() {
         body: JSON.stringify({
           amount: amount || null,
           token,
+          network,
           type,
           expiry: type === "expiring" ? expiry : "none",
           creatorWallet,
@@ -145,6 +159,16 @@ export function PayLinkForm() {
       createdLink.link.type === "permanent"
         ? "No expiry"
         : formatExpiryLabel(createdLink.link.expiresAt);
+    const networkLabel =
+      createdLink.link.network === "ethereum"
+        ? "Ethereum"
+        : createdLink.link.network === "base"
+          ? "Base"
+          : createdLink.link.network === "arbitrum"
+            ? "Arbitrum"
+            : createdLink.link.network === "bsc"
+              ? "BNB Chain"
+              : "Solana";
 
     return (
       <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
@@ -177,6 +201,7 @@ export function PayLinkForm() {
                 value={createdLink.link.ownerTag ? `@${createdLink.link.ownerTag}` : createdLink.link.tag}
               />
               <PreviewRow label="Payment purpose" value={purposeLabel} />
+              <PreviewRow label="Network" value={networkLabel} />
               <PreviewRow label="Amount" value={amountLabel} />
               <PreviewRow label="Link type" value={linkTypeLabel} />
               <PreviewRow label="Expiry" value={expiryLabel} />
@@ -290,33 +315,59 @@ export function PayLinkForm() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
-                <span className="text-sm text-secondary">Token</span>
+                <span className="text-sm text-secondary">Network</span>
                 <Select
-                  value={token}
-                  onChange={(event) => setToken(event.target.value as PayLinkToken)}
+                  value={network}
+                  onChange={(event) => {
+                    const nextNetwork = event.target.value as PaymentNetwork;
+                    setNetwork(nextNetwork);
+                    const nextTokens =
+                      nextNetwork === "solana"
+                        ? ["SOL", "USDC"]
+                        : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
+                    setToken(nextTokens[0] as PaymentAsset);
+                  }}
                 >
-                  <option value="USDC">USDC</option>
-                  <option value="SOL">SOL</option>
+                  <option value="solana">Solana</option>
+                  {EVM_NETWORK_OPTIONS.map((option) => (
+                    <option key={option.key} value={option.key}>
+                      {option.label}
+                    </option>
+                  ))}
                 </Select>
               </label>
 
               <label className="space-y-2">
-                <span className="text-sm text-secondary">Type</span>
+                <span className="text-sm text-secondary">Token</span>
                 <Select
-                  value={type}
-                  onChange={(event) => {
-                    const nextType = event.target.value as PayLinkType;
-                    setType(nextType);
-                    if (nextType === "permanent") {
-                      setExpiry("none");
-                    }
-                  }}
+                  value={token}
+                  onChange={(event) => setToken(event.target.value as PaymentAsset)}
                 >
-                  <option value="permanent">Permanent</option>
-                  <option value="expiring">Expiring</option>
+                  {availableTokens.map((tokenOption) => (
+                    <option key={tokenOption} value={tokenOption}>
+                      {tokenOption}
+                    </option>
+                  ))}
                 </Select>
               </label>
             </div>
+
+            <label className="space-y-2">
+              <span className="text-sm text-secondary">Type</span>
+              <Select
+                value={type}
+                onChange={(event) => {
+                  const nextType = event.target.value as PayLinkType;
+                  setType(nextType);
+                  if (nextType === "permanent") {
+                    setExpiry("none");
+                  }
+                }}
+              >
+                <option value="permanent">Permanent</option>
+                <option value="expiring">Expiring</option>
+              </Select>
+            </label>
 
             <label className="space-y-2">
               <span className="text-sm text-secondary">Expiry</span>
@@ -341,6 +392,12 @@ export function PayLinkForm() {
               />
             </label>
 
+            {network !== "solana" && !evmWallet ? (
+              <p className="text-sm text-secondary">
+                Add an EVM wallet in your dashboard before creating EVM payment links.
+              </p>
+            ) : null}
+
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
             <Button className="w-full" disabled={!canCreate}>
@@ -360,7 +417,7 @@ export function PayLinkForm() {
   );
 }
 
-function TokenBadge({ token }: { token: PayLinkToken }) {
+function TokenBadge({ token }: { token: PaymentAsset }) {
   return (
     <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2563EB] text-3xl font-semibold text-white">

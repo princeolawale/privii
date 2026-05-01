@@ -38,6 +38,8 @@ export async function GET(
       asset: payment.asset,
       status: payment.status,
       tx_signature: payment.tx_signature,
+      chain: payment.chain,
+      explorer_url: payment.explorer_url,
       created_at: payment.created_at,
       updated_at: payment.updated_at,
       confirmed_at: payment.confirmed_at,

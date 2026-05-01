@@ -9,8 +9,10 @@ import {
 } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
+import { getEvmNetworkOption } from "@/lib/evm/chains";
+import { verifyEvmTransaction } from "@/lib/evm/client";
 import { USDC_MINT_ADDRESS, SOLANA_RPC_URL } from "@/lib/solana";
-import type { PaymentRecord, PaymentStatus, PayLinkToken } from "@/lib/types";
+import type { EvmNetwork, PaymentAsset, PaymentNetwork, PaymentRecord, PaymentStatus } from "@/lib/types";
 
 const paymentKey = (id: string) => `payment:${id}`;
 const recipientIndexKey = (wallet: string) => `payment:recipient:${wallet}`;
@@ -112,11 +114,16 @@ export async function getPaymentsByWallet(wallet: string) {
 
 export function createPaymentRecord(input: {
   tag: string;
+  receiverTag?: string | null;
   recipientWallet: string;
-  asset: PayLinkToken;
+  asset: PaymentAsset;
+  chain: PaymentNetwork;
+  chainId?: number | null;
   expectedAmount: string;
   status?: PaymentStatus;
   payerWallet?: string | null;
+  txSignature?: string | null;
+  explorerUrl?: string | null;
 }) {
   const now = new Date().toISOString();
 
@@ -125,10 +132,14 @@ export function createPaymentRecord(input: {
     tag: input.tag,
     recipient_wallet: input.recipientWallet,
     payer_wallet: input.payerWallet ?? null,
+    receiver_tag: input.receiverTag ?? null,
     asset: input.asset,
+    chain: input.chain,
+    chain_id: input.chainId ?? null,
     amount: null,
     expected_amount: input.expectedAmount,
-    tx_signature: null,
+    tx_signature: input.txSignature ?? null,
+    explorer_url: input.explorerUrl ?? null,
     status: input.status ?? "initialized",
     created_at: now,
     updated_at: now,
@@ -198,9 +209,11 @@ export async function confirmPaymentRecord(payment: PaymentRecord) {
 
 export async function confirmAndSavePayment(input: {
   tag: string;
+  receiverTag?: string | null;
   recipientWallet: string;
   payerWallet: string;
-  asset: PayLinkToken;
+  asset: PaymentAsset;
+  chain: PaymentNetwork;
   expectedAmount: string;
   txSignature: string;
 }) {
@@ -210,41 +223,77 @@ export async function confirmAndSavePayment(input: {
     return { status: existing.status, payment: existing } as const;
   }
 
-  const status = await connection.getSignatureStatuses([input.txSignature], {
-    searchTransactionHistory: true,
+  if (input.chain === "solana") {
+    const status = await connection.getSignatureStatuses([input.txSignature], {
+      searchTransactionHistory: true,
+    });
+    const signatureStatus = status.value[0];
+
+    if (!signatureStatus) {
+      return { status: "confirming" as const };
+    }
+
+    if (signatureStatus.err) {
+      return { status: "failed" as const };
+    }
+
+    const transaction = await connection.getParsedTransaction(input.txSignature, {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0,
+    });
+
+    if (!transaction) {
+      return { status: "confirming" as const };
+    }
+
+    const pendingRecord = {
+      ...createPaymentRecord({
+        tag: input.tag,
+        receiverTag: input.receiverTag,
+        recipientWallet: input.recipientWallet,
+        asset: input.asset,
+        chain: "solana",
+        expectedAmount: input.expectedAmount,
+        status: "submitted",
+        payerWallet: input.payerWallet,
+        txSignature: input.txSignature,
+        explorerUrl: `https://solscan.io/tx/${input.txSignature}`
+      }),
+    } satisfies PaymentRecord;
+
+    const verified = verifyTransaction(transaction, pendingRecord);
+
+    if (!verified.ok || !verified.amount) {
+      return { status: "failed" as const };
+    }
+
+    const now = new Date().toISOString();
+    const confirmedRecord: PaymentRecord = {
+      ...pendingRecord,
+      amount: verified.amount,
+      status: "confirmed",
+      updated_at: now,
+      confirmed_at: now,
+    };
+
+    await savePayment(confirmedRecord);
+
+    return {
+      status: "confirmed" as const,
+      payment: confirmedRecord,
+    };
+  }
+
+  const evmNetwork = input.chain as EvmNetwork;
+  const networkOption = getEvmNetworkOption(evmNetwork);
+  const verified = await verifyEvmTransaction({
+    network: evmNetwork,
+    asset: input.asset,
+    recipientWallet: input.recipientWallet as `0x${string}`,
+    payerWallet: input.payerWallet as `0x${string}`,
+    txHash: input.txSignature as `0x${string}`,
+    expectedAmount: input.expectedAmount,
   });
-  const signatureStatus = status.value[0];
-
-  if (!signatureStatus) {
-    return { status: "confirming" as const };
-  }
-
-  if (signatureStatus.err) {
-    return { status: "failed" as const };
-  }
-
-  const transaction = await connection.getParsedTransaction(input.txSignature, {
-    commitment: "confirmed",
-    maxSupportedTransactionVersion: 0,
-  });
-
-  if (!transaction) {
-    return { status: "confirming" as const };
-  }
-
-  const pendingRecord = {
-    ...createPaymentRecord({
-      tag: input.tag,
-      recipientWallet: input.recipientWallet,
-      asset: input.asset,
-      expectedAmount: input.expectedAmount,
-      status: "submitted",
-      payerWallet: input.payerWallet,
-    }),
-    tx_signature: input.txSignature,
-  } satisfies PaymentRecord;
-
-  const verified = verifyTransaction(transaction, pendingRecord);
 
   if (!verified.ok || !verified.amount) {
     return { status: "failed" as const };
@@ -252,9 +301,20 @@ export async function confirmAndSavePayment(input: {
 
   const now = new Date().toISOString();
   const confirmedRecord: PaymentRecord = {
-    ...pendingRecord,
+    ...createPaymentRecord({
+      tag: input.tag,
+      receiverTag: input.receiverTag,
+      recipientWallet: input.recipientWallet,
+      asset: input.asset,
+      chain: evmNetwork,
+      chainId: networkOption.chain.id,
+      expectedAmount: input.expectedAmount,
+      status: "confirmed",
+      payerWallet: input.payerWallet,
+      txSignature: input.txSignature,
+      explorerUrl: verified.explorerUrl
+    }),
     amount: verified.amount,
-    status: "confirmed",
     updated_at: now,
     confirmed_at: now,
   };
@@ -279,7 +339,11 @@ function verifyTransaction(
     return verifySolTransfer(transaction, payment);
   }
 
-  return verifyUsdcTransfer(transaction, payment);
+  if (payment.asset === "USDC") {
+    return verifyUsdcTransfer(transaction, payment);
+  }
+
+  return { ok: false };
 }
 
 function verifySolTransfer(transaction: ParsedTransactionWithMeta, payment: PaymentRecord) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useAccount } from "wagmi";
 import {
   Check,
   Copy,
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
+import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +32,8 @@ type PaymentHistoryItem = Pick<
   | "asset"
   | "status"
   | "tx_signature"
+  | "chain"
+  | "explorer_url"
   | "created_at"
   | "updated_at"
   | "confirmed_at"
@@ -42,6 +46,7 @@ type PaymentHistoryItem = Pick<
 export function DashboardClient() {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const walletAddress = publicKey?.toBase58() ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
@@ -50,6 +55,8 @@ export function DashboardClient() {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
+  const [isSavingEvmWallet, setIsSavingEvmWallet] = useState(false);
+  const [evmWalletMessage, setEvmWalletMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
 
   useEffect(() => {
@@ -155,6 +162,43 @@ export function DashboardClient() {
     }
 
     window.open(buildXShareUrl(publicUrl, tagRecord.tag), "_blank", "noopener,noreferrer");
+  }
+
+  async function handleSaveEvmWallet() {
+    if (!tagRecord || !walletAddress || !evmAddress) {
+      return;
+    }
+
+    setIsSavingEvmWallet(true);
+    setEvmWalletMessage(null);
+
+    try {
+      const response = await fetch(`/api/tags/${tagRecord.tag}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ownerWallet: walletAddress,
+          evmWallet: evmAddress
+        })
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to update Privii tag.");
+      }
+
+      setTagRecord(result.tag);
+      setEvmWalletMessage("EVM wallet saved");
+    } catch (error) {
+      console.error(error);
+      setEvmWalletMessage(
+        error instanceof Error ? error.message : "Unable to update Privii tag."
+      );
+    } finally {
+      setIsSavingEvmWallet(false);
+    }
   }
 
   function handlePaySomeone(event: React.FormEvent<HTMLFormElement>) {
@@ -289,6 +333,37 @@ export function DashboardClient() {
                     onClick={handleShareTag}
                   />
                 </div>
+                <div className="mt-8 rounded-[24px] border border-border bg-background/60 p-5 text-left">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">
+                        Wallets
+                      </p>
+                      <p className="mt-2 text-sm text-secondary">
+                        Solana: {truncateWalletAddress(tagRecord.solanaWallet || tagRecord.recipientWallet || tagRecord.ownerWallet)}
+                      </p>
+                      <p className="mt-1 text-sm text-secondary">
+                        EVM: {tagRecord.evmWallet ? truncateWalletAddress(tagRecord.evmWallet) : "Not added"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <EvmConnectWalletButton className="!w-full sm:!w-auto" />
+                      {evmConnected && evmAddress ? (
+                        <Button
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                          disabled={isSavingEvmWallet}
+                          onClick={handleSaveEvmWallet}
+                        >
+                          {isSavingEvmWallet ? "Saving..." : tagRecord.evmWallet ? "Update EVM wallet" : "Add EVM wallet"}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {evmWalletMessage ? (
+                      <p className="text-sm text-secondary">{evmWalletMessage}</p>
+                    ) : null}
+                  </div>
+                </div>
               </Card>
             ) : null}
 
@@ -377,9 +452,15 @@ export function DashboardClient() {
                               {truncateCounterparty(payment, walletAddress)}
                             </p>
                           </div>
-                          {payment.tx_signature ? (
+                          {payment.tx_signature &&
+                          (payment.explorer_url || payment.chain === "solana") ? (
                             <a
-                              href={`https://solscan.io/tx/${payment.tx_signature}`}
+                              href={
+                                payment.explorer_url ||
+                                (payment.chain === "solana"
+                                  ? `https://solscan.io/tx/${payment.tx_signature}`
+                                  : "#")
+                              }
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex"
