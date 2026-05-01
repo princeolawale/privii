@@ -7,16 +7,9 @@ import { useState } from "react";
 
 import { BrandMark } from "@/components/layout/brand-mark";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
-import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
+import { ConnectMenuButton } from "@/components/wallet/connect-menu-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/get-started", label: "Get Started" }, 
-  { href: "/create", label: "Create Link" },
-  { href: "/dashboard", label: "Dashboard" }
-];
 
 export function SiteHeader({
   hideWalletButton = false,
@@ -30,7 +23,7 @@ export function SiteHeader({
   const { hasTag } = useOwnerTag();
   const navItems = hasTag
     ? [
-        { href: "/", label: "" },
+        { href: "/", label: "Home" },
         { href: "/create", label: "Create Link" },
         { href: "/dashboard", label: "Dashboard" }
       ]
@@ -59,12 +52,12 @@ export function SiteHeader({
               <Button className="min-w-[140px]">Get Started</Button>
             </Link>
           ) : null}
-          {!hideWalletButton ? <ConnectWalletButton /> : null}
+          {!hideWalletButton ? <ConnectMenuButton /> : null}
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
           {!hideWalletButton ? (
-            <ConnectWalletButton className="!min-h-12 !rounded-2xl !px-4 !text-sm" />
+            <ConnectMenuButton />
           ) : null}
           <button
             aria-expanded={open}

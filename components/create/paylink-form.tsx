@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useAccount } from "wagmi";
 import {
   ArrowRight,
   Check,
@@ -41,6 +42,7 @@ type CreateResponse = {
 
 export function PayLinkForm() {
   const { publicKey, connected } = useWallet();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
   const { showToast } = useToast();
   const [paymentPurpose, setPaymentPurpose] = useState("");
@@ -53,17 +55,18 @@ export function PayLinkForm() {
   const [error, setError] = useState<string | null>(null);
   const [createdLink, setCreatedLink] = useState<CreateResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  const anyWalletConnected = connected || evmConnected;
 
-  const creatorWallet = useMemo(() => publicKey?.toBase58() ?? "", [publicKey]);
+  const creatorWallet = useMemo(() => publicKey?.toBase58() || evmAddress || "", [evmAddress, publicKey]);
   const recipientWallet =
-    tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
+    tagRecord?.solanaWallet?.trim() || tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
   const evmWallet = tagRecord?.evmWallet?.trim() || "";
   const availableTokens =
     network === "solana"
       ? ["SOL", "USDC"]
       : EVM_TOKENS[network].map((item) => item.symbol);
   const canCreate =
-    connected &&
+    (connected || evmConnected) &&
     hasTag &&
     Boolean(creatorWallet) &&
     !isLoading &&
@@ -271,17 +274,17 @@ export function PayLinkForm() {
           </p>
         </div>
 
-        {!connected ? (
+        {!anyWalletConnected ? (
           <div className="space-y-4">
             <p className="text-sm text-secondary">Please connect your wallet first</p>
           </div>
         ) : null}
 
-        {connected && isTagLoading ? (
+        {anyWalletConnected && isTagLoading ? (
           <p className="text-sm text-secondary">Loading your payment tag</p>
         ) : null}
 
-        {connected && !isTagLoading && !hasTag ? (
+        {anyWalletConnected && !isTagLoading && !hasTag ? (
           <div className="space-y-4">
             <p className="text-sm text-secondary">Create your payment tag first.</p>
             <Link href="/get-started" className="inline-flex">
@@ -290,7 +293,7 @@ export function PayLinkForm() {
           </div>
         ) : null}
 
-        {connected && hasTag ? (
+        {anyWalletConnected && hasTag ? (
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">

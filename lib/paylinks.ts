@@ -1,9 +1,15 @@
 import { kv } from "@vercel/kv";
+import { isAddress } from "viem";
 
 import type { PayLinkRecord } from "@/lib/types";
 
 const linkKey = (tag: string) => `paylink:${tag.toLowerCase()}`;
-const ownerKey = (wallet: string) => `paylink:owner:${wallet}`;
+const ownerKey = (wallet: string) => `paylink:owner:${normalizeOwnerWallet(wallet)}`;
+
+function normalizeOwnerWallet(wallet: string) {
+  const normalized = wallet.trim();
+  return isAddress(normalized) ? normalized.toLowerCase() : normalized;
+}
 
 export async function getPayLink(tag: string) {
   return kv.get<PayLinkRecord>(linkKey(tag));

@@ -7,6 +7,7 @@ import { normalizePriviiTag } from "@/lib/utils";
 
 type UpdateTagPayload = {
   ownerWallet?: string;
+  solanaWallet?: string | null;
   evmWallet?: string | null;
 };
 
@@ -44,20 +45,40 @@ export async function PATCH(
       return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
     }
 
-    try {
-      new PublicKey(ownerWallet);
-    } catch {
-      return NextResponse.json(
-        { error: "Owner wallet is not a valid Solana address." },
-        { status: 400 }
-      );
+    const isSolanaOwner = (() => {
+      try {
+        new PublicKey(ownerWallet);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!isSolanaOwner && !isAddress(ownerWallet)) {
+      return NextResponse.json({ error: "Owner wallet is not a valid address." }, { status: 400 });
     }
 
-    if (record.ownerWallet !== ownerWallet && record.solanaWallet !== ownerWallet) {
+    if (
+      record.ownerWallet !== ownerWallet &&
+      record.solanaWallet !== ownerWallet &&
+      record.evmWallet !== ownerWallet
+    ) {
       return NextResponse.json({ error: "Only the tag owner can update this record." }, { status: 403 });
     }
 
+    const solanaWallet = body.solanaWallet?.trim() || record.solanaWallet?.trim() || null;
     const evmWallet = body.evmWallet?.trim() || null;
+
+    if (solanaWallet) {
+      try {
+        new PublicKey(solanaWallet);
+      } catch {
+        return NextResponse.json(
+          { error: "Solana wallet is not a valid address." },
+          { status: 400 }
+        );
+      }
+    }
 
     if (evmWallet && !isAddress(evmWallet)) {
       return NextResponse.json({ error: "EVM wallet is not a valid address." }, { status: 400 });
@@ -65,7 +86,9 @@ export async function PATCH(
 
     const updated = {
       ...record,
-      solanaWallet: record.solanaWallet?.trim() || record.recipientWallet?.trim() || record.ownerWallet,
+      ownerWallet: record.ownerWallet || solanaWallet || evmWallet || ownerWallet,
+      recipientWallet: solanaWallet || record.recipientWallet || null,
+      solanaWallet,
       evmWallet,
     };
 

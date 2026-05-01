@@ -36,11 +36,18 @@ export async function POST(request: Request) {
       );
     }
 
-    try {
-      new PublicKey(creatorWallet);
-    } catch {
+    const isSolanaCreatorWallet = (() => {
+      try {
+        new PublicKey(creatorWallet);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+
+    if (!isSolanaCreatorWallet && !isAddress(creatorWallet)) {
       return NextResponse.json(
-        { error: "Creator wallet is not a valid Solana address." },
+        { error: "Please connect your wallet first" },
         { status: 400 }
       );
     }
@@ -76,7 +83,7 @@ export async function POST(request: Request) {
           error:
             network === "solana"
               ? "Recipient wallet not configured for this tag."
-              : "This user has not added an EVM wallet yet"
+              : "This user has not added a wallet for this network"
         },
         { status: 422 }
       );
@@ -93,7 +100,7 @@ export async function POST(request: Request) {
       }
     } else if (!isAddress(recipientWallet)) {
       return NextResponse.json(
-        { error: "This user has not added an EVM wallet yet" },
+        { error: "This user has not added a wallet for this network" },
         { status: 422 }
       );
     }

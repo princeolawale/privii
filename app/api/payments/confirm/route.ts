@@ -63,7 +63,7 @@ export async function POST(request: Request) {
             error:
               network === "solana"
                 ? "Recipient wallet not configured for this tag."
-                : "This user has not added an EVM wallet yet"
+                : "This user has not added a wallet for this network"
           },
           { status: 422 }
         );
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         }
       } else if (!isAddress(recipientWallet)) {
         return NextResponse.json(
-          { error: "This user has not added an EVM wallet yet" },
+          { error: "This user has not added a wallet for this network" },
           { status: 422 }
         );
       }
@@ -154,7 +154,7 @@ export async function POST(request: Request) {
           error:
             network === "solana"
               ? "Recipient wallet not configured for this tag."
-              : "This user has not added an EVM wallet yet"
+              : "This user has not added a wallet for this network"
         },
         { status: 422 }
       );
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
       }
     } else if (!isAddress(recipientWallet)) {
       return NextResponse.json(
-        { error: "This user has not added an EVM wallet yet" },
+        { error: "This user has not added a wallet for this network" },
         { status: 422 }
       );
     }

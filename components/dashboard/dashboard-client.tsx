@@ -48,6 +48,7 @@ export function DashboardClient() {
   const { publicKey, connected } = useWallet();
   const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const walletAddress = publicKey?.toBase58() ?? "";
+  const anyWalletConnected = connected || evmConnected;
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -56,12 +57,18 @@ export function DashboardClient() {
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
   const [isSavingEvmWallet, setIsSavingEvmWallet] = useState(false);
+  const [isSavingSolanaWallet, setIsSavingSolanaWallet] = useState(false);
   const [evmWalletMessage, setEvmWalletMessage] = useState<string | null>(null);
+  const [solanaWalletMessage, setSolanaWalletMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
 
   useEffect(() => {
     async function fetchData() {
-      if (!walletAddress) {
+      const connectedWallets = [walletAddress, evmAddress].filter(
+        (value): value is string => Boolean(value)
+      );
+
+      if (!connectedWallets.length) {
         setTagRecord(null);
         setLinks([]);
         setPayments([]);
@@ -72,54 +79,105 @@ export function DashboardClient() {
       setIsLoading(true);
 
       try {
-        const [tagResponse, linksResponse, paymentsResponse] = await Promise.all([
-          fetch(`/api/tags/by-owner/${encodeURIComponent(walletAddress)}`, {
+        let currentTagRecord: PriviiTagRecord | null = null;
+
+        for (const owner of connectedWallets) {
+          const tagResponse = await fetch(`/api/tags/by-owner/${encodeURIComponent(owner)}`, {
             cache: "no-store"
-          }),
-          fetch(`/api/links/by-owner/${encodeURIComponent(walletAddress)}`, {
-            cache: "no-store"
-          }),
-          fetch(`/api/payments/by-wallet/${encodeURIComponent(walletAddress)}`, {
-            cache: "no-store"
-          })
+          });
+
+          if (tagResponse.ok) {
+            const result = (await tagResponse.json()) as { tag: PriviiTagRecord };
+            currentTagRecord = result.tag;
+            break;
+          }
+        }
+
+        if (!currentTagRecord) {
+          setTagRecord(null);
+          setLinks([]);
+          setPayments([]);
+          setHistoryError(null);
+          return;
+        }
+
+        setTagRecord(currentTagRecord);
+
+        const historyWallets = new Set(
+          [
+            currentTagRecord.solanaWallet,
+            currentTagRecord.recipientWallet,
+            currentTagRecord.ownerWallet,
+            currentTagRecord.evmWallet
+          ].filter((value): value is string => Boolean(value))
+        );
+
+        const [linksResponses, paymentsResponses] = await Promise.all([
+          Promise.all(
+            [...historyWallets].map((owner) =>
+              fetch(`/api/links/by-owner/${encodeURIComponent(owner)}`, {
+                cache: "no-store"
+              })
+            )
+          ),
+          Promise.all(
+            [...historyWallets].map((owner) =>
+              fetch(`/api/payments/by-wallet/${encodeURIComponent(owner)}`, {
+                cache: "no-store"
+              })
+            )
+          )
         ]);
 
-        if (tagResponse.ok) {
-          const result = (await tagResponse.json()) as { tag: PriviiTagRecord };
-          setTagRecord(result.tag);
-        } else {
-          setTagRecord(null);
+        const linkResults = await Promise.all(
+          linksResponses.map(async (response) =>
+            response.ok ? ((await response.json()) as { links: PayLinkRecord[] }).links : []
+          )
+        );
+        const mergedLinks = new Map<string, PayLinkRecord>();
+
+        for (const ownerLinks of linkResults) {
+          for (const link of ownerLinks) {
+            mergedLinks.set(link.tag, link);
+          }
         }
 
-        if (linksResponse.ok) {
-          const result = (await linksResponse.json()) as { links: PayLinkRecord[] };
-          setLinks(result.links);
-        } else {
-          setLinks([]);
+        setLinks([...mergedLinks.values()]);
+
+        const paymentResults = await Promise.all(
+          paymentsResponses.map(async (response) => {
+            if (!response.ok) {
+              return { payments: [], error: "Unable to load payment history." };
+            }
+
+            return (await response.json()) as {
+              payments: PaymentHistoryItem[];
+              error?: string;
+            };
+          })
+        );
+
+        const mergedPayments = new Map<string, PaymentHistoryItem>();
+
+        for (const result of paymentResults) {
+          for (const payment of result.payments) {
+            mergedPayments.set(payment.id, payment);
+          }
         }
 
-        if (paymentsResponse.ok) {
-          const result = (await paymentsResponse.json()) as {
-            payments: PaymentHistoryItem[];
-          };
-          setPayments(result.payments);
-          setHistoryError(null);
-        } else {
-          setPayments([]);
-          const result = (await paymentsResponse
-            .json()
-            .catch(() => ({ error: "Unable to load payment history." }))) as {
-            error?: string;
-          };
-          setHistoryError(result.error || "Unable to load payment history.");
-        }
+        setPayments(
+          [...mergedPayments.values()].sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
+        );
+        setHistoryError(paymentResults.find((result) => result.error)?.error ?? null);
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchData();
-  }, [walletAddress]);
+  }, [walletAddress, evmAddress]);
 
   const publicUrl = useMemo(() => {
     if (!tagRecord) {
@@ -132,6 +190,19 @@ export function DashboardClient() {
 
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
+  const tagOwnerAuthWallet =
+    (tagRecord &&
+      [
+        walletAddress && (tagRecord.ownerWallet === walletAddress || tagRecord.solanaWallet === walletAddress)
+          ? walletAddress
+          : null,
+        evmAddress && tagRecord.evmWallet === evmAddress ? evmAddress : null,
+        walletAddress && tagRecord.ownerWallet === walletAddress ? walletAddress : null,
+        evmAddress && tagRecord.ownerWallet === evmAddress ? evmAddress : null
+      ].find((value): value is string => Boolean(value))) ||
+    walletAddress ||
+    evmAddress ||
+    "";
 
   async function handleCopyTagLink() {
     if (!publicUrl) {
@@ -165,7 +236,7 @@ export function DashboardClient() {
   }
 
   async function handleSaveEvmWallet() {
-    if (!tagRecord || !walletAddress || !evmAddress) {
+    if (!tagRecord || !evmAddress || !tagOwnerAuthWallet) {
       return;
     }
 
@@ -179,7 +250,7 @@ export function DashboardClient() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          ownerWallet: walletAddress,
+          ownerWallet: tagOwnerAuthWallet,
           evmWallet: evmAddress
         })
       });
@@ -198,6 +269,43 @@ export function DashboardClient() {
       );
     } finally {
       setIsSavingEvmWallet(false);
+    }
+  }
+
+  async function handleSaveSolanaWallet() {
+    if (!tagRecord || !walletAddress || !tagOwnerAuthWallet) {
+      return;
+    }
+
+    setIsSavingSolanaWallet(true);
+    setSolanaWalletMessage(null);
+
+    try {
+      const response = await fetch(`/api/tags/${tagRecord.tag}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          ownerWallet: tagOwnerAuthWallet,
+          solanaWallet: walletAddress
+        })
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to update Privii tag.");
+      }
+
+      setTagRecord(result.tag);
+      setSolanaWalletMessage("Solana wallet saved");
+    } catch (error) {
+      console.error(error);
+      setSolanaWalletMessage(
+        error instanceof Error ? error.message : "Unable to update Privii tag."
+      );
+    } finally {
+      setIsSavingSolanaWallet(false);
     }
   }
 
@@ -244,18 +352,19 @@ export function DashboardClient() {
     router.push(`/${value.replace(/^\/+/, "")}`);
   }
 
-  if (!connected) {
+  if (!anyWalletConnected) {
     return (
       <div className="mx-auto flex w-full max-w-3xl justify-center pt-4 sm:pt-6">
         <Card className="w-full rounded-[32px] p-6 text-center sm:p-8">
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mx-auto max-w-lg text-sm leading-6 text-secondary">
-              Connect your wallet to manage your Privii tag, payment links, and payment
+              Connect at least one wallet to manage your Privii tag, payment links, and payment
               activity.
             </p>
-            <div className="flex justify-center pt-2">
+            <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
               <ConnectWalletButton />
+              <EvmConnectWalletButton />
             </div>
           </div>
         </Card>
@@ -311,7 +420,7 @@ export function DashboardClient() {
                   Your Privii tag is ready
                 </h2>
                 <p className="mt-3 text-sm text-secondary">
-                  Connected as {truncateWalletAddress(walletAddress)}
+                  Connected as {truncateWalletAddress(walletAddress || evmAddress || tagRecord.ownerWallet)}
                 </p>
                 <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
@@ -347,6 +456,17 @@ export function DashboardClient() {
                       </p>
                     </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <ConnectWalletButton className="!w-full sm:!w-auto" />
+                      {connected && walletAddress ? (
+                        <Button
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                          disabled={isSavingSolanaWallet}
+                          onClick={handleSaveSolanaWallet}
+                        >
+                          {isSavingSolanaWallet ? "Saving..." : tagRecord.solanaWallet ? "Update Solana wallet" : "Add Solana wallet"}
+                        </Button>
+                      ) : null}
                       <EvmConnectWalletButton className="!w-full sm:!w-auto" />
                       {evmConnected && evmAddress ? (
                         <Button
@@ -359,6 +479,9 @@ export function DashboardClient() {
                         </Button>
                       ) : null}
                     </div>
+                    {solanaWalletMessage ? (
+                      <p className="text-sm text-secondary">{solanaWalletMessage}</p>
+                    ) : null}
                     {evmWalletMessage ? (
                       <p className="text-sm text-secondary">{evmWalletMessage}</p>
                     ) : null}
@@ -507,7 +630,7 @@ export function DashboardClient() {
               No Privii tag yet. Register your payment identity to unlock your dashboard.
             </p>
             <Link href="/get-started" className="mt-6 inline-flex">
-              <Button></Button>
+              <Button>Get Started</Button>
             </Link>
           </Card>
         )}

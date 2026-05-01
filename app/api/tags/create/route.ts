@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
+import { isAddress } from "viem";
 
 import { tagExists } from "@/lib/paylinks";
 import { getPriviiTagByOwner, priviiTagExists, savePriviiTag } from "@/lib/tags";
@@ -14,13 +15,17 @@ import {
 type CreateTagPayload = {
   tag?: string;
   ownerWallet?: string;
+  solanaWallet?: string | null;
+  evmWallet?: string | null;
 };
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateTagPayload;
     const tag = normalizePriviiTag(body.tag ?? "");
-    const ownerWallet = body.ownerWallet?.trim();
+    const solanaWallet = body.solanaWallet?.trim() || null;
+    const evmWallet = body.evmWallet?.trim() || null;
+    const ownerWallet = body.ownerWallet?.trim() || solanaWallet || evmWallet || "";
 
     if (!isValidPriviiTag(tag)) {
       return NextResponse.json(
@@ -31,15 +36,27 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!ownerWallet) {
-      return NextResponse.json({ error: "Owner wallet is required." }, { status: 400 });
+    if (!solanaWallet && !evmWallet) {
+      return NextResponse.json(
+        { error: "Connect at least one wallet to continue" },
+        { status: 400 }
+      );
     }
 
-    try {
-      new PublicKey(ownerWallet);
-    } catch {
+    if (solanaWallet) {
+      try {
+        new PublicKey(solanaWallet);
+      } catch {
+        return NextResponse.json(
+          { error: "Solana wallet is not a valid address." },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (evmWallet && !isAddress(evmWallet)) {
       return NextResponse.json(
-        { error: "Owner wallet is not a valid Solana address." },
+        { error: "EVM wallet is not a valid address." },
         { status: 400 }
       );
     }
@@ -51,7 +68,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const existingTag = await getPriviiTagByOwner(ownerWallet);
+    const existingTag =
+      (solanaWallet ? await getPriviiTagByOwner(solanaWallet) : null) ||
+      (evmWallet ? await getPriviiTagByOwner(evmWallet) : null) ||
+      (ownerWallet ? await getPriviiTagByOwner(ownerWallet) : null);
 
     if (existingTag) {
       return NextResponse.json(
@@ -66,9 +86,9 @@ export async function POST(request: Request) {
     const record: PriviiTagRecord = {
       tag,
       ownerWallet,
-      recipientWallet: ownerWallet,
-      solanaWallet: ownerWallet,
-      evmWallet: null,
+      recipientWallet: solanaWallet,
+      solanaWallet,
+      evmWallet,
       createdAt: new Date().toISOString(),
       status: "active",
       primaryUrl: buildPrimaryTagUrl(tag),

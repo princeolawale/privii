@@ -327,7 +327,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         data.kind === "tag"
           ? selectedNetwork === "solana"
             ? "Recipient wallet not configured for this tag."
-            : "This user has not added an EVM wallet yet"
+            : "This user has not added a wallet for this network"
           : "Payment failed. Please try again"
       );
       return;
@@ -796,7 +796,7 @@ async function sendEvmPayment({
   }
 
   if (!isAddress(recipientWallet)) {
-    throw new Error("This user has not added an EVM wallet yet");
+    throw new Error("This user has not added a wallet for this network");
   }
 
   if (!isAddress(senderWallet)) {

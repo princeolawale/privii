@@ -1,10 +1,12 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useAccount } from "wagmi";
 import { LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
 import { Button } from "@/components/ui/button";
@@ -16,9 +18,11 @@ import { isValidPriviiTag, normalizePriviiTag, truncateWalletAddress } from "@/l
 export function GetStartedFlow() {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const { showToast } = useToast();
   const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
   const walletAddress = publicKey?.toBase58() ?? "";
+  const anyWalletConnected = connected || evmConnected;
   const [tag, setTag] = useState("");
   const [availability, setAvailability] = useState<"idle" | "checking" | "available" | "taken">(
     "idle"
@@ -30,7 +34,7 @@ export function GetStartedFlow() {
   const normalizedTag = normalizePriviiTag(tag);
   const isTagValid = isValidPriviiTag(normalizedTag);
   const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
-  const currentStep = justCreated ? 3 : connected ? 2 : 1;
+  const currentStep = justCreated ? 3 : anyWalletConnected ? 2 : 1;
 
   useEffect(() => {
     if (hasTag && tagRecord && !justCreated) {
@@ -61,7 +65,8 @@ export function GetStartedFlow() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!walletAddress || !isTagValid) {
+    if ((!walletAddress && !evmAddress) || !isTagValid) {
+      setError("Connect at least one wallet to continue");
       return;
     }
 
@@ -76,7 +81,9 @@ export function GetStartedFlow() {
         },
         body: JSON.stringify({
           tag: normalizedTag,
-          ownerWallet: walletAddress
+          ownerWallet: walletAddress || evmAddress,
+          solanaWallet: walletAddress || null,
+          evmWallet: evmAddress || null
         })
       });
 
@@ -126,7 +133,7 @@ export function GetStartedFlow() {
     return "Choose the payment identity you want people to remember.";
   }, [availability, isTagValid, normalizedTag]);
 
-  if (connected && isTagLoading) {
+  if (anyWalletConnected && isTagLoading) {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <Card className="rounded-[32px] p-6 sm:p-8">
@@ -136,7 +143,7 @@ export function GetStartedFlow() {
     );
   }
 
-  if (connected && hasTag && !justCreated) {
+  if (anyWalletConnected && hasTag && !justCreated) {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <Card className="rounded-[32px] p-6 sm:p-8">
@@ -157,7 +164,7 @@ export function GetStartedFlow() {
             Register your Privii tag
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
-            Connect your wallet, choose a tag, and start getting paid with Privii.
+            Connect at least one wallet, choose a tag, and start getting paid with Privii.
           </p>
         </div>
 
@@ -170,13 +177,27 @@ export function GetStartedFlow() {
         {currentStep === 1 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1</p>
-            <h2 className="mt-3 text-2xl font-semibold">Connect wallet</h2>
+            <h2 className="mt-3 text-2xl font-semibold">Connect at least one wallet</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
-              Connect any supported Solana wallet to reserve your Privii tag.
+              Connect a Solana wallet, an EVM wallet, or both.
             </p>
-            <div className="mt-6">
-              <ConnectWalletButton />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-border bg-card/70 p-4">
+                <p className="text-sm text-secondary">Connect Solana Wallet</p>
+                <div className="mt-3">
+                  <ConnectWalletButton className="!w-full" />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border bg-card/70 p-4">
+                <p className="text-sm text-secondary">Connect EVM Wallet</p>
+                <div className="mt-3">
+                  <EvmConnectWalletButton className="!w-full" />
+                </div>
+              </div>
             </div>
+            {!anyWalletConnected ? (
+              <p className="mt-4 text-sm text-secondary">Connect at least one wallet to continue</p>
+            ) : null}
           </div>
         ) : null}
 
@@ -188,7 +209,12 @@ export function GetStartedFlow() {
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
             <h2 className="mt-3 text-2xl font-semibold">Choose your Privii tag</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
-              Connected as {truncateWalletAddress(walletAddress)}.
+              {[
+                walletAddress ? `Solana ${truncateWalletAddress(walletAddress)}` : null,
+                evmAddress ? `EVM ${truncateWalletAddress(evmAddress)}` : null
+              ]
+                .filter(Boolean)
+                .join(" • ")}
             </p>
 
             <label className="mt-6 block space-y-2">
@@ -224,7 +250,7 @@ export function GetStartedFlow() {
 
             <Button
               className="mt-6 w-full"
-              disabled={!isTagValid || availability === "taken" || isSubmitting}
+              disabled={!anyWalletConnected || !isTagValid || availability === "taken" || isSubmitting}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

@@ -1,10 +1,16 @@
 import { kv } from "@vercel/kv";
+import { isAddress } from "viem";
 
 import type { PriviiTagRecord } from "@/lib/types";
 import { normalizePriviiTag } from "@/lib/utils";
 
 const tagKey = (tag: string) => `privii:tag:${normalizePriviiTag(tag)}`;
-const ownerKey = (wallet: string) => `privii:owner:${wallet}`;
+const ownerKey = (wallet: string) => `privii:owner:${normalizeOwnerWallet(wallet)}`;
+
+function normalizeOwnerWallet(wallet: string) {
+  const normalized = wallet.trim();
+  return isAddress(normalized) ? normalized.toLowerCase() : normalized;
+}
 
 export async function getPriviiTag(tag: string) {
   return kv.get<PriviiTagRecord>(tagKey(tag));
@@ -27,7 +33,17 @@ export async function priviiTagExists(tag: string) {
 
 export async function savePriviiTag(record: PriviiTagRecord) {
   await kv.set(tagKey(record.tag), record);
-  await kv.set(ownerKey(resolveTagSolanaWallet(record)), record.tag);
+  const ownerWallets = new Set(
+    [
+      record.ownerWallet?.trim(),
+      resolveTagSolanaWallet(record),
+      resolveTagEvmWallet(record)
+    ].filter((value): value is string => Boolean(value))
+  );
+
+  await Promise.all(
+    [...ownerWallets].map((wallet) => kv.set(ownerKey(wallet), record.tag))
+  );
   return record;
 }
 

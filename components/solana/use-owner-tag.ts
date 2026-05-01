@@ -1,13 +1,16 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useAccount } from "wagmi";
 import { useEffect, useState } from "react";
 
 import type { PriviiTagRecord } from "@/lib/types";
 
 export function useOwnerTag() {
   const { publicKey, connected } = useWallet();
+  const { address: evmAddress, isConnected: evmConnected } = useAccount();
   const walletAddress = publicKey?.toBase58() ?? "";
+  const normalizedEvmAddress = evmAddress ?? "";
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -15,7 +18,7 @@ export function useOwnerTag() {
     let cancelled = false;
 
     async function fetchTag() {
-      if (!connected || !walletAddress) {
+      if ((!connected || !walletAddress) && (!evmConnected || !normalizedEvmAddress)) {
         setTagRecord(null);
         setIsLoading(false);
         return;
@@ -24,17 +27,27 @@ export function useOwnerTag() {
       setIsLoading(true);
 
       try {
-        const response = await fetch(`/api/tags/by-owner/${encodeURIComponent(walletAddress)}`, {
-          cache: "no-store"
-        });
+        const candidates = [
+          connected && walletAddress ? walletAddress : null,
+          evmConnected && normalizedEvmAddress ? normalizedEvmAddress : null
+        ].filter((value): value is string => Boolean(value));
 
-        if (!cancelled) {
+        let resultTag: PriviiTagRecord | null = null;
+
+        for (const candidate of candidates) {
+          const response = await fetch(`/api/tags/by-owner/${encodeURIComponent(candidate)}`, {
+            cache: "no-store"
+          });
+
           if (response.ok) {
             const result = (await response.json()) as { tag: PriviiTagRecord };
-            setTagRecord(result.tag);
-          } else {
-            setTagRecord(null);
+            resultTag = result.tag;
+            break;
           }
+        }
+
+        if (!cancelled) {
+          setTagRecord(resultTag);
         }
       } finally {
         if (!cancelled) {
@@ -48,11 +61,13 @@ export function useOwnerTag() {
     return () => {
       cancelled = true;
     };
-  }, [connected, walletAddress]);
+  }, [connected, walletAddress, evmConnected, normalizedEvmAddress]);
 
   return {
     connected,
+    evmConnected,
     walletAddress,
+    evmAddress: normalizedEvmAddress,
     tagRecord,
     hasTag: Boolean(tagRecord),
     isLoading
