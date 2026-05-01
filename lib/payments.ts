@@ -15,6 +15,7 @@ import type { PaymentRecord, PaymentStatus, PayLinkToken } from "@/lib/types";
 const paymentKey = (id: string) => `payment:${id}`;
 const recipientIndexKey = (wallet: string) => `payment:recipient:${wallet}`;
 const payerIndexKey = (wallet: string) => `payment:payer:${wallet}`;
+const txSignatureIndexKey = (signature: string) => `payment:tx:${signature}`;
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
 export async function getPayment(id: string) {
@@ -39,7 +40,21 @@ export async function savePayment(payment: PaymentRecord) {
     }
   }
 
+  if (payment.tx_signature) {
+    await kv.set(txSignatureIndexKey(payment.tx_signature), payment.id);
+  }
+
   return payment;
+}
+
+export async function getPaymentBySignature(signature: string) {
+  const paymentId = await kv.get<string>(txSignatureIndexKey(signature));
+
+  if (!paymentId) {
+    return null;
+  }
+
+  return getPayment(paymentId);
 }
 
 export async function updatePayment(
@@ -179,6 +194,77 @@ export async function confirmPaymentRecord(payment: PaymentRecord) {
     amount: verified.amount,
     confirmed_at: new Date().toISOString(),
   });
+}
+
+export async function confirmAndSavePayment(input: {
+  tag: string;
+  recipientWallet: string;
+  payerWallet: string;
+  asset: PayLinkToken;
+  expectedAmount: string;
+  txSignature: string;
+}) {
+  const existing = await getPaymentBySignature(input.txSignature);
+
+  if (existing) {
+    return { status: existing.status, payment: existing } as const;
+  }
+
+  const status = await connection.getSignatureStatuses([input.txSignature], {
+    searchTransactionHistory: true,
+  });
+  const signatureStatus = status.value[0];
+
+  if (!signatureStatus) {
+    return { status: "confirming" as const };
+  }
+
+  if (signatureStatus.err) {
+    return { status: "failed" as const };
+  }
+
+  const transaction = await connection.getParsedTransaction(input.txSignature, {
+    commitment: "confirmed",
+    maxSupportedTransactionVersion: 0,
+  });
+
+  if (!transaction) {
+    return { status: "confirming" as const };
+  }
+
+  const pendingRecord = {
+    ...createPaymentRecord({
+      tag: input.tag,
+      recipientWallet: input.recipientWallet,
+      asset: input.asset,
+      expectedAmount: input.expectedAmount,
+      status: "submitted",
+      payerWallet: input.payerWallet,
+    }),
+    tx_signature: input.txSignature,
+  } satisfies PaymentRecord;
+
+  const verified = verifyTransaction(transaction, pendingRecord);
+
+  if (!verified.ok || !verified.amount) {
+    return { status: "failed" as const };
+  }
+
+  const now = new Date().toISOString();
+  const confirmedRecord: PaymentRecord = {
+    ...pendingRecord,
+    amount: verified.amount,
+    status: "confirmed",
+    updated_at: now,
+    confirmed_at: now,
+  };
+
+  await savePayment(confirmedRecord);
+
+  return {
+    status: "confirmed" as const,
+    payment: confirmedRecord,
+  };
 }
 
 function verifyTransaction(

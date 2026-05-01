@@ -35,7 +35,6 @@ import { USDC_MINT_ADDRESS } from "@/lib/solana";
 import type {
   PayLinkResponse,
   PayLinkToken,
-  PaymentRecord,
   PriviiTagRecord
 } from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
@@ -49,14 +48,18 @@ type PayTarget =
   | { kind: "paylink"; link: PayLinkResponse["link"]; status: PayLinkResponse["status"] }
   | { kind: "tag"; tagRecord: PriviiTagRecord };
 
-type PaymentInit =
-  (PaymentRecord & {
-    kind: "paylink" | "tag";
-    recipientWallet: string;
-    token?: PayLinkToken;
-    expiresAt: number | null;
-    expired: boolean;
-  });
+type PaymentInit = {
+  kind: "paylink" | "tag";
+  tag: string;
+  asset: PayLinkToken;
+  expectedAmount: string;
+  payerWallet?: string | null;
+  recipientWallet: string;
+  token?: PayLinkToken;
+  amount?: string | null;
+  expiresAt: number | null;
+  expired: boolean;
+};
 
 type PaymentStage =
   | "idle"
@@ -338,32 +341,6 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
       const signature = await wallet.sendTransaction(transaction, connection);
       setPaymentStage("submitted");
-
-      const submitResponse = await fetch(`/api/payments/${paymentInit.id}/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          txSignature: signature,
-          payerWallet: wallet.publicKey.toBase58()
-        })
-      });
-      const submitResult = await submitResponse.json();
-
-      if (!submitResponse.ok) {
-        throw new Error(submitResult.error || "Payment failed. Please try again");
-      }
-
-      setPaymentStage("confirming");
-
-      const confirmed = await pollForConfirmedPayment(paymentInit.id);
-
-      if (!confirmed || confirmed.status !== "confirmed") {
-        throw new Error("Payment failed. Please try again");
-      }
-
-      setPaymentStage("confirmed");
       await connection.confirmTransaction(
         {
           signature,
@@ -372,6 +349,23 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         },
         "confirmed"
       );
+
+      setPaymentStage("confirming");
+
+      const confirmed = await pollForConfirmedPayment({
+        kind: data.kind,
+        tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+        asset: paymentToken,
+        expectedAmount: enteredAmount,
+        payerWallet: wallet.publicKey.toBase58(),
+        txSignature: signature
+      });
+
+      if (confirmed.status !== "confirmed") {
+        throw new Error("Payment failed. Please try again");
+      }
+
+      setPaymentStage("confirmed");
 
       router.push(
         `/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(
@@ -764,13 +758,21 @@ async function fetchLatestBlockhashWithRetry(connection: Connection) {
   }
 }
 
-async function pollForConfirmedPayment(paymentId: string) {
+async function pollForConfirmedPayment(input: {
+  kind: "tag" | "paylink";
+  tag: string;
+  asset: PayLinkToken;
+  expectedAmount: string;
+  payerWallet: string;
+  txSignature: string;
+}) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    const confirmResponse = await fetch(`/api/payments/${paymentId}/confirm`, {
+    const confirmResponse = await fetch("/api/payments/confirm", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
-      }
+      },
+      body: JSON.stringify(input)
     });
     const confirmResult = await confirmResponse.json();
 
@@ -778,25 +780,14 @@ async function pollForConfirmedPayment(paymentId: string) {
       throw new Error(confirmResult.error || "Payment failed. Please try again");
     }
 
-    const payment = confirmResult.payment as PaymentRecord;
-
-    if (payment.status === "confirmed" || payment.status === "failed" || payment.status === "expired") {
-      return payment;
+    if (confirmResult.status === "confirmed" || confirmResult.status === "failed") {
+      return confirmResult as { status: "confirmed" | "failed" };
     }
 
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
   }
 
-  const statusResponse = await fetch(`/api/payments/${paymentId}`, {
-    cache: "no-store"
-  });
-  const statusResult = await statusResponse.json();
-
-  if (!statusResponse.ok) {
-    throw new Error(statusResult.error || "Payment failed. Please try again");
-  }
-
-  return statusResult.payment as PaymentRecord;
+  throw new Error("Payment failed. Please try again");
 }
 
 function paymentStageMessage(stage: PaymentStage) {

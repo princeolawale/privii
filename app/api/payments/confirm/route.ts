@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
-import { parseDecimalAmount } from "@/lib/payments";
+import { confirmAndSavePayment, parseDecimalAmount } from "@/lib/payments";
 import { getPayLink } from "@/lib/paylinks";
 import { getPriviiTag } from "@/lib/tags";
 import type { PayLinkToken } from "@/lib/types";
 import { isExpired, normalizePriviiTag } from "@/lib/utils";
 
-type PaymentInitPayload = {
+type ConfirmPayload = {
   kind?: "tag" | "paylink";
   tag?: string;
   asset?: PayLinkToken;
   expectedAmount?: string;
   payerWallet?: string;
+  txSignature?: string;
 };
 
 function resolveTagRecipientWallet(record: {
@@ -24,21 +25,20 @@ function resolveTagRecipientWallet(record: {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as PaymentInitPayload;
+    const body = (await request.json()) as ConfirmPayload;
     const kind = body.kind === "tag" ? "tag" : "paylink";
     const tag = normalizePriviiTag(body.tag ?? "");
-    const payerWallet = body.payerWallet?.trim() || null;
+    const payerWallet = body.payerWallet?.trim() ?? "";
+    const txSignature = body.txSignature?.trim() ?? "";
 
-    if (payerWallet) {
-      try {
-        new PublicKey(payerWallet);
-      } catch {
-        return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
-      }
+    if (!tag || !payerWallet || !txSignature) {
+      return NextResponse.json({ error: "Payment failed. Please try again" }, { status: 400 });
     }
 
-    if (!tag) {
-      return NextResponse.json({ error: "Payment link not found" }, { status: 400 });
+    try {
+      new PublicKey(payerWallet);
+    } catch {
+      return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
     }
 
     if (kind === "tag") {
@@ -69,28 +69,37 @@ export async function POST(request: Request) {
       const asset: PayLinkToken = body.asset === "SOL" ? "SOL" : "USDC";
       const expectedAmount = body.expectedAmount?.trim() ?? "";
 
-      if (!parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) || Number(expectedAmount) <= 0) {
+      if (
+        !parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) ||
+        Number(expectedAmount) <= 0
+      ) {
         return NextResponse.json({ error: "Enter an amount to continue" }, { status: 400 });
       }
 
-      return NextResponse.json({
-        payment: {
-          kind: "tag" as const,
-          tag: record.tag,
-          asset,
-          expectedAmount,
-          payerWallet,
-          recipientWallet,
-          expiresAt: null,
-          expired: false
-        }
+      const result = await confirmAndSavePayment({
+        tag: record.tag,
+        recipientWallet,
+        payerWallet,
+        asset,
+        expectedAmount,
+        txSignature,
       });
+
+      if (result.status === "failed") {
+        return NextResponse.json({ error: "Payment failed. Please try again" }, { status: 400 });
+      }
+
+      return NextResponse.json(result);
     }
 
     const link = await getPayLink(tag);
 
     if (!link) {
       return NextResponse.json({ error: "Payment link not found" }, { status: 404 });
+    }
+
+    if (isExpired(link.expiresAt)) {
+      return NextResponse.json({ error: "This payment link has expired" }, { status: 410 });
     }
 
     const recipientWallet = link.recipientWallet?.trim() || null;
@@ -112,26 +121,29 @@ export async function POST(request: Request) {
     }
 
     const asset: PayLinkToken = link.token === "SOL" ? "SOL" : "USDC";
-    const expectedAmount = (link.amount?.trim() || body.expectedAmount?.trim() || "");
+    const expectedAmount = link.amount?.trim() || body.expectedAmount?.trim() || "";
 
-    if (!parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) || Number(expectedAmount) <= 0) {
+    if (
+      !parseDecimalAmount(expectedAmount, asset === "SOL" ? 9 : 6) ||
+      Number(expectedAmount) <= 0
+    ) {
       return NextResponse.json({ error: "Enter an amount to continue" }, { status: 400 });
     }
 
-    return NextResponse.json({
-      payment: {
-        kind: "paylink" as const,
-        tag: link.tag,
-        asset,
-        expectedAmount,
-        payerWallet,
-        recipientWallet,
-        token: link.token,
-        amount: link.amount,
-        expiresAt: link.expiresAt,
-        expired: isExpired(link.expiresAt)
-      }
+    const result = await confirmAndSavePayment({
+      tag: link.tag,
+      recipientWallet,
+      payerWallet,
+      asset,
+      expectedAmount,
+      txSignature,
     });
+
+    if (result.status === "failed") {
+      return NextResponse.json({ error: "Payment failed. Please try again" }, { status: 400 });
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

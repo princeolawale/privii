@@ -24,11 +24,7 @@ export async function GET(
     const isSent = payment.payer_wallet === normalizedWallet;
     const isReceived = payment.recipient_wallet === normalizedWallet;
 
-    if (isSent) {
-      return true;
-    }
-
-    if (isReceived) {
+    if (isSent || isReceived) {
       return Boolean(payment.tx_signature) && payment.status === "confirmed";
     }
 
