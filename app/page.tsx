@@ -32,7 +32,7 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <section className="flex min-h-[68vh] flex-col items-center justify-center pb-20 pt-8 text-center">
+      <section className="flex min-h-[68vh] flex-col items-center justify-center pb-20 pt-2 text-center sm:pt-4">
         <div className="space-y-8">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent">
             Tags and PayLinks

@@ -1,16 +1,19 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useAccount } from "wagmi";
 import { useEffect, useState } from "react";
 
+import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
 import type { PriviiTagRecord } from "@/lib/types";
 
 export function useOwnerTag() {
-  const { publicKey, connected } = useWallet();
-  const { address: evmAddress, isConnected: evmConnected } = useAccount();
-  const walletAddress = publicKey?.toBase58() ?? "";
-  const normalizedEvmAddress = evmAddress ?? "";
+  const {
+    evmAddress,
+    evmConnected,
+    primaryWalletAddress,
+    primaryWalletType,
+    solanaAddress,
+    solanaConnected
+  } = useConnectedWallets();
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,7 +21,7 @@ export function useOwnerTag() {
     let cancelled = false;
 
     async function fetchTag() {
-      if ((!connected || !walletAddress) && (!evmConnected || !normalizedEvmAddress)) {
+      if ((!solanaConnected || !solanaAddress) && (!evmConnected || !evmAddress)) {
         setTagRecord(null);
         setIsLoading(false);
         return;
@@ -28,8 +31,8 @@ export function useOwnerTag() {
 
       try {
         const candidates = [
-          connected && walletAddress ? walletAddress : null,
-          evmConnected && normalizedEvmAddress ? normalizedEvmAddress : null
+          solanaConnected && solanaAddress ? solanaAddress : null,
+          evmConnected && evmAddress ? evmAddress : null
         ].filter((value): value is string => Boolean(value));
 
         let resultTag: PriviiTagRecord | null = null;
@@ -61,13 +64,15 @@ export function useOwnerTag() {
     return () => {
       cancelled = true;
     };
-  }, [connected, walletAddress, evmConnected, normalizedEvmAddress]);
+  }, [evmAddress, evmConnected, solanaAddress, solanaConnected]);
 
   return {
-    connected,
+    connected: solanaConnected,
     evmConnected,
-    walletAddress,
-    evmAddress: normalizedEvmAddress,
+    evmAddress,
+    primaryWalletAddress,
+    primaryWalletType,
+    walletAddress: solanaAddress,
     tagRecord,
     hasTag: Boolean(tagRecord),
     isLoading

@@ -1,7 +1,5 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useAccount } from "wagmi";
 import {
   ArrowRight,
   Check,
@@ -16,6 +14,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
+import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -48,8 +47,11 @@ type CreateResponse = {
 };
 
 export function PayLinkForm() {
-  const { publicKey, connected } = useWallet();
-  const { address: evmAddress, isConnected: evmConnected } = useAccount();
+  const {
+    anyWalletConnected,
+    primaryWalletAddress,
+    primaryWalletType
+  } = useConnectedWallets();
   const { tagRecord, hasTag, isLoading: isTagLoading } = useOwnerTag();
   const { showToast } = useToast();
   const [paymentPurpose, setPaymentPurpose] = useState("");
@@ -62,50 +64,49 @@ export function PayLinkForm() {
   const [error, setError] = useState<string | null>(null);
   const [createdLink, setCreatedLink] = useState<CreateResponse | null>(null);
   const [copied, setCopied] = useState(false);
-  const anyWalletConnected = connected || evmConnected;
-  const [creatorWalletType, setCreatorWalletType] = useState<WalletType>("solana");
-
-  useEffect(() => {
-    if (hasTag && tagRecord) {
-      setCreatorWalletType(resolveTagWalletType(tagRecord));
-      return;
-    }
-
-    if (connected && !evmConnected) {
-      setCreatorWalletType("solana");
-      return;
-    }
-
-    if (evmConnected && !connected) {
-      setCreatorWalletType("evm");
-    }
-  }, [connected, evmConnected, hasTag, tagRecord]);
 
   const activeWalletType: WalletType =
     hasTag && tagRecord
       ? resolveTagWalletType(tagRecord)
-      : creatorWalletType;
-  const creatorWallet = useMemo(
-    () =>
-      activeWalletType === "solana"
-        ? publicKey?.toBase58() || ""
-        : evmAddress || "",
-    [activeWalletType, evmAddress, publicKey]
-  );
+      : primaryWalletType || "solana";
   const recipientWallet =
     tagRecord?.solanaWallet?.trim() || tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
   const evmWallet = tagRecord?.evmWallet?.trim() || "";
+  const creatorWallet = useMemo(
+    () =>
+      hasTag && tagRecord
+        ? activeWalletType === "solana"
+          ? recipientWallet || primaryWalletAddress || ""
+          : evmWallet || primaryWalletAddress || ""
+        : primaryWalletAddress || "",
+    [activeWalletType, evmWallet, hasTag, primaryWalletAddress, recipientWallet, tagRecord]
+  );
   const availableTokens =
     activeWalletType === "solana"
       ? ["SOL", "USDC"]
       : EVM_TOKENS[network === "solana" ? "ethereum" : network].map((item) => item.symbol);
   const canCreate =
-    (connected || evmConnected) &&
+    anyWalletConnected &&
     Boolean(creatorWallet) &&
     !isLoading &&
     (activeWalletType === "solana"
       ? (hasTag ? Boolean(recipientWallet) : Boolean(creatorWallet))
       : (hasTag ? Boolean(evmWallet) : Boolean(creatorWallet)));
+
+  useEffect(() => {
+    if (activeWalletType === "solana") {
+      setNetwork("solana");
+      setToken((current) => (current === "SOL" || current === "USDC" ? current : "USDC"));
+      return;
+    }
+
+    setNetwork((current) => (current === "solana" ? "ethereum" : current));
+    setToken((current) =>
+      current === "ETH" || current === "USDC" || current === "USDT" || current === "BNB"
+        ? current
+        : "ETH"
+    );
+  }, [activeWalletType]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -321,29 +322,6 @@ export function PayLinkForm() {
 
         {anyWalletConnected && !isTagLoading ? (
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {!hasTag && connected && evmConnected ? (
-              <label className="space-y-2">
-                <span className="text-sm text-secondary">Wallet path</span>
-                <Select
-                  value={creatorWalletType}
-                  onChange={(event) => {
-                    const nextType = event.target.value as WalletType;
-                    setCreatorWalletType(nextType);
-                    if (nextType === "solana") {
-                      setNetwork("solana");
-                      setToken("USDC");
-                    } else {
-                      setNetwork("ethereum");
-                      setToken("ETH");
-                    }
-                  }}
-                >
-                  <option value="solana">Solana</option>
-                  <option value="evm">EVM</option>
-                </Select>
-              </label>
-            ) : null}
-
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-secondary">Payment purpose</span>

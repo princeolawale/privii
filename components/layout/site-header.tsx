@@ -31,7 +31,7 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="mb-12 flex items-center justify-between">
+      <header className="mb-8 flex items-center justify-between">
         <BrandMark />
 
         <nav className="hidden items-center gap-6 text-sm text-secondary md:flex">

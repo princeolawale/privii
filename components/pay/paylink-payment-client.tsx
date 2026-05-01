@@ -1,6 +1,7 @@
 "use client";
 
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
+import { useAppKitConnection } from "@reown/appkit-adapter-solana/react";
 import { getWalletClient } from "@wagmi/core";
 import { isAddress, parseUnits } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -78,8 +79,12 @@ type PaymentStage =
 
 export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const router = useRouter();
-  const { connection } = useConnection();
-  const wallet = useWallet();
+  const { connection } = useAppKitConnection();
+  const solanaAccount = useAppKitAccount({ namespace: "solana" });
+  const { walletProvider: solanaWalletProvider } = useAppKitProvider<{
+    publicKey?: PublicKey;
+    sendTransaction?: (transaction: Transaction, connection: Connection) => Promise<string>;
+  }>("solana");
   const { address: evmAddress, isConnected: evmConnected, chainId: evmChainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const [data, setData] = useState<PayTarget | null>(null);
@@ -224,14 +229,14 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             kind: data.kind,
             tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
             asset: paymentToken,
-            network: selectedNetwork,
-            expectedAmount: initAmount,
-            payerWallet:
-              selectedNetwork === "solana"
-                ? wallet.publicKey?.toBase58() ?? null
+              network: selectedNetwork,
+              expectedAmount: initAmount,
+              payerWallet:
+                selectedNetwork === "solana"
+                ? solanaAccount.address ?? null
                 : evmAddress ?? null
-          })
-        });
+            })
+          });
 
         const result = await response.json();
 
@@ -266,7 +271,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [canInitializePayment, data, evmAddress, initAmount, paymentToken, selectedNetwork, wallet.publicKey]);
+  }, [canInitializePayment, data, evmAddress, initAmount, paymentToken, selectedNetwork, solanaAccount.address]);
 
   const currentUrl =
     typeof window !== "undefined" ? window.location.href : `/${tag}`;
@@ -286,7 +291,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   );
   const recipientWallet = paymentInit?.recipientWallet ?? null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
-  const connectedWalletAddress = wallet.publicKey?.toBase58().trim() ?? null;
+  const connectedWalletAddress = solanaAccount.address?.trim() ?? null;
   const normalizedEvmAddress = evmAddress?.trim().toLowerCase() ?? null;
   const isCreator =
     selectedNetwork === "solana"
@@ -298,7 +303,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     Boolean(paymentInit) &&
     !isInitializingPayment &&
     (selectedNetwork === "solana"
-      ? Boolean(wallet.connected && wallet.publicKey)
+      ? Boolean(solanaAccount.isConnected && solanaAccount.address)
       : Boolean(evmConnected && evmAddress)) &&
     !isCreator &&
     !isExpired &&
@@ -349,7 +354,10 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
-    if (selectedNetwork === "solana" && (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction)) {
+    if (
+      selectedNetwork === "solana" &&
+      (!solanaAccount.isConnected || !solanaAccount.address || !solanaWalletProvider?.sendTransaction)
+    ) {
       setError("Please connect your wallet first");
       return;
     }
@@ -375,7 +383,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         selectedNetwork === "solana"
           ? await sendSolanaPayment({
               connection,
-              wallet,
+              wallet: solanaWalletProvider,
               recipientWallet: normalizedRecipientWallet,
               amountNumber,
               paymentToken: paymentToken as PayLinkToken,
@@ -399,7 +407,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         network: selectedNetwork,
         asset: paymentToken,
         expectedAmount: enteredAmount,
-        payerWallet: selectedNetwork === "solana" ? wallet.publicKey!.toBase58() : evmAddress!,
+        payerWallet: selectedNetwork === "solana" ? solanaAccount.address! : evmAddress!,
         txSignature: signature
       });
 
@@ -587,7 +595,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             </div>
           ) : null}
 
-          {selectedNetwork === "solana" && !wallet.connected && !isCreator && !isExpired ? (
+          {selectedNetwork === "solana" && !solanaAccount.isConnected && !isCreator && !isExpired ? (
             <div className="space-y-3">
               <p className="text-sm text-secondary">Please connect your wallet first</p>
               <ConnectWalletButton className="!w-full" />
@@ -732,13 +740,18 @@ async function sendSolanaPayment({
   amountNumber,
   paymentToken,
 }: {
-  connection: Connection;
-  wallet: ReturnType<typeof useWallet>;
+  connection: Connection | undefined;
+  wallet:
+    | {
+        publicKey?: PublicKey;
+        sendTransaction?: (transaction: Transaction, connection: Connection) => Promise<string>;
+      }
+    | undefined;
   recipientWallet: string;
   amountNumber: number;
   paymentToken: PayLinkToken;
 }) {
-  if (!wallet.publicKey || !wallet.sendTransaction) {
+  if (!connection || !wallet?.publicKey || !wallet.sendTransaction) {
     throw new Error("Please connect your wallet first");
   }
 

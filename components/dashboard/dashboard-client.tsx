@@ -1,7 +1,5 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useAccount } from "wagmi";
 import {
   Check,
   Copy,
@@ -16,8 +14,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
-import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
+import { ConnectMenuButton } from "@/components/wallet/connect-menu-button";
+import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,10 +44,7 @@ type PaymentHistoryItem = Pick<
 
 export function DashboardClient() {
   const router = useRouter();
-  const { publicKey, connected } = useWallet();
-  const { address: evmAddress, isConnected: evmConnected } = useAccount();
-  const walletAddress = publicKey?.toBase58() ?? "";
-  const anyWalletConnected = connected || evmConnected;
+  const { anyWalletConnected, evmAddress, solanaAddress } = useConnectedWallets();
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -61,7 +56,7 @@ export function DashboardClient() {
 
   useEffect(() => {
     async function fetchData() {
-      const connectedWallets = [walletAddress, evmAddress].filter(
+      const connectedWallets = [solanaAddress, evmAddress].filter(
         (value): value is string => Boolean(value)
       );
 
@@ -144,7 +139,7 @@ export function DashboardClient() {
     }
 
     fetchData();
-  }, [walletAddress, evmAddress]);
+  }, [evmAddress, solanaAddress]);
 
   const publicUrl = useMemo(() => {
     if (!tagRecord) {
@@ -157,6 +152,10 @@ export function DashboardClient() {
 
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
+  const historyWalletAddress = tagRecord
+    ? resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
+    : "";
+
   async function handleCopyTagLink() {
     if (!publicUrl) {
       return;
@@ -241,9 +240,8 @@ export function DashboardClient() {
               Connect at least one wallet to manage your Privii tag, payment links, and payment
               activity.
             </p>
-            <div className="flex flex-col items-center gap-3 pt-2 sm:flex-row sm:justify-center">
-              <ConnectWalletButton />
-              <EvmConnectWalletButton />
+            <div className="flex justify-center pt-2">
+              <ConnectMenuButton />
             </div>
           </div>
         </Card>
@@ -423,7 +421,7 @@ export function DashboardClient() {
                             </p>
                             <p className="text-sm text-secondary">
                               {payment.direction === "sent" ? "To" : "From"}{" "}
-                              {truncateCounterparty(payment, walletAddress)}
+                              {truncateCounterparty(payment, historyWalletAddress)}
                             </p>
                           </div>
                           {payment.tx_signature &&

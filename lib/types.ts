@@ -39,6 +39,7 @@ export type PriviiTagRecord = {
   ownerWallet: string;
   walletType?: WalletType | null;
   walletAddress?: string | null;
+  chainId?: string | number | null;
   recipientWallet?: string | null;
   solanaWallet?: string | null;
   evmWallet?: string | null;

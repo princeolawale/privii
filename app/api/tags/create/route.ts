@@ -16,6 +16,7 @@ type CreateTagPayload = {
   tag?: string;
   ownerWallet?: string;
   walletType?: WalletType;
+  chainId?: string | number | null;
   solanaWallet?: string | null;
   evmWallet?: string | null;
 };
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CreateTagPayload;
     const tag = normalizePriviiTag(body.tag ?? "");
     const requestedWalletType = body.walletType === "evm" ? "evm" : "solana";
+    const chainId = body.chainId ?? null;
     const solanaWallet = body.solanaWallet?.trim() || null;
     const evmWallet = body.evmWallet?.trim() || null;
     const walletType =
@@ -100,6 +102,7 @@ export async function POST(request: Request) {
       ownerWallet,
       walletType,
       walletAddress,
+      chainId,
       recipientWallet: walletType === "solana" ? solanaWallet : null,
       solanaWallet: walletType === "solana" ? solanaWallet : null,
       evmWallet: walletType === "evm" ? evmWallet : null,
