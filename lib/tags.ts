@@ -13,17 +13,35 @@ function normalizeOwnerWallet(wallet: string) {
 }
 
 export async function getPriviiTag(tag: string) {
-  return kv.get<PriviiTagRecord>(tagKey(tag));
+  const record = await kv.get<PriviiTagRecord>(tagKey(tag));
+
+  if (record) {
+    await ensureTagOwnerIndexes(record);
+  }
+
+  return record;
 }
 
 export async function getPriviiTagByOwner(wallet: string) {
   const storedTag = await kv.get<string>(ownerKey(wallet));
 
-  if (!storedTag) {
+  if (storedTag) {
+    const record = await getPriviiTag(storedTag);
+
+    if (record) {
+      return record;
+    }
+  }
+
+  const normalizedWallet = normalizeOwnerWallet(wallet);
+  const scan = await findPriviiTagByWallet(normalizedWallet);
+
+  if (!scan) {
     return null;
   }
 
-  return getPriviiTag(storedTag);
+  await ensureTagOwnerIndexes(scan);
+  return scan;
 }
 
 export async function priviiTagExists(tag: string) {
@@ -33,6 +51,11 @@ export async function priviiTagExists(tag: string) {
 
 export async function savePriviiTag(record: PriviiTagRecord) {
   await kv.set(tagKey(record.tag), record);
+  await ensureTagOwnerIndexes(record);
+  return record;
+}
+
+export async function ensureTagOwnerIndexes(record: PriviiTagRecord) {
   const ownerWallets = new Set(
     [
       record.ownerWallet?.trim(),
@@ -41,10 +64,53 @@ export async function savePriviiTag(record: PriviiTagRecord) {
     ].filter((value): value is string => Boolean(value))
   );
 
-  await Promise.all(
-    [...ownerWallets].map((wallet) => kv.set(ownerKey(wallet), record.tag))
-  );
-  return record;
+  await Promise.all([...ownerWallets].map((wallet) => kv.set(ownerKey(wallet), record.tag)));
+}
+
+export async function isWalletLinkedToAnyTag(wallet: string) {
+  return Boolean(await getPriviiTagByOwner(wallet));
+}
+
+async function findPriviiTagByWallet(wallet: string) {
+  let cursor = 0;
+
+  while (true) {
+    const [nextCursor, keys] = await kv.scan(cursor, {
+      match: "privii:tag:*",
+      count: 100
+    });
+
+    if (keys.length) {
+      const records = await Promise.all(
+        keys.map((key) => kv.get<PriviiTagRecord>(key))
+      );
+      const record = records.find((candidate) => {
+        if (!candidate) {
+          return false;
+        }
+
+        const wallets = [
+          candidate.ownerWallet?.trim(),
+          resolveTagSolanaWallet(candidate),
+          resolveTagEvmWallet(candidate)
+        ]
+          .filter((value): value is string => Boolean(value))
+          .map((value) => normalizeOwnerWallet(value));
+
+        return wallets.includes(wallet);
+      });
+
+      if (record) {
+        return record;
+      }
+    }
+
+    if (Number(nextCursor) === 0) {
+      return null;
+    }
+
+    cursor = Number(nextCursor);
+  }
 }
 
 export function hasTagSolanaWallet(record: {

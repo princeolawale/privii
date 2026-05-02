@@ -43,9 +43,10 @@ export function GetStartedFlow() {
 
   useEffect(() => {
     if (hasTag && tagRecord && !justCreated) {
+      showToast("Redirecting to your dashboard");
       router.replace("/dashboard");
     }
-  }, [hasTag, justCreated, router, tagRecord]);
+  }, [hasTag, justCreated, router, showToast, tagRecord]);
 
   useEffect(() => {
     async function checkTag() {
@@ -102,6 +103,13 @@ export function GetStartedFlow() {
       const result = await response.json();
 
       if (!response.ok) {
+        if (response.status === 409 && result.tag) {
+          showToast("This wallet already has a Privii tag");
+          showToast("Redirecting to your dashboard");
+          router.replace("/dashboard");
+          return;
+        }
+
         throw new Error(result.error || "Unable to create your Privii tag.");
       }
 

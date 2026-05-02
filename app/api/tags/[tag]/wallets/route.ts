@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { isAddress } from "viem";
 
-import { getPriviiTag, savePriviiTag } from "@/lib/tags";
+import { getPriviiTag, getPriviiTagByOwner, savePriviiTag } from "@/lib/tags";
 import type { WalletType } from "@/lib/types";
 import { normalizePriviiTag } from "@/lib/utils";
 
@@ -110,6 +110,15 @@ export async function PATCH(
         return NextResponse.json({ error: "Invalid EVM address" }, { status: 400 });
       }
 
+      const existingOwnerTag = await getPriviiTagByOwner(walletAddress);
+
+      if (existingOwnerTag && existingOwnerTag.tag !== record.tag) {
+        return NextResponse.json(
+          { error: "This wallet is already linked to a Privii tag" },
+          { status: 409 }
+        );
+      }
+
       if (existingEvmWallet) {
         if (existingEvmWallet.toLowerCase() === walletAddress.toLowerCase()) {
           return NextResponse.json({
@@ -134,6 +143,15 @@ export async function PATCH(
       new PublicKey(walletAddress);
     } catch {
       return NextResponse.json({ error: "Invalid Solana address" }, { status: 400 });
+    }
+
+    const existingOwnerTag = await getPriviiTagByOwner(walletAddress);
+
+    if (existingOwnerTag && existingOwnerTag.tag !== record.tag) {
+      return NextResponse.json(
+        { error: "This wallet is already linked to a Privii tag" },
+        { status: 409 }
+      );
     }
 
     if (existingSolanaWallet) {

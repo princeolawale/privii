@@ -294,7 +294,7 @@ export function DashboardClient() {
     } catch (linkError) {
       console.error(linkError);
       const nextError =
-        linkError instanceof Error ? linkError.message : "Failed to link wallet. Please try again";
+        linkError instanceof Error ? normalizeWalletLinkMessage(linkError.message) : "Failed to link wallet. Please try again";
       setWalletLinkError(nextError);
       showToast(nextError);
     } finally {
@@ -833,6 +833,17 @@ function truncateCounterparty(payment: PaymentHistoryItem, walletAddress: string
   }
 
   return truncateWalletAddress(rawCounterparty);
+}
+
+function normalizeWalletLinkMessage(message: string) {
+  if (
+    message === "Invalid EVM address" ||
+    message === "Invalid Solana address"
+  ) {
+    return "Invalid wallet address";
+  }
+
+  return message;
 }
 
 function getDashboardSolanaWallet(record: PriviiTagRecord) {

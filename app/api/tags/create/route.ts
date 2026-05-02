@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     if (existingTag) {
       return NextResponse.json(
         {
-          error: "This wallet already has a registered Privii tag.",
+          error: "This wallet already has a Privii tag",
           tag: existingTag
         },
         { status: 409 }
