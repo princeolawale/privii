@@ -424,34 +424,16 @@ export function DashboardClient() {
                 <div className="mt-8 rounded-[24px] border border-border bg-background/60 p-5 text-left">
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">
-                        Wallet
-                      </p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
                       <p className="mt-2 text-sm text-secondary">
-                        {truncateWalletAddress(
-                          resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
-                        )}
-                      </p>
-                    </div>
-                    <p className="text-sm text-secondary">
-                      This wallet receives payments for your Privii tag.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 rounded-[24px] border border-border bg-background/60 p-5 text-left">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">
-                        Linked wallets
-                      </p>
-                      <p className="mt-2 text-sm text-secondary">
-                        Add the missing wallet type to use this tag across both ecosystems.
+                        Manage wallets linked to your Privii tag.
                       </p>
                     </div>
 
                     <WalletRow
                       label="EVM Wallet"
                       value={linkedEvmWallet}
+                      isPrimary={resolveTagWalletType(tagRecord) === "evm"}
                       isBusy={isLinkingWallet && linkingWalletType === "evm"}
                       action={
                         linkedEvmWallet ? null : linkingWalletType === "evm" ? (
@@ -474,7 +456,7 @@ export function DashboardClient() {
                                 Cancel
                               </Button>
                               <Button type="button" onClick={handleSaveLinkedWallet}>
-                                Save
+                                Link wallet
                               </Button>
                             </div>
                           </div>
@@ -488,7 +470,7 @@ export function DashboardClient() {
                               setLinkingWalletType("evm");
                             }}
                           >
-                            Add
+                            Link
                           </button>
                         )
                       }
@@ -497,6 +479,7 @@ export function DashboardClient() {
                     <WalletRow
                       label="Solana Wallet"
                       value={linkedSolanaWallet}
+                      isPrimary={resolveTagWalletType(tagRecord) === "solana"}
                       isBusy={isLinkingWallet && linkingWalletType === "solana"}
                       action={
                         linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
@@ -519,7 +502,7 @@ export function DashboardClient() {
                                 Cancel
                               </Button>
                               <Button type="button" onClick={handleSaveLinkedWallet}>
-                                Save
+                                Link wallet
                               </Button>
                             </div>
                           </div>
@@ -533,7 +516,7 @@ export function DashboardClient() {
                               setLinkingWalletType("solana");
                             }}
                           >
-                            Add
+                            Link
                           </button>
                         )
                       }
@@ -787,11 +770,13 @@ function formatPaymentStatus(status: PaymentRecord["status"]) {
 
 function WalletRow({
   action,
+  isPrimary = false,
   isBusy = false,
   label,
   value
 }: {
   action?: ReactNode;
+  isPrimary?: boolean;
   isBusy?: boolean;
   label: string;
   value: string | null;
@@ -799,7 +784,14 @@ function WalletRow({
   return (
     <div className="flex items-center justify-between gap-4 rounded-[18px] border border-border bg-card/40 px-4 py-3">
       <div className="min-w-0">
-        <p className="text-sm text-secondary">{label}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm text-secondary">{label}</p>
+          {value && isPrimary ? (
+            <span className="rounded-full border border-accent/20 bg-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-accent">
+              Receiving wallet
+            </span>
+          ) : null}
+        </div>
         <p className="mt-1 truncate text-sm text-primary">
           {value ? truncateWalletAddress(value) : "Not linked"}
         </p>
