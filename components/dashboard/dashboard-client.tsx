@@ -21,10 +21,9 @@ import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast-provider";
 import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
 import {
-  resolveTagEvmWallet,
-  resolveTagSolanaWallet,
   resolveTagWalletAddress,
   resolveTagWalletType
 } from "@/lib/tags";
@@ -52,6 +51,7 @@ type PaymentHistoryItem = Pick<
 export function DashboardClient() {
   const router = useRouter();
   const { anyWalletConnected, evmAddress, solanaAddress } = useConnectedWallets();
+  const { showToast } = useToast();
   const [tagRecord, setTagRecord] = useState<PriviiTagRecord | null>(null);
   const [links, setLinks] = useState<PayLinkRecord[]>([]);
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
@@ -163,8 +163,14 @@ export function DashboardClient() {
 
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
-  const linkedSolanaWallet = tagRecord ? resolveTagSolanaWallet(tagRecord) || null : null;
-  const linkedEvmWallet = tagRecord ? resolveTagEvmWallet(tagRecord) || null : null;
+  const linkedSolanaWallet = useMemo(
+    () => (tagRecord ? getDashboardSolanaWallet(tagRecord) || null : null),
+    [tagRecord]
+  );
+  const linkedEvmWallet = useMemo(
+    () => (tagRecord ? getDashboardEvmWallet(tagRecord) || null : null),
+    [tagRecord]
+  );
   const historyWalletAddress = tagRecord
     ? resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
     : "";
@@ -272,6 +278,7 @@ export function DashboardClient() {
 
       const result = (await response.json().catch(() => ({}))) as {
         error?: string;
+        message?: string;
         tag?: PriviiTagRecord;
       };
 
@@ -282,11 +289,14 @@ export function DashboardClient() {
       setTagRecord(result.tag);
       setLinkingWalletType(null);
       setWalletInputValue("");
+      setWalletLinkError(null);
+      showToast(result.message || "Wallet linked successfully");
     } catch (linkError) {
       console.error(linkError);
-      setWalletLinkError(
-        linkError instanceof Error ? linkError.message : "Failed to link wallet. Please try again"
-      );
+      const nextError =
+        linkError instanceof Error ? linkError.message : "Failed to link wallet. Please try again";
+      setWalletLinkError(nextError);
+      showToast(nextError);
     } finally {
       setIsLinkingWallet(false);
     }
@@ -823,4 +833,40 @@ function truncateCounterparty(payment: PaymentHistoryItem, walletAddress: string
   }
 
   return truncateWalletAddress(rawCounterparty);
+}
+
+function getDashboardSolanaWallet(record: PriviiTagRecord) {
+  if (record.solanaWallet?.trim()) {
+    return record.solanaWallet.trim();
+  }
+
+  if (record.walletType === "solana" && record.walletAddress?.trim()) {
+    return record.walletAddress.trim();
+  }
+
+  if (record.recipientWallet?.trim()) {
+    return record.recipientWallet.trim();
+  }
+
+  if (record.ownerWallet?.trim() && !isAddress(record.ownerWallet.trim())) {
+    return record.ownerWallet.trim();
+  }
+
+  return "";
+}
+
+function getDashboardEvmWallet(record: PriviiTagRecord) {
+  if (record.evmWallet?.trim()) {
+    return record.evmWallet.trim();
+  }
+
+  if (record.walletType === "evm" && record.walletAddress?.trim()) {
+    return record.walletAddress.trim();
+  }
+
+  if (record.ownerWallet?.trim() && isAddress(record.ownerWallet.trim())) {
+    return record.ownerWallet.trim();
+  }
+
+  return "";
 }
