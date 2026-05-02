@@ -13,11 +13,11 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { isAddress } from "viem";
+import { PublicKey } from "@solana/web3.js";
 
 import { ConnectMenuButton } from "@/components/wallet/connect-menu-button";
 import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
-import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
-import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -58,8 +58,9 @@ export function DashboardClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [walletLinkError, setWalletLinkError] = useState<string | null>(null);
-  const [pendingWalletLink, setPendingWalletLink] = useState<"solana" | "evm" | null>(null);
   const [isLinkingWallet, setIsLinkingWallet] = useState(false);
+  const [linkingWalletType, setLinkingWalletType] = useState<"solana" | "evm" | null>(null);
+  const [walletInputValue, setWalletInputValue] = useState("");
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
@@ -191,65 +192,6 @@ export function DashboardClient() {
     );
   }, [evmAddress, linkedEvmWallet, linkedSolanaWallet, solanaAddress, tagRecord]);
 
-  useEffect(() => {
-    async function linkWallet() {
-      if (!tagRecord || !pendingWalletLink || isLinkingWallet) {
-        return;
-      }
-
-      const nextWallet = pendingWalletLink === "solana" ? solanaAddress : evmAddress;
-
-      if (!nextWallet) {
-        return;
-      }
-
-      if (!ownerWalletForUpdate) {
-        setWalletLinkError("Unable to verify tag ownership.");
-        setPendingWalletLink(null);
-        return;
-      }
-
-      setIsLinkingWallet(true);
-      setWalletLinkError(null);
-
-      try {
-        const response = await fetch(`/api/tags/${encodeURIComponent(tagRecord.tag)}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            ownerWallet: ownerWalletForUpdate,
-            solanaWallet: pendingWalletLink === "solana" ? nextWallet : undefined,
-            evmWallet: pendingWalletLink === "evm" ? nextWallet : undefined
-          })
-        });
-
-        const result = (await response.json().catch(() => ({}))) as {
-          error?: string;
-          tag?: PriviiTagRecord;
-        };
-
-        if (!response.ok || !result.tag) {
-          throw new Error(result.error || "Unable to update Privii tag.");
-        }
-
-        setTagRecord(result.tag);
-        setPendingWalletLink(null);
-      } catch (linkError) {
-        console.error(linkError);
-        setWalletLinkError(
-          linkError instanceof Error ? linkError.message : "Unable to update Privii tag."
-        );
-        setPendingWalletLink(null);
-      } finally {
-        setIsLinkingWallet(false);
-      }
-    }
-
-    void linkWallet();
-  }, [evmAddress, isLinkingWallet, ownerWalletForUpdate, pendingWalletLink, solanaAddress, tagRecord]);
-
   async function handleCopyTagLink() {
     if (!publicUrl) {
       return;
@@ -279,6 +221,75 @@ export function DashboardClient() {
     }
 
     window.open(buildXShareUrl(publicUrl, tagRecord.tag), "_blank", "noopener,noreferrer");
+  }
+
+  async function handleSaveLinkedWallet() {
+    if (!tagRecord || !linkingWalletType) {
+      return;
+    }
+
+    const nextWallet = walletInputValue.trim();
+
+    if (!nextWallet) {
+      setWalletLinkError("Enter a wallet address");
+      return;
+    }
+
+    if (linkingWalletType === "evm" && !isAddress(nextWallet)) {
+      setWalletLinkError("Invalid EVM address");
+      return;
+    }
+
+    if (linkingWalletType === "solana") {
+      try {
+        new PublicKey(nextWallet);
+      } catch {
+        setWalletLinkError("Invalid Solana address");
+        return;
+      }
+    }
+
+    if (!ownerWalletForUpdate) {
+      setWalletLinkError("You do not own this tag");
+      return;
+    }
+
+    setIsLinkingWallet(true);
+    setWalletLinkError(null);
+
+    try {
+      const response = await fetch(`/api/tags/${encodeURIComponent(tagRecord.tag)}/wallets`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          walletType: linkingWalletType,
+          walletAddress: nextWallet,
+          ownerWallet: ownerWalletForUpdate
+        })
+      });
+
+      const result = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        tag?: PriviiTagRecord;
+      };
+
+      if (!response.ok || !result.tag) {
+        throw new Error(result.error || "Failed to link wallet. Please try again");
+      }
+
+      setTagRecord(result.tag);
+      setLinkingWalletType(null);
+      setWalletInputValue("");
+    } catch (linkError) {
+      console.error(linkError);
+      setWalletLinkError(
+        linkError instanceof Error ? linkError.message : "Failed to link wallet. Please try again"
+      );
+    } finally {
+      setIsLinkingWallet(false);
+    }
   }
 
   function handlePaySomeone(event: React.FormEvent<HTMLFormElement>) {
@@ -387,13 +398,10 @@ export function DashboardClient() {
             {activeTab === "tag" ? (
               <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
-                <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Your Privii tag is ready
-                </h2>
                 <p className="mt-3 text-sm text-secondary">
                   Wallet type: {resolveTagWalletType(tagRecord) === "solana" ? "Solana" : "EVM"}
                 </p>
-                <p className="mx-auto mt-6 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                <p className="mx-auto mt-4 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
                 </p>
                 <div className="mt-8 flex items-center justify-center gap-4">
@@ -444,17 +452,40 @@ export function DashboardClient() {
                     <WalletRow
                       label="EVM Wallet"
                       value={linkedEvmWallet}
-                      isBusy={isLinkingWallet && pendingWalletLink === "evm"}
+                      isBusy={isLinkingWallet && linkingWalletType === "evm"}
                       action={
-                        linkedEvmWallet ? null : pendingWalletLink === "evm" ? (
-                          <EvmConnectWalletButton className="min-h-10 rounded-xl px-4 text-sm" />
+                        linkedEvmWallet ? null : linkingWalletType === "evm" ? (
+                          <div className="w-full max-w-[240px] space-y-2">
+                            <Input
+                              value={walletInputValue}
+                              placeholder="Paste EVM address"
+                              onChange={(event) => setWalletInputValue(event.target.value)}
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                onClick={() => {
+                                  setLinkingWalletType(null);
+                                  setWalletInputValue("");
+                                  setWalletLinkError(null);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="button" onClick={handleSaveLinkedWallet}>
+                                Save
+                              </Button>
+                            </div>
+                          </div>
                         ) : (
                           <button
                             type="button"
                             className="text-sm font-medium text-accent transition hover:text-accent/80"
                             onClick={() => {
                               setWalletLinkError(null);
-                              setPendingWalletLink("evm");
+                              setWalletInputValue("");
+                              setLinkingWalletType("evm");
                             }}
                           >
                             Add
@@ -466,17 +497,40 @@ export function DashboardClient() {
                     <WalletRow
                       label="Solana Wallet"
                       value={linkedSolanaWallet}
-                      isBusy={isLinkingWallet && pendingWalletLink === "solana"}
+                      isBusy={isLinkingWallet && linkingWalletType === "solana"}
                       action={
-                        linkedSolanaWallet ? null : pendingWalletLink === "solana" ? (
-                          <ConnectWalletButton className="min-h-10 rounded-xl px-4 text-sm" />
+                        linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
+                          <div className="w-full max-w-[240px] space-y-2">
+                            <Input
+                              value={walletInputValue}
+                              placeholder="Paste Solana address"
+                              onChange={(event) => setWalletInputValue(event.target.value)}
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                type="button"
+                                onClick={() => {
+                                  setLinkingWalletType(null);
+                                  setWalletInputValue("");
+                                  setWalletLinkError(null);
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="button" onClick={handleSaveLinkedWallet}>
+                                Save
+                              </Button>
+                            </div>
+                          </div>
                         ) : (
                           <button
                             type="button"
                             className="text-sm font-medium text-accent transition hover:text-accent/80"
                             onClick={() => {
                               setWalletLinkError(null);
-                              setPendingWalletLink("solana");
+                              setWalletInputValue("");
+                              setLinkingWalletType("solana");
                             }}
                           >
                             Add
