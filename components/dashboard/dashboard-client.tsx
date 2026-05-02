@@ -16,11 +16,18 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { ConnectMenuButton } from "@/components/wallet/connect-menu-button";
 import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
+import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
+import { EvmConnectWalletButton } from "@/components/evm/connect-wallet-button";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
-import { resolveTagWalletAddress, resolveTagWalletType } from "@/lib/tags";
+import {
+  resolveTagEvmWallet,
+  resolveTagSolanaWallet,
+  resolveTagWalletAddress,
+  resolveTagWalletType
+} from "@/lib/tags";
 import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
@@ -50,6 +57,9 @@ export function DashboardClient() {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [walletLinkError, setWalletLinkError] = useState<string | null>(null);
+  const [pendingWalletLink, setPendingWalletLink] = useState<"solana" | "evm" | null>(null);
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
   const [payTarget, setPayTarget] = useState("");
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTab>("tag");
@@ -152,9 +162,93 @@ export function DashboardClient() {
 
     return `${window.location.origin}/${tagRecord.tag}`;
   }, [tagRecord]);
+  const linkedSolanaWallet = tagRecord ? resolveTagSolanaWallet(tagRecord) || null : null;
+  const linkedEvmWallet = tagRecord ? resolveTagEvmWallet(tagRecord) || null : null;
   const historyWalletAddress = tagRecord
     ? resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
     : "";
+  const ownerWalletForUpdate = useMemo(() => {
+    if (!tagRecord) {
+      return "";
+    }
+
+    const candidates = [solanaAddress, evmAddress].filter((value): value is string => Boolean(value));
+    const normalizedOwner = tagRecord.ownerWallet?.trim().toLowerCase();
+    const normalizedSolana = linkedSolanaWallet?.trim().toLowerCase() ?? null;
+    const normalizedEvm = linkedEvmWallet?.trim().toLowerCase() ?? null;
+
+    return (
+      candidates.find((wallet) => {
+        const normalizedWallet = wallet.trim().toLowerCase();
+        return (
+          normalizedWallet === normalizedOwner ||
+          normalizedWallet === normalizedSolana ||
+          normalizedWallet === normalizedEvm
+        );
+      }) ||
+      tagRecord.ownerWallet ||
+      ""
+    );
+  }, [evmAddress, linkedEvmWallet, linkedSolanaWallet, solanaAddress, tagRecord]);
+
+  useEffect(() => {
+    async function linkWallet() {
+      if (!tagRecord || !pendingWalletLink || isLinkingWallet) {
+        return;
+      }
+
+      const nextWallet = pendingWalletLink === "solana" ? solanaAddress : evmAddress;
+
+      if (!nextWallet) {
+        return;
+      }
+
+      if (!ownerWalletForUpdate) {
+        setWalletLinkError("Unable to verify tag ownership.");
+        setPendingWalletLink(null);
+        return;
+      }
+
+      setIsLinkingWallet(true);
+      setWalletLinkError(null);
+
+      try {
+        const response = await fetch(`/api/tags/${encodeURIComponent(tagRecord.tag)}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            ownerWallet: ownerWalletForUpdate,
+            solanaWallet: pendingWalletLink === "solana" ? nextWallet : undefined,
+            evmWallet: pendingWalletLink === "evm" ? nextWallet : undefined
+          })
+        });
+
+        const result = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          tag?: PriviiTagRecord;
+        };
+
+        if (!response.ok || !result.tag) {
+          throw new Error(result.error || "Unable to update Privii tag.");
+        }
+
+        setTagRecord(result.tag);
+        setPendingWalletLink(null);
+      } catch (linkError) {
+        console.error(linkError);
+        setWalletLinkError(
+          linkError instanceof Error ? linkError.message : "Unable to update Privii tag."
+        );
+        setPendingWalletLink(null);
+      } finally {
+        setIsLinkingWallet(false);
+      }
+    }
+
+    void linkWallet();
+  }, [evmAddress, isLinkingWallet, ownerWalletForUpdate, pendingWalletLink, solanaAddress, tagRecord]);
 
   async function handleCopyTagLink() {
     if (!publicUrl) {
@@ -334,6 +428,66 @@ export function DashboardClient() {
                     <p className="text-sm text-secondary">
                       This wallet receives payments for your Privii tag.
                     </p>
+                  </div>
+                </div>
+                <div className="mt-6 rounded-[24px] border border-border bg-background/60 p-5 text-left">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">
+                        Linked wallets
+                      </p>
+                      <p className="mt-2 text-sm text-secondary">
+                        Add the missing wallet type to use this tag across both ecosystems.
+                      </p>
+                    </div>
+
+                    <WalletRow
+                      label="EVM Wallet"
+                      value={linkedEvmWallet}
+                      isBusy={isLinkingWallet && pendingWalletLink === "evm"}
+                      action={
+                        linkedEvmWallet ? null : pendingWalletLink === "evm" ? (
+                          <EvmConnectWalletButton className="min-h-10 rounded-xl px-4 text-sm" />
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-sm font-medium text-accent transition hover:text-accent/80"
+                            onClick={() => {
+                              setWalletLinkError(null);
+                              setPendingWalletLink("evm");
+                            }}
+                          >
+                            Add
+                          </button>
+                        )
+                      }
+                    />
+
+                    <WalletRow
+                      label="Solana Wallet"
+                      value={linkedSolanaWallet}
+                      isBusy={isLinkingWallet && pendingWalletLink === "solana"}
+                      action={
+                        linkedSolanaWallet ? null : pendingWalletLink === "solana" ? (
+                          <ConnectWalletButton className="min-h-10 rounded-xl px-4 text-sm" />
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-sm font-medium text-accent transition hover:text-accent/80"
+                            onClick={() => {
+                              setWalletLinkError(null);
+                              setPendingWalletLink("solana");
+                            }}
+                          >
+                            Add
+                          </button>
+                        )
+                      }
+                    />
+
+                    {walletLinkError ? (
+                      <p className="text-sm text-red-400">{walletLinkError}</p>
+                    ) : null}
                   </div>
                 </div>
               </Card>
@@ -575,6 +729,39 @@ function formatPaymentStatus(status: PaymentRecord["status"]) {
     default:
       return "Pending";
   }
+}
+
+function WalletRow({
+  action,
+  isBusy = false,
+  label,
+  value
+}: {
+  action?: ReactNode;
+  isBusy?: boolean;
+  label: string;
+  value: string | null;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-[18px] border border-border bg-card/40 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm text-secondary">{label}</p>
+        <p className="mt-1 truncate text-sm text-primary">
+          {value ? truncateWalletAddress(value) : "Not linked"}
+        </p>
+      </div>
+      <div className="shrink-0">
+        {isBusy ? (
+          <span className="inline-flex items-center gap-2 text-sm text-secondary">
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            Linking
+          </span>
+        ) : (
+          action
+        )}
+      </div>
+    </div>
+  );
 }
 
 function truncateCounterparty(payment: PaymentHistoryItem, walletAddress: string) {

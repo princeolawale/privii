@@ -67,7 +67,7 @@ export async function PATCH(
     }
 
     const solanaWallet = body.solanaWallet?.trim() || record.solanaWallet?.trim() || null;
-    const evmWallet = body.evmWallet?.trim() || null;
+    const evmWallet = body.evmWallet?.trim() || record.evmWallet?.trim() || null;
 
     if (solanaWallet) {
       try {
