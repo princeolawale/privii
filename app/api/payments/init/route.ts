@@ -23,11 +23,22 @@ export async function POST(request: Request) {
     const kind = body.kind === "tag" ? "tag" : "paylink";
     const tag = normalizePriviiTag(body.tag ?? "");
     const payerWallet = body.payerWallet?.trim() || null;
+    const requestedNetwork: PaymentNetwork =
+      body.network === "ethereum" ||
+      body.network === "base" ||
+      body.network === "arbitrum" ||
+      body.network === "bsc"
+        ? body.network
+        : "solana";
 
     if (payerWallet) {
-      try {
-        new PublicKey(payerWallet);
-      } catch {
+      if (requestedNetwork === "solana") {
+        try {
+          new PublicKey(payerWallet);
+        } catch {
+          return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
+        }
+      } else if (!isAddress(payerWallet)) {
         return NextResponse.json({ error: "Please connect your wallet first" }, { status: 400 });
       }
     }
@@ -45,15 +56,11 @@ export async function POST(request: Request) {
 
       const walletType = resolveTagWalletType(record);
 
-      const network: PaymentNetwork =
-        body.network === "ethereum" ||
-        body.network === "base" ||
-        body.network === "arbitrum" ||
-        body.network === "bsc"
-          ? body.network
-          : walletType === "solana"
-            ? "solana"
-            : "ethereum";
+      const network: PaymentNetwork = requestedNetwork
+        ? requestedNetwork
+        : walletType === "solana"
+          ? "solana"
+          : "ethereum";
 
       if (walletType === "solana" && network !== "solana") {
         return NextResponse.json(
@@ -142,15 +149,11 @@ export async function POST(request: Request) {
     }
 
     const walletType = link.walletType || "solana";
-    const network: PaymentNetwork =
-      body.network === "ethereum" ||
-      body.network === "base" ||
-      body.network === "arbitrum" ||
-      body.network === "bsc"
-        ? body.network
-        : walletType === "solana"
-          ? "solana"
-          : link.network || "ethereum";
+    const network: PaymentNetwork = requestedNetwork
+      ? requestedNetwork
+      : walletType === "solana"
+        ? "solana"
+        : link.network || "ethereum";
 
     if (walletType === "solana" && network !== "solana") {
       return NextResponse.json(

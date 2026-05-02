@@ -33,7 +33,7 @@ import { getEvmTokenConfig } from "@/lib/evm/tokens";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { addUsdcTransfer, fetchLatestBlockhashWithRetry } from "@/lib/solana/client";
 import { resolveTagWalletType } from "@/lib/tags";
-import { useConnectedWallets } from "@/components/wallet/use-connected-wallets";
+import { usePriviiWallet } from "@/components/wallet/use-privii-wallet";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type {
@@ -86,8 +86,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     publicKey?: PublicKey;
     sendTransaction?: (transaction: Transaction, connection: Connection) => Promise<string>;
   }>("solana");
-  const { evmAddress, evmConnected, solanaAddress, solanaConnected } = useConnectedWallets();
-  const { chainId: evmChainId } = useAccount();
+  const { address: wagmiAddress, chainId: wagmiChainId } = useAccount();
+  const priviiWallet = usePriviiWallet();
   const { switchChainAsync } = useSwitchChain();
   const [data, setData] = useState<PayTarget | null>(null);
   const [customAmount, setCustomAmount] = useState("");
@@ -202,14 +202,14 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     selectedNetwork === "solana" ? null : getEvmNetworkOption(selectedNetwork as EvmNetwork);
   const activePaymentWallet = getActivePaymentWallet({
     selectedNetwork,
-    solanaAddress: solanaAddress || solanaAccount.address || null,
-    solanaConnected: solanaConnected || Boolean(solanaAccount.isConnected && solanaAccount.address),
-    evmAddress: evmAddress || null,
-    evmConnected,
+    solanaAddress: priviiWallet.solanaAddress || solanaAccount.address || null,
+    solanaConnected: priviiWallet.solanaConnected || Boolean(solanaAccount.isConnected && solanaAccount.address),
+    evmAddress: priviiWallet.evmAddress || null,
+    evmConnected: priviiWallet.evmConnected,
   });
   const activePaymentWalletConnected = activePaymentWallet.connected;
-  const connectedEvmAddress = (evmAddress ?? "").trim();
-  const currentEvmChainId = evmChainId ?? null;
+  const connectedEvmAddress = (priviiWallet.evmAddress ?? "").trim();
+  const currentEvmChainId = priviiWallet.evmChainId ?? wagmiChainId ?? null;
   const isWrongEvmChain =
     selectedNetwork !== "solana" &&
     Boolean(activePaymentWalletConnected && selectedEvmNetworkOption) &&
@@ -309,7 +309,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   );
   const recipientWallet = paymentInit?.recipientWallet ?? null;
   const normalizedRecipientWallet = recipientWallet?.trim() ?? null;
-  const connectedWalletAddress = (solanaAddress || solanaAccount.address || "").trim() || null;
+  const connectedWalletAddress = (priviiWallet.solanaAddress || solanaAccount.address || "").trim() || null;
   const normalizedEvmAddress = connectedEvmAddress.toLowerCase() || null;
   const isCreator =
     selectedNetwork === "solana"
@@ -360,6 +360,11 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
+    if (!enteredAmount || !Number.isFinite(Number(enteredAmount)) || Number(enteredAmount) <= 0) {
+      setError("Enter an amount to continue");
+      return;
+    }
+
     if (!paymentInit || !normalizedRecipientWallet) {
       setError(
         data.kind === "tag"
@@ -388,13 +393,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       setError("Please switch network");
       return;
     }
-
     const amountNumber = Number(enteredAmount);
-
-    if (!enteredAmount || !Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setError("Enter an amount to continue");
-      return;
-    }
 
     setError(null);
     setIsPaying(true);
@@ -484,25 +483,37 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
-    console.log("EVM payment state", {
+    console.log("Privii EVM debug", {
+      headerAddress: priviiWallet.address,
+      hookAddress: activePaymentWallet.address,
+      wagmiAddress: wagmiAddress ?? null,
+      reownAddress: priviiWallet.evmAddress || null,
+      walletType: priviiWallet.walletType,
       selectedNetwork,
       selectedChainId: selectedEvmNetworkOption?.chain.id ?? null,
       evmAddress: connectedEvmAddress || null,
-      evmIsConnected: evmConnected,
+      evmIsConnected: priviiWallet.evmConnected,
       currentChainId: currentEvmChainId,
       receiverWallet: normalizedRecipientWallet,
       amount: enteredAmount,
-      token: paymentToken
+      token: paymentToken,
+      isConnected: activePaymentWalletConnected
     });
   }, [
+    activePaymentWallet.address,
+    activePaymentWalletConnected,
     connectedEvmAddress,
     currentEvmChainId,
     enteredAmount,
-    evmConnected,
     normalizedRecipientWallet,
     paymentToken,
+    priviiWallet.address,
+    priviiWallet.evmAddress,
+    priviiWallet.evmConnected,
+    priviiWallet.walletType,
     selectedEvmNetworkOption,
-    selectedNetwork
+    selectedNetwork,
+    wagmiAddress
   ]);
 
   if (isFetching) {
