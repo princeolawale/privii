@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { isAddress } from "viem";
 
-import { getPaymentsByWallet } from "@/lib/payments";
+import { getPaymentsByWallet, isConfirmedHistoryPayment } from "@/lib/payments";
 
 export async function GET(
   request: Request,
@@ -34,15 +34,19 @@ export async function GET(
       ? value.toLowerCase() === normalizedWallet.toLowerCase()
       : value === normalizedWallet);
   const visiblePayments = payments.filter((payment) => {
+    if (!isConfirmedHistoryPayment(payment)) {
+      return false;
+    }
+
     const isSent = matchesWallet(payment.payer_wallet);
     const isReceived = matchesWallet(payment.recipient_wallet);
 
     if (isSent) {
-      return Boolean(payment.tx_signature) && payment.status === "confirmed";
+      return true;
     }
 
     if (isReceived) {
-      return Boolean(payment.tx_signature) && payment.status === "confirmed";
+      return true;
     }
 
     return false;

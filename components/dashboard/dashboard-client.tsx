@@ -103,7 +103,11 @@ export function DashboardClient() {
 
         setTagRecord(currentTagRecord);
 
-        const historyWallet = resolveTagWalletAddress(currentTagRecord);
+        const historyWallets = connectedWallets.filter((wallet) =>
+          ownsTagWallet(currentTagRecord, wallet)
+        );
+
+        const historyWallet = historyWallets[0] ?? resolveTagWalletAddress(currentTagRecord);
 
         if (!historyWallet) {
           setLinks([]);
@@ -112,13 +116,17 @@ export function DashboardClient() {
           return;
         }
 
-        const [linksResponse, paymentsResponse] = await Promise.all([
+        const [linksResponse, paymentResponses] = await Promise.all([
           fetch(`/api/links/by-owner/${encodeURIComponent(historyWallet)}`, {
             cache: "no-store"
           }),
-          fetch(`/api/payments/by-wallet/${encodeURIComponent(historyWallet)}`, {
-            cache: "no-store"
-          })
+          Promise.all(
+            (historyWallets.length ? historyWallets : [historyWallet]).map((wallet) =>
+              fetch(`/api/payments/by-wallet/${encodeURIComponent(wallet)}`, {
+                cache: "no-store"
+              })
+            )
+          )
         ]);
 
         if (linksResponse.ok) {
@@ -128,13 +136,31 @@ export function DashboardClient() {
           setLinks([]);
         }
 
-        if (paymentsResponse.ok) {
-          const result = (await paymentsResponse.json()) as { payments: PaymentHistoryItem[] };
-          setPayments(result.payments);
+        const failedPaymentResponse = paymentResponses.find((response) => !response.ok);
+
+        if (!failedPaymentResponse) {
+          const results = (await Promise.all(
+            paymentResponses.map((response) => response.json())
+          )) as Array<{ payments: PaymentHistoryItem[] }>;
+          const dedupedPayments = new Map<string, PaymentHistoryItem>();
+
+          for (const result of results) {
+            for (const payment of result.payments) {
+              dedupedPayments.set(payment.id, payment);
+            }
+          }
+
+          setPayments(
+            Array.from(dedupedPayments.values()).sort((left, right) =>
+              (right.confirmed_at || right.updated_at || right.created_at).localeCompare(
+                left.confirmed_at || left.updated_at || left.created_at
+              )
+            )
+          );
           setHistoryError(null);
         } else {
           setPayments([]);
-          const result = (await paymentsResponse
+          const result = (await failedPaymentResponse
             .json()
             .catch(() => ({ error: "Unable to load payment history." }))) as {
             error?: string;
@@ -612,7 +638,7 @@ export function DashboardClient() {
                               <span className="text-accent/90">
                                 {payment.direction === "sent" ? "Sent" : "Received"}
                               </span>{" "}
-                              • {payment.amount || "Pending"} {payment.asset}
+                              • {payment.amount} {payment.asset}
                             </p>
                             <p className="text-sm text-secondary">
                               {formatPaymentStatus(payment.status)} •{" "}
@@ -833,6 +859,18 @@ function truncateCounterparty(payment: PaymentHistoryItem, walletAddress: string
   }
 
   return truncateWalletAddress(rawCounterparty);
+}
+
+function ownsTagWallet(tag: PriviiTagRecord, wallet: string) {
+  const normalizedWallet = wallet.trim().toLowerCase();
+  const candidates = [
+    tag.ownerWallet,
+    tag.walletAddress,
+    getDashboardSolanaWallet(tag),
+    getDashboardEvmWallet(tag),
+  ].filter((value): value is string => Boolean(value));
+
+  return candidates.some((candidate) => candidate.trim().toLowerCase() === normalizedWallet);
 }
 
 function normalizeWalletLinkMessage(message: string) {

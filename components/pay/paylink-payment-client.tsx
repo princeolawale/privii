@@ -1099,17 +1099,23 @@ async function confirmSolanaPayment({
     throw new Error("Payment failed. Please try again");
   }
 
-  const latest = await fetchLatestBlockhashWithRetry(connection);
-  const result = await connection.confirmTransaction(
-    {
-      signature,
-      blockhash: latest.blockhash,
-      lastValidBlockHeight: latest.lastValidBlockHeight
-    },
-    "confirmed"
-  );
+  try {
+    const result = await connection.confirmTransaction(signature, "confirmed");
 
-  if (result.value.err) {
+    if (result.value.err) {
+      throw new Error("Payment failed. Please try again");
+    }
+  } catch (error) {
+    console.error("payment confirmation error", error);
+    const status = await connection.getSignatureStatuses([signature], {
+      searchTransactionHistory: true,
+    });
+    const signatureStatus = status.value[0];
+
+    if (signatureStatus && !signatureStatus.err) {
+      return;
+    }
+
     throw new Error("Payment failed. Please try again");
   }
 }

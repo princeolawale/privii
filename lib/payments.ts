@@ -8,6 +8,7 @@ import {
   type ParsedTransactionWithMeta,
 } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { isAddress } from "viem";
 
 import { getEvmNetworkOption } from "@/lib/evm/chains";
 import { verifyEvmTransaction } from "@/lib/evm/client";
@@ -20,6 +21,27 @@ const payerIndexKey = (wallet: string) => `payment:payer:${wallet}`;
 const txSignatureIndexKey = (signature: string) => `payment:tx:${signature}`;
 const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
+function normalizePaymentIndexWallet(wallet: string) {
+  return isAddress(wallet) ? wallet.toLowerCase() : wallet;
+}
+
+function getWalletIndexKeys(wallet: string) {
+  const normalized = normalizePaymentIndexWallet(wallet);
+  return Array.from(new Set([wallet, normalized]));
+}
+
+export function isConfirmedHistoryPayment(
+  payment: PaymentRecord | null | undefined
+): payment is PaymentRecord & { amount: string; tx_signature: string; confirmed_at: string } {
+  return Boolean(
+    payment &&
+      payment.status === "confirmed" &&
+      payment.amount &&
+      payment.tx_signature &&
+      payment.confirmed_at
+  );
+}
+
 export async function getPayment(id: string) {
   return kv.get<PaymentRecord>(paymentKey(id));
 }
@@ -27,18 +49,25 @@ export async function getPayment(id: string) {
 export async function savePayment(payment: PaymentRecord) {
   await kv.set(paymentKey(payment.id), payment);
   const existing = payment.recipient_wallet
-    ? (await kv.get<string[]>(recipientIndexKey(payment.recipient_wallet))) ?? []
+    ? (await kv.get<string[]>(recipientIndexKey(normalizePaymentIndexWallet(payment.recipient_wallet)))) ?? []
     : [];
 
   if (payment.recipient_wallet && !existing.includes(payment.id)) {
-    await kv.set(recipientIndexKey(payment.recipient_wallet), [...existing, payment.id]);
+    await kv.set(
+      recipientIndexKey(normalizePaymentIndexWallet(payment.recipient_wallet)),
+      [...existing, payment.id]
+    );
   }
 
   if (payment.payer_wallet) {
-    const payerExisting = (await kv.get<string[]>(payerIndexKey(payment.payer_wallet))) ?? [];
+    const payerExisting =
+      (await kv.get<string[]>(payerIndexKey(normalizePaymentIndexWallet(payment.payer_wallet)))) ?? [];
 
     if (!payerExisting.includes(payment.id)) {
-      await kv.set(payerIndexKey(payment.payer_wallet), [...payerExisting, payment.id]);
+      await kv.set(
+        payerIndexKey(normalizePaymentIndexWallet(payment.payer_wallet)),
+        [...payerExisting, payment.id]
+      );
     }
   }
 
@@ -80,7 +109,10 @@ export async function updatePayment(
 }
 
 export async function getPaymentsByRecipient(wallet: string) {
-  const ids = (await kv.get<string[]>(recipientIndexKey(wallet))) ?? [];
+  const idLists = await Promise.all(
+    getWalletIndexKeys(wallet).map((key) => kv.get<string[]>(recipientIndexKey(key)))
+  );
+  const ids = Array.from(new Set(idLists.flatMap((value) => value ?? [])));
   const payments = await Promise.all(ids.map((id) => getPayment(id)));
   return payments
     .filter((payment): payment is PaymentRecord => Boolean(payment))
@@ -88,7 +120,10 @@ export async function getPaymentsByRecipient(wallet: string) {
 }
 
 export async function getPaymentsByPayer(wallet: string) {
-  const ids = (await kv.get<string[]>(payerIndexKey(wallet))) ?? [];
+  const idLists = await Promise.all(
+    getWalletIndexKeys(wallet).map((key) => kv.get<string[]>(payerIndexKey(key)))
+  );
+  const ids = Array.from(new Set(idLists.flatMap((value) => value ?? [])));
   const payments = await Promise.all(ids.map((id) => getPayment(id)));
   return payments
     .filter((payment): payment is PaymentRecord => Boolean(payment))
@@ -461,7 +496,7 @@ function verifyUsdcTransfer(transaction: ParsedTransactionWithMeta, payment: Pay
       info.authority === payment.payer_wallet &&
       info.source === payerAta &&
       info.destination === recipientAta &&
-      info.mint === USDC_MINT_ADDRESS.toBase58() &&
+      (!info.mint || info.mint === USDC_MINT_ADDRESS.toBase58()) &&
       amount >= expectedAmount
     ) {
       return {

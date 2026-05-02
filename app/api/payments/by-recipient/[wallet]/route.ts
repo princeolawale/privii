@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 
-import { getPaymentsByRecipient } from "@/lib/payments";
+import { getPaymentsByRecipient, isConfirmedHistoryPayment } from "@/lib/payments";
 
 export async function GET(
   request: Request,
@@ -20,9 +20,10 @@ export async function GET(
   }
 
   const payments = await getPaymentsByRecipient(normalizedWallet);
+  const visiblePayments = payments.filter(isConfirmedHistoryPayment);
 
   return NextResponse.json({
-    payments: payments.map((payment) => ({
+    payments: visiblePayments.map((payment) => ({
       id: payment.id,
       amount: payment.amount,
       asset: payment.asset,
