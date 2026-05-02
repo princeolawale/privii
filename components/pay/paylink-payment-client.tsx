@@ -97,6 +97,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
   const [isInitializingPayment, setIsInitializingPayment] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [paymentInit, setPaymentInit] = useState<PaymentInit | null>(null);
@@ -260,6 +261,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       setIsInitializingPayment(true);
       setPaymentStage("initializing");
       setError(null);
+      setStatusNotice(null);
 
       try {
         const response = await fetch("/api/payments/init", {
@@ -420,6 +422,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     const amountNumber = Number(enteredAmount);
 
     setError(null);
+    setStatusNotice(null);
     setIsPaying(true);
     setPaymentStage("awaiting_signature");
 
@@ -446,32 +449,66 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       setPaymentStage("submitted");
       setPaymentStage("confirming");
 
-      const confirmed = await pollForConfirmedPayment({
-        kind: data.kind,
-        tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
-        network: selectedNetwork,
-        asset: paymentToken,
-        expectedAmount: enteredAmount,
-        payerWallet: selectedNetwork === "solana" ? solanaAccount.address! : connectedEvmAddress,
-        txSignature: signature
-      });
+      try {
+        if (selectedNetwork === "solana") {
+          await confirmSolanaPayment({
+            connection,
+            signature,
+          });
+        } else {
+          await confirmEvmPayment({
+            network: selectedNetwork as EvmNetwork,
+            txHash: signature as `0x${string}`,
+          });
+        }
+      } catch (confirmationError) {
+        console.error("payment confirmation error", confirmationError);
+        throw confirmationError;
+      }
+
+      let confirmed: PaymentConfirmResult;
+
+      try {
+        confirmed = await pollForConfirmedPayment({
+          kind: data.kind,
+          tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+          network: selectedNetwork,
+          asset: paymentToken,
+          expectedAmount: enteredAmount,
+          payerWallet: selectedNetwork === "solana" ? solanaAccount.address! : connectedEvmAddress,
+          txSignature: signature
+        });
+      } catch (historyError) {
+        console.error("payment history save error", historyError);
+        setPaymentStage("confirmed");
+        setStatusNotice("Payment confirmed, but history sync failed");
+        safeRedirectToSuccess({
+          router,
+          signature,
+          tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+        });
+        return;
+      }
 
       if (confirmed.status !== "confirmed") {
         throw new Error("Payment failed. Please try again");
       }
 
       setPaymentStage("confirmed");
+      if (confirmed.historySaved === false) {
+        setStatusNotice("Payment confirmed, but history sync failed");
+      }
 
-      router.push(
-        `/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(
-          data.kind === "tag" ? data.tagRecord.tag : data.link.tag
-        )}`
-      );
+      safeRedirectToSuccess({
+        router,
+        signature,
+        tag: data.kind === "tag" ? data.tagRecord.tag : data.link.tag,
+      });
     } catch (paymentError) {
       if (paymentToken === "SOL") {
         console.error("SOL transfer error:", paymentError);
       }
-      console.error(paymentError);
+      console.error("payment confirmation error", paymentError);
       setError(
         paymentError instanceof Error
           ? getReadablePaymentError(paymentError.message)
@@ -731,6 +768,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             <p className="text-sm text-secondary">{paymentStageMessage(paymentStage)}</p>
           ) : null}
 
+          {statusNotice ? <p className="text-sm text-secondary">{statusNotice}</p> : null}
+
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
           {isExpired ? (
             <p className="text-sm text-red-400">This payment link has expired</p>
@@ -909,17 +948,7 @@ async function sendSolanaPayment({
   transaction.recentBlockhash = blockhash.blockhash;
   transaction.feePayer = wallet.publicKey;
 
-  const signature = await wallet.sendTransaction(transaction, connection);
-  await connection.confirmTransaction(
-    {
-      signature,
-      blockhash: blockhash.blockhash,
-      lastValidBlockHeight: blockhash.lastValidBlockHeight
-    },
-    "confirmed"
-  );
-
-  return signature;
+  return wallet.sendTransaction(transaction, connection);
 }
 
 async function sendEvmPayment({
@@ -1056,9 +1085,48 @@ async function sendEvmPayment({
     args: [recipientWallet as `0x${string}`, atomicAmount],
     gas,
   });
-
-  await publicClient.waitForTransactionReceipt({ hash });
   return hash;
+}
+
+async function confirmSolanaPayment({
+  connection,
+  signature,
+}: {
+  connection: Connection | undefined;
+  signature: string;
+}) {
+  if (!connection) {
+    throw new Error("Payment failed. Please try again");
+  }
+
+  const latest = await fetchLatestBlockhashWithRetry(connection);
+  const result = await connection.confirmTransaction(
+    {
+      signature,
+      blockhash: latest.blockhash,
+      lastValidBlockHeight: latest.lastValidBlockHeight
+    },
+    "confirmed"
+  );
+
+  if (result.value.err) {
+    throw new Error("Payment failed. Please try again");
+  }
+}
+
+async function confirmEvmPayment({
+  network,
+  txHash,
+}: {
+  network: EvmNetwork;
+  txHash: `0x${string}`;
+}) {
+  const publicClient = getEvmPublicClient(network);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+  if (receipt.status !== "success") {
+    throw new Error("Payment failed. Please try again");
+  }
 }
 
 function IconActionButton({
@@ -1148,6 +1216,10 @@ function formatExpiryLabel(expiresAt: number | null, now: number) {
   return `Expires in ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
+type PaymentConfirmResult =
+  | { status: "confirmed"; payment?: unknown; historySaved?: boolean }
+  | { status: "failed" | "confirming" };
+
 async function pollForConfirmedPayment(input: {
   kind: "tag" | "paylink";
   tag: string;
@@ -1156,7 +1228,7 @@ async function pollForConfirmedPayment(input: {
   expectedAmount: string;
   payerWallet: string;
   txSignature: string;
-}) {
+}): Promise<PaymentConfirmResult> {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const confirmResponse = await fetch("/api/payments/confirm", {
       method: "POST",
@@ -1172,13 +1244,29 @@ async function pollForConfirmedPayment(input: {
     }
 
     if (confirmResult.status === "confirmed" || confirmResult.status === "failed") {
-      return confirmResult as { status: "confirmed" | "failed" };
+      return confirmResult as PaymentConfirmResult;
     }
 
     await new Promise((resolve) => window.setTimeout(resolve, 2000));
   }
 
   throw new Error("Payment failed. Please try again");
+}
+
+function safeRedirectToSuccess({
+  router,
+  signature,
+  tag,
+}: {
+  router: ReturnType<typeof useRouter>;
+  signature: string;
+  tag: string;
+}) {
+  try {
+    router.push(`/success?tx=${encodeURIComponent(signature)}&tag=${encodeURIComponent(tag)}`);
+  } catch (error) {
+    console.error("payment history save error", error);
+  }
 }
 
 function paymentStageMessage(stage: PaymentStage) {
@@ -1202,6 +1290,14 @@ function paymentStageMessage(stage: PaymentStage) {
 
 function getReadablePaymentError(message: string) {
   const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("rejected") ||
+    normalized.includes("user rejected") ||
+    normalized.includes("user denied")
+  ) {
+    return "Transaction rejected";
+  }
 
   if (normalized.includes("usdc wallet not initialized")) {
     return "USDC wallet not initialized";

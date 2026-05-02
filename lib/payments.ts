@@ -276,11 +276,21 @@ export async function confirmAndSavePayment(input: {
       confirmed_at: now,
     };
 
-    await savePayment(confirmedRecord);
+    try {
+      await savePayment(confirmedRecord);
+    } catch (error) {
+      console.error("payment history save error", error);
+      return {
+        status: "confirmed" as const,
+        payment: confirmedRecord,
+        historySaved: false,
+      };
+    }
 
     return {
       status: "confirmed" as const,
       payment: confirmedRecord,
+      historySaved: true,
     };
   }
 
@@ -319,11 +329,21 @@ export async function confirmAndSavePayment(input: {
     confirmed_at: now,
   };
 
-  await savePayment(confirmedRecord);
+  try {
+    await savePayment(confirmedRecord);
+  } catch (error) {
+    console.error("payment history save error", error);
+    return {
+      status: "confirmed" as const,
+      payment: confirmedRecord,
+      historySaved: false,
+    };
+  }
 
   return {
     status: "confirmed" as const,
     payment: confirmedRecord,
+    historySaved: true,
   };
 }
 

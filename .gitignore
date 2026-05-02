@@ -6,3 +6,5 @@ out
 coverage
 *.log
 tsconfig.tsbuildinfo
+.vercel
+.env*.local
