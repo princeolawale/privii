@@ -6,9 +6,10 @@ import { savePayLink, tagExists } from "@/lib/paylinks";
 import {
   getPriviiTagByOwner,
   priviiTagExists,
+  hasTagEvmWallet,
+  hasTagSolanaWallet,
   resolveTagEvmWallet,
-  resolveTagSolanaWallet,
-  resolveTagWalletType
+  resolveTagSolanaWallet
 } from "@/lib/tags";
 import type {
   PayLinkExpiryOption,
@@ -60,28 +61,31 @@ export async function POST(request: Request) {
     }
 
     const ownerTagRecord = await getPriviiTagByOwner(creatorWallet);
-    const creatorWalletType: WalletType = ownerTagRecord
-      ? resolveTagWalletType(ownerTagRecord)
-      : isSolanaCreatorWallet
-        ? "solana"
-        : "evm";
+    const requestedNetwork =
+      body.network === "ethereum" || body.network === "base" || body.network === "arbitrum" || body.network === "bsc"
+        ? body.network
+        : body.network === "solana"
+          ? "solana"
+          : null;
+    const hasSolanaWallet = ownerTagRecord
+      ? hasTagSolanaWallet(ownerTagRecord)
+      : isSolanaCreatorWallet;
+    const hasEvmWallet = ownerTagRecord ? hasTagEvmWallet(ownerTagRecord) : !isSolanaCreatorWallet;
+    const network: PaymentNetwork =
+      requestedNetwork ||
+      (hasSolanaWallet ? "solana" : "ethereum");
+    const creatorWalletType: WalletType = network === "solana" ? "solana" : "evm";
 
-    const network: PaymentNetwork = body.network === "ethereum" || body.network === "base" || body.network === "arbitrum" || body.network === "bsc"
-      ? body.network
-      : creatorWalletType === "solana"
-        ? "solana"
-        : "ethereum";
-
-    if (creatorWalletType === "solana" && network !== "solana") {
+    if (network === "solana" && !hasSolanaWallet) {
       return NextResponse.json(
-        { error: "This wallet path only supports Solana payment links." },
+        { error: "Link a wallet for this network first" },
         { status: 400 }
       );
     }
 
-    if (creatorWalletType === "evm" && network === "solana") {
+    if (network !== "solana" && !hasEvmWallet) {
       return NextResponse.json(
-        { error: "This wallet path only supports EVM payment links." },
+        { error: "Link a wallet for this network first" },
         { status: 400 }
       );
     }
@@ -107,8 +111,8 @@ export async function POST(request: Request) {
         {
           error:
             network === "solana"
-              ? "Recipient wallet not configured for this tag."
-              : "This user has not added a wallet for this network"
+              ? "Link a wallet for this network first"
+              : "Link a wallet for this network first"
         },
         { status: 422 }
       );
@@ -119,13 +123,13 @@ export async function POST(request: Request) {
         new PublicKey(recipientWallet);
       } catch {
         return NextResponse.json(
-          { error: "Recipient wallet not configured for this tag." },
+          { error: "Link a wallet for this network first" },
           { status: 422 }
         );
       }
     } else if (!isAddress(recipientWallet)) {
       return NextResponse.json(
-        { error: "This user has not added a wallet for this network" },
+        { error: "Link a wallet for this network first" },
         { status: 422 }
       );
     }

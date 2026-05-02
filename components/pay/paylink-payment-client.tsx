@@ -32,7 +32,7 @@ import { getEvmPublicClient } from "@/lib/evm/client";
 import { getEvmTokenConfig } from "@/lib/evm/tokens";
 import { ConnectWalletButton } from "@/components/solana/connect-wallet-button";
 import { addUsdcTransfer, fetchLatestBlockhashWithRetry } from "@/lib/solana/client";
-import { resolveTagWalletType } from "@/lib/tags";
+import { hasTagEvmWallet, hasTagSolanaWallet } from "@/lib/tags";
 import { usePriviiWallet } from "@/components/wallet/use-privii-wallet";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -158,40 +158,64 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return () => window.clearInterval(interval);
   }, []);
 
-  useEffect(() => {
+  const tagHasSolanaWallet = data?.kind === "tag" ? hasTagSolanaWallet(data.tagRecord) : false;
+  const tagHasEvmWallet = data?.kind === "tag" ? hasTagEvmWallet(data.tagRecord) : false;
+  const availableNetworkOptions: Array<{ value: PaymentNetwork; label: string }> = useMemo(() => {
     if (!data) {
+      return [];
+    }
+
+    if (data.kind === "paylink") {
+      if ((data.link.walletType || "solana") === "solana") {
+        return [{ value: "solana", label: "Solana" }];
+      }
+
+      const paylinkNetwork = data.link.network || "ethereum";
+      const option = paylinkNetwork === "solana" ? null : getEvmNetworkOption(paylinkNetwork);
+
+      return option ? [{ value: paylinkNetwork, label: option.label }] : [];
+    }
+
+    const options: Array<{ value: PaymentNetwork; label: string }> = [];
+
+    if (tagHasSolanaWallet) {
+      options.push({ value: "solana", label: "Solana" });
+    }
+
+    if (tagHasEvmWallet) {
+      options.push(
+        ...EVM_NETWORK_OPTIONS.map((option) => ({
+          value: option.key as PaymentNetwork,
+          label: option.label
+        }))
+      );
+    }
+
+    return options;
+  }, [data, tagHasEvmWallet, tagHasSolanaWallet]);
+
+  useEffect(() => {
+    if (!data || !availableNetworkOptions.length) {
       return;
     }
 
     const nextNetwork =
-      data.kind === "tag"
-        ? resolveTagWalletType(data.tagRecord) === "solana"
-          ? "solana"
-          : "ethereum"
-        : data.link.walletType === "solana"
-          ? "solana"
-          : data.link.network || "ethereum";
-    setSelectedNetwork(nextNetwork);
+      availableNetworkOptions.find((option) => option.value === selectedNetwork)?.value ||
+      availableNetworkOptions[0].value;
+
+    if (nextNetwork !== selectedNetwork) {
+      setSelectedNetwork(nextNetwork);
+    }
 
     const nextTokens = getNetworkTokenOptions(nextNetwork);
-    setSelectedToken(
-      data.kind === "paylink" && nextTokens.includes(data.link.token) ? data.link.token : nextTokens[0]
-    );
-  }, [data]);
+    setSelectedToken((current) => {
+      if (data.kind === "paylink" && nextTokens.includes(data.link.token)) {
+        return data.link.token;
+      }
 
-  const receiverWalletType =
-    data?.kind === "tag"
-      ? resolveTagWalletType(data.tagRecord)
-      : data?.kind === "paylink"
-        ? data.link.walletType || "solana"
-        : "solana";
-  const availableNetworkOptions: Array<{ value: PaymentNetwork; label: string }> =
-    receiverWalletType === "solana"
-      ? [{ value: "solana", label: "Solana" }]
-      : EVM_NETWORK_OPTIONS.map((option) => ({
-          value: option.key as PaymentNetwork,
-          label: option.label
-        }));
+      return nextTokens.includes(current) ? current : nextTokens[0];
+    });
+  }, [availableNetworkOptions, data, selectedNetwork]);
   const availableTokens =
     selectedNetwork === "solana"
       ? (["SOL", "USDC"] as PaymentAsset[])
@@ -369,8 +393,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       setError(
         data.kind === "tag"
           ? selectedNetwork === "solana"
-            ? "Recipient wallet not configured for this tag."
-            : "This user has not added a wallet for this network"
+            ? "This tag has no Solana wallet linked"
+            : "This tag has no EVM wallet linked"
           : "Payment failed. Please try again"
       );
       return;
@@ -938,7 +962,7 @@ async function sendEvmPayment({
   }
 
   if (!isAddress(recipientWallet)) {
-    throw new Error("This user has not added a wallet for this network");
+    throw new Error("This tag has no EVM wallet linked");
   }
 
   if (!isAddress(senderWallet)) {

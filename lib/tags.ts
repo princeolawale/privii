@@ -47,6 +47,25 @@ export async function savePriviiTag(record: PriviiTagRecord) {
   return record;
 }
 
+export function hasTagSolanaWallet(record: {
+  ownerWallet?: string | null;
+  walletType?: WalletType | null;
+  walletAddress?: string | null;
+  recipientWallet?: string | null;
+  solanaWallet?: string | null;
+}) {
+  return Boolean(resolveTagSolanaWallet(record));
+}
+
+export function hasTagEvmWallet(record: {
+  ownerWallet?: string | null;
+  walletType?: WalletType | null;
+  walletAddress?: string | null;
+  evmWallet?: string | null;
+}) {
+  return Boolean(resolveTagEvmWallet(record));
+}
+
 export function resolveTagWalletType(record: {
   walletType?: WalletType | null;
   walletAddress?: string | null;
@@ -108,27 +127,42 @@ export function resolveTagSolanaWallet(record: {
   walletType?: WalletType | null;
   walletAddress?: string | null;
 }) {
-  if (resolveTagWalletType(record) === "evm") {
-    return "";
+  if (record.solanaWallet?.trim()) {
+    return record.solanaWallet.trim();
   }
 
-  return (
-    record.walletAddress?.trim() ||
-    record.solanaWallet?.trim() ||
-    record.recipientWallet?.trim() ||
-    record.ownerWallet?.trim() ||
-    ""
-  );
+  if (record.walletType === "solana" && record.walletAddress?.trim()) {
+    return record.walletAddress.trim();
+  }
+
+  if (record.recipientWallet?.trim()) {
+    return record.recipientWallet.trim();
+  }
+
+  if (record.ownerWallet?.trim() && !isAddress(record.ownerWallet.trim())) {
+    return record.ownerWallet.trim();
+  }
+
+  return "";
 }
 
 export function resolveTagEvmWallet(record: {
+  ownerWallet?: string | null;
   walletType?: WalletType | null;
   walletAddress?: string | null;
   evmWallet?: string | null;
 }) {
-  if (resolveTagWalletType(record) === "solana") {
-    return null;
+  if (record.evmWallet?.trim()) {
+    return record.evmWallet.trim();
   }
 
-  return record.walletAddress?.trim() || record.evmWallet?.trim() || null;
+  if (record.walletType === "evm" && record.walletAddress?.trim()) {
+    return record.walletAddress.trim();
+  }
+
+  if (record.ownerWallet?.trim() && isAddress(record.ownerWallet.trim())) {
+    return record.ownerWallet.trim();
+  }
+
+  return null;
 }

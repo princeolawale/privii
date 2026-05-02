@@ -21,13 +21,12 @@ import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast-provider";
 import { EVM_NETWORK_OPTIONS } from "@/lib/evm/chains";
 import { EVM_TOKENS } from "@/lib/evm/tokens";
-import { resolveTagWalletType } from "@/lib/tags";
+import { hasTagEvmWallet, hasTagSolanaWallet } from "@/lib/tags";
 import type {
   PayLinkExpiryOption,
   PaymentAsset,
   PaymentNetwork,
-  PayLinkType,
-  WalletType
+  PayLinkType
 } from "@/lib/types";
 import { buildWhatsAppShareUrl, buildXShareUrl } from "@/lib/utils";
 
@@ -65,48 +64,85 @@ export function PayLinkForm() {
   const [createdLink, setCreatedLink] = useState<CreateResponse | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const activeWalletType: WalletType =
-    hasTag && tagRecord
-      ? resolveTagWalletType(tagRecord)
-      : primaryWalletType || "solana";
-  const recipientWallet =
-    tagRecord?.solanaWallet?.trim() || tagRecord?.recipientWallet?.trim() || tagRecord?.ownerWallet?.trim() || "";
-  const evmWallet = tagRecord?.evmWallet?.trim() || "";
+  const solanaWallet =
+    (tagRecord
+      ? (tagRecord.solanaWallet?.trim() ||
+        (tagRecord.walletType === "solana" ? tagRecord.walletAddress?.trim() : "") ||
+        tagRecord.recipientWallet?.trim() ||
+        (tagRecord.ownerWallet?.startsWith("0x") ? "" : tagRecord.ownerWallet?.trim()) ||
+        "")
+      : primaryWalletType === "solana"
+        ? primaryWalletAddress || ""
+        : "") || "";
+  const evmWallet =
+    (tagRecord
+      ? (tagRecord.evmWallet?.trim() ||
+        (tagRecord.walletType === "evm" ? tagRecord.walletAddress?.trim() : "") ||
+        (tagRecord.ownerWallet?.startsWith("0x") ? tagRecord.ownerWallet.trim() : "") ||
+        "")
+      : primaryWalletType === "evm"
+        ? primaryWalletAddress || ""
+        : "") || "";
+  const availableNetworks = useMemo(() => {
+    const networks: Array<{ value: PaymentNetwork; label: string }> = [];
+
+    if (hasTag && tagRecord ? hasTagSolanaWallet(tagRecord) : Boolean(solanaWallet)) {
+      networks.push({ value: "solana", label: "Solana" });
+    }
+
+    if (hasTag && tagRecord ? hasTagEvmWallet(tagRecord) : Boolean(evmWallet)) {
+      networks.push(
+        ...EVM_NETWORK_OPTIONS.map((option) => ({
+          value: option.key as PaymentNetwork,
+          label: option.label
+        }))
+      );
+    }
+
+    return networks;
+  }, [evmWallet, hasTag, solanaWallet, tagRecord]);
   const creatorWallet = useMemo(
-    () =>
-      hasTag && tagRecord
-        ? activeWalletType === "solana"
-          ? recipientWallet || primaryWalletAddress || ""
-          : evmWallet || primaryWalletAddress || ""
-        : primaryWalletAddress || "",
-    [activeWalletType, evmWallet, hasTag, primaryWalletAddress, recipientWallet, tagRecord]
+    () => primaryWalletAddress || tagRecord?.ownerWallet || solanaWallet || evmWallet || "",
+    [evmWallet, primaryWalletAddress, solanaWallet, tagRecord]
   );
+  const selectedReceiverWallet = network === "solana" ? solanaWallet : evmWallet;
   const availableTokens =
-    activeWalletType === "solana"
+    network === "solana"
       ? ["SOL", "USDC"]
-      : EVM_TOKENS[network === "solana" ? "ethereum" : network].map((item) => item.symbol);
+      : EVM_TOKENS[network].map((item) => item.symbol);
   const canCreate =
     anyWalletConnected &&
     Boolean(creatorWallet) &&
+    Boolean(selectedReceiverWallet) &&
+    availableNetworks.some((option) => option.value === network) &&
     !isLoading &&
-    (activeWalletType === "solana"
-      ? (hasTag ? Boolean(recipientWallet) : Boolean(creatorWallet))
-      : (hasTag ? Boolean(evmWallet) : Boolean(creatorWallet)));
+    Boolean(availableTokens.length);
 
   useEffect(() => {
-    if (activeWalletType === "solana") {
-      setNetwork("solana");
-      setToken((current) => (current === "SOL" || current === "USDC" ? current : "USDC"));
+    if (!availableNetworks.length) {
       return;
     }
 
-    setNetwork((current) => (current === "solana" ? "ethereum" : current));
-    setToken((current) =>
-      current === "ETH" || current === "USDC" || current === "USDT" || current === "BNB"
-        ? current
-        : "ETH"
-    );
-  }, [activeWalletType]);
+    if (!availableNetworks.some((option) => option.value === network)) {
+      const nextNetwork = availableNetworks[0].value;
+      setNetwork(nextNetwork);
+      const nextTokens =
+        nextNetwork === "solana"
+          ? (["SOL", "USDC"] as PaymentAsset[])
+          : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
+      setToken(nextTokens[0] as PaymentAsset);
+      return;
+    }
+
+    const nextTokens =
+      network === "solana"
+        ? (["SOL", "USDC"] as PaymentAsset[])
+        : EVM_TOKENS[network].map((item) => item.symbol);
+
+    if (!nextTokens.includes(token)) {
+      setToken(nextTokens[0] as PaymentAsset);
+    }
+  }, [availableNetworks, network, token]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,7 +163,7 @@ export function PayLinkForm() {
         body: JSON.stringify({
           amount: amount || null,
           token,
-          network: activeWalletType === "solana" ? "solana" : network,
+          network,
           type,
           expiry: type === "expiring" ? expiry : "none",
           creatorWallet,
@@ -346,22 +382,23 @@ export function PayLinkForm() {
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-secondary">Network</span>
-                {activeWalletType === "solana" ? (
-                  <Input disabled value="Solana" />
+                {availableNetworks.length <= 1 ? (
+                  <Input disabled value={availableNetworks[0]?.label || "Unavailable"} />
                 ) : (
                   <Select
-                    value={network === "solana" ? "ethereum" : network}
+                    value={network}
                     onChange={(event) => {
                       const nextNetwork = event.target.value as PaymentNetwork;
                       setNetwork(nextNetwork);
-                      const nextTokens = EVM_TOKENS[nextNetwork as Exclude<PaymentNetwork, "solana">].map(
-                        (item) => item.symbol
-                      );
+                      const nextTokens =
+                        nextNetwork === "solana"
+                          ? (["SOL", "USDC"] as PaymentAsset[])
+                          : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
                       setToken(nextTokens[0] as PaymentAsset);
                     }}
                   >
-                    {EVM_NETWORK_OPTIONS.map((option) => (
-                      <option key={option.key} value={option.key}>
+                    {availableNetworks.map((option) => (
+                      <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
@@ -424,7 +461,7 @@ export function PayLinkForm() {
                 value={
                   hasTag && tagRecord
                     ? `@${tagRecord.tag}`
-                    : activeWalletType === "solana"
+                    : network === "solana"
                       ? "Connected Solana wallet"
                       : "Connected EVM wallet"
                 }
@@ -432,9 +469,9 @@ export function PayLinkForm() {
               />
             </label>
 
-            {activeWalletType === "evm" && hasTag && !evmWallet ? (
+            {!selectedReceiverWallet ? (
               <p className="text-sm text-secondary">
-                This user has not added a wallet for this network
+                Link a wallet for this network first
               </p>
             ) : null}
 

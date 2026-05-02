@@ -23,10 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast-provider";
 import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
-import {
-  resolveTagWalletAddress,
-  resolveTagWalletType
-} from "@/lib/tags";
+import { resolveTagWalletAddress } from "@/lib/tags";
 import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
@@ -174,6 +171,9 @@ export function DashboardClient() {
   const historyWalletAddress = tagRecord
     ? resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
     : "";
+  const receivingNetworks = [linkedSolanaWallet ? "Solana" : null, linkedEvmWallet ? "EVM" : null]
+    .filter((value): value is string => Boolean(value))
+    .join(" + ");
   const ownerWalletForUpdate = useMemo(() => {
     if (!tagRecord) {
       return "";
@@ -409,7 +409,7 @@ export function DashboardClient() {
               <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
                 <p className="mt-3 text-sm text-secondary">
-                  Wallet type: {resolveTagWalletType(tagRecord) === "solana" ? "Solana" : "EVM"}
+                  Receiving networks: {receivingNetworks || "None linked"}
                 </p>
                 <p className="mx-auto mt-4 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
                   {publicUrl}
@@ -443,7 +443,7 @@ export function DashboardClient() {
                     <WalletRow
                       label="EVM Wallet"
                       value={linkedEvmWallet}
-                      isPrimary={resolveTagWalletType(tagRecord) === "evm"}
+                      isPrimary={Boolean(linkedEvmWallet)}
                       isBusy={isLinkingWallet && linkingWalletType === "evm"}
                       action={
                         linkedEvmWallet ? null : linkingWalletType === "evm" ? (
@@ -489,7 +489,7 @@ export function DashboardClient() {
                     <WalletRow
                       label="Solana Wallet"
                       value={linkedSolanaWallet}
-                      isPrimary={resolveTagWalletType(tagRecord) === "solana"}
+                      isPrimary={Boolean(linkedSolanaWallet)}
                       isBusy={isLinkingWallet && linkingWalletType === "solana"}
                       action={
                         linkedSolanaWallet ? null : linkingWalletType === "solana" ? (

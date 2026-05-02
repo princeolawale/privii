@@ -4,7 +4,7 @@ import { isAddress } from "viem";
 
 import { confirmAndSavePayment, parseDecimalAmount } from "@/lib/payments";
 import { getPayLink } from "@/lib/paylinks";
-import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet, resolveTagWalletType } from "@/lib/tags";
+import { getPriviiTag, resolveTagEvmWallet, resolveTagSolanaWallet } from "@/lib/tags";
 import type { PaymentAsset, PaymentNetwork } from "@/lib/types";
 import { isExpired, normalizePriviiTag } from "@/lib/utils";
 
@@ -54,22 +54,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
       }
 
-      const walletType = resolveTagWalletType(record);
-
-      if (walletType === "solana" && network !== "solana") {
-        return NextResponse.json(
-          { error: "This user has not added a wallet for this network" },
-          { status: 422 }
-        );
-      }
-
-      if (walletType === "evm" && network === "solana") {
-        return NextResponse.json(
-          { error: "This user has not added a wallet for this network" },
-          { status: 422 }
-        );
-      }
-
       const recipientWallet =
         network === "solana" ? resolveTagSolanaWallet(record) : resolveTagEvmWallet(record);
 
@@ -78,8 +62,8 @@ export async function POST(request: Request) {
           {
             error:
               network === "solana"
-                ? "Recipient wallet not configured for this tag."
-                : "This user has not added a wallet for this network"
+                ? "This tag has no Solana wallet linked"
+                : "This tag has no EVM wallet linked"
           },
           { status: 422 }
         );
@@ -90,13 +74,13 @@ export async function POST(request: Request) {
           new PublicKey(recipientWallet);
         } catch {
           return NextResponse.json(
-            { error: "Recipient wallet not configured for this tag." },
+            { error: "This tag has no Solana wallet linked" },
             { status: 422 }
           );
         }
       } else if (!isAddress(recipientWallet)) {
         return NextResponse.json(
-          { error: "This user has not added a wallet for this network" },
+          { error: "This tag has no EVM wallet linked" },
           { status: 422 }
         );
       }
@@ -146,20 +130,8 @@ export async function POST(request: Request) {
     }
 
     const walletType = link.walletType || "solana";
-
-    if (walletType === "solana" && network !== "solana") {
-      return NextResponse.json(
-        { error: "This user has not added a wallet for this network" },
-        { status: 422 }
-      );
-    }
-
-    if (walletType === "evm" && network === "solana") {
-      return NextResponse.json(
-        { error: "This user has not added a wallet for this network" },
-        { status: 422 }
-      );
-    }
+    const resolvedNetwork: PaymentNetwork =
+      walletType === "solana" ? "solana" : link.network || "ethereum";
 
     if (isExpired(link.expiresAt)) {
       return NextResponse.json({ error: "This payment link has expired" }, { status: 410 });
@@ -173,9 +145,9 @@ export async function POST(request: Request) {
 
       if (tagRecord) {
         recipientWallet =
-          network === "solana"
+          resolvedNetwork === "solana"
             ? resolveTagSolanaWallet(tagRecord) || recipientWallet
-            : resolveTagEvmWallet(tagRecord);
+            : resolveTagEvmWallet(tagRecord) || recipientWallet;
         receiverTag = tagRecord.tag;
       }
     }
@@ -184,26 +156,26 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            network === "solana"
-              ? "Recipient wallet not configured for this tag."
-              : "This user has not added a wallet for this network"
+            resolvedNetwork === "solana"
+              ? "This tag has no Solana wallet linked"
+              : "This tag has no EVM wallet linked"
         },
         { status: 422 }
       );
     }
 
-    if (network === "solana") {
+    if (resolvedNetwork === "solana") {
       try {
         new PublicKey(recipientWallet);
       } catch {
         return NextResponse.json(
-          { error: "Recipient wallet not configured for this tag." },
+          { error: "This tag has no Solana wallet linked" },
           { status: 422 }
         );
       }
     } else if (!isAddress(recipientWallet)) {
       return NextResponse.json(
-        { error: "This user has not added a wallet for this network" },
+        { error: "This tag has no EVM wallet linked" },
         { status: 422 }
       );
     }
@@ -230,7 +202,7 @@ export async function POST(request: Request) {
       recipientWallet,
       payerWallet,
       asset,
-      chain: network,
+      chain: resolvedNetwork,
       expectedAmount,
       txSignature,
     });
