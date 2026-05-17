@@ -76,7 +76,7 @@ npm run dev
 
 ## Wildcard subdomain setup
 
-Domain: `privii.cash`
+Domain: `privii.xyz`
 
 Required DNS:
 

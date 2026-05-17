@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, Send, X } from "lucide-react";
+import { Menu, Send, X as CloseIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -65,7 +65,7 @@ export function SiteHeader({
             className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-accent/25 hover:bg-accent/10"
             onClick={() => setOpen((current) => !current)}
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </header>
@@ -98,7 +98,8 @@ export function SiteHeader({
                   className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background/70 px-4 text-base font-medium text-primary transition hover:border-accent/25 hover:bg-accent/10"
                   onClick={() => setOpen(false)}
                 >
-                  <span className="text-lg font-medium">X</span>
+                  <CloseIcon className="h-4 w-4" />
+                  X
                 </a>
                 <a
                   href="https://t.me/priviilabs"

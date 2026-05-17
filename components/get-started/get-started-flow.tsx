@@ -35,7 +35,7 @@ export function GetStartedFlow() {
 
   const normalizedTag = normalizePriviiTag(tag);
   const isTagValid = isValidPriviiTag(normalizedTag);
-  const tagPreview = normalizedTag ? `${normalizedTag}.privii.cash` : "prince.privii.cash";
+  const tagPreview = normalizedTag ? `${normalizedTag}.privii.xyz` : "prince.privii.xyz";
   const currentStep = justCreated ? 3 : anyWalletConnected ? 2 : 1;
   const resolvedWalletType =
     primaryWalletType ||

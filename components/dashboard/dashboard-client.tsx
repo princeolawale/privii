@@ -24,7 +24,12 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast-provider";
 import type { PayLinkRecord, PaymentRecord, PriviiTagRecord } from "@/lib/types";
 import { resolveTagWalletAddress } from "@/lib/tags";
-import { buildFallbackTagUrl, buildXShareUrl, truncateWalletAddress } from "@/lib/utils";
+import {
+  buildFallbackTagUrl,
+  buildPrimaryTagUrl,
+  buildXShareUrl,
+  truncateWalletAddress
+} from "@/lib/utils";
 
 type DashboardTab = "tag" | "links" | "history" | "pay";
 type PaymentHistoryItem = Pick<
@@ -180,11 +185,7 @@ export function DashboardClient() {
       return null;
     }
 
-    if (typeof window === "undefined") {
-      return buildFallbackTagUrl(tagRecord.tag);
-    }
-
-    return `${window.location.origin}/${tagRecord.tag}`;
+    return tagRecord.primaryUrl || buildPrimaryTagUrl(tagRecord.tag);
   }, [tagRecord]);
   const linkedSolanaWallet = useMemo(
     () => (tagRecord ? getDashboardSolanaWallet(tagRecord) || null : null),

@@ -4,7 +4,7 @@ function normalizePriviiTag(value: string) {
   return value.trim().toLowerCase();
 }
 
-const SUPPORTED_ROOT_DOMAINS = [PRIVII_ROOT_DOMAIN, PRIVII_FALLBACK_DOMAIN];
+const SUPPORTED_ROOT_DOMAINS = [...new Set([PRIVII_ROOT_DOMAIN, PRIVII_FALLBACK_DOMAIN])];
 
 export function extractTagFromHost(host: string | null) {
   if (!host) {
