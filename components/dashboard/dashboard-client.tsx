@@ -824,7 +824,7 @@ function WalletRow({
         <div className="flex items-center gap-2">
           <p className="text-sm text-secondary">{label}</p>
           {value && isPrimary ? (
-            <span className="rounded-full border border-accent/20 bg-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-accent">
+            <span className="rounded-full border border-mint/20 bg-mint/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.16em] text-mint">
               Receiving wallet
             </span>
           ) : null}

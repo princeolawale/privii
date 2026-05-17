@@ -1149,7 +1149,7 @@ function IconActionButton({
       type="button"
       aria-label={label}
       title={label}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-mint/20 hover:bg-mint/[0.05]"
       onClick={onClick}
     >
       {icon}
@@ -1173,7 +1173,7 @@ function IconActionLink({
       rel="noreferrer"
       aria-label={label}
       title={label}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-mint/20 hover:bg-mint/[0.05]"
     >
       {icon}
     </a>
@@ -1186,7 +1186,7 @@ function ExpiryPill({ label, expired }: { label: string; expired?: boolean }) {
       className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
         expired
           ? "border-white/10 bg-white/[0.03] text-secondary"
-          : "border-accent/20 bg-accent/10 text-accent"
+          : "border-mint/20 bg-mint/10 text-mint"
       }`}
     >
       {expired ? "This payment link has expired" : label}

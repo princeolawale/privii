@@ -38,7 +38,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -left-12 top-14 h-36 w-36 rounded-full bg-electric/[0.08] blur-3xl" />
         <div className="pointer-events-none absolute right-0 top-20 h-28 w-28 rounded-full bg-mint/[0.05] blur-3xl" />
         <div className="relative space-y-8">
-          <div className="inline-flex rounded-full border border-accent/30 bg-[linear-gradient(180deg,rgba(139,92,255,0.14)_0%,rgba(91,45,255,0.08)_100%)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent shadow-[0_0_0_1px_rgba(139,92,255,0.06),0_10px_30px_rgba(91,45,255,0.08)]">
+          <div className="inline-flex rounded-full border border-accent/30 bg-[linear-gradient(180deg,rgba(139,92,255,0.14)_0%,rgba(91,45,255,0.08)_100%)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent shadow-[0_0_0_1px_rgba(139,92,255,0.06),0_10px_30px_rgba(91,45,255,0.08),inset_0_-1px_0_rgba(0,240,181,0.08)]">
             Tags and PayLinks
           </div>
           <div className="space-y-4">
@@ -148,7 +148,7 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto mb-14 max-w-4xl">
-        <Card className="rounded-[36px] px-6 py-10 text-center sm:px-10 sm:py-12">
+        <Card className="rounded-[36px] px-6 py-10 text-center shadow-[0_20px_70px_rgba(0,0,0,0.34),inset_0_-1px_0_rgba(0,240,181,0.05)] sm:px-10 sm:py-12">
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.24em] text-accent">Start Now</p>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
