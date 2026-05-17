@@ -16,20 +16,20 @@ export function SiteFooter() {
 
         <div className="flex items-center gap-4">
           <a
-            href="https://x.com/"
+            href="https://x.com/priviilabs?s=21"
             target="_blank"
             rel="noreferrer"
             aria-label="Privii on X"
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-accent/25 hover:bg-accent/10"
           >
             <span className="text-xl font-medium">X</span>
           </a>
           <a
-            href="https://t.me/"
+            href="https://t.me/priviilabs"
             target="_blank"
             rel="noreferrer"
             aria-label="Privii on Telegram"
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-mint/25 hover:bg-mint/10"
           >
             <Send className="h-5 w-5" />
           </a>

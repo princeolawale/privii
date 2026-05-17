@@ -43,7 +43,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className="pointer-events-auto flex items-center justify-between rounded-2xl border border-border bg-card/95 px-4 py-3 text-sm text-primary shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur"
+              className="pointer-events-auto flex items-center justify-between rounded-2xl border border-accent/15 bg-card/95 px-4 py-3 text-sm text-primary shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur"
             >
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-accent" />

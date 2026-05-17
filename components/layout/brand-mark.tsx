@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { APP_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function BrandMark({
@@ -17,15 +16,13 @@ export function BrandMark({
       className={cn("inline-flex items-center gap-3 text-primary", className)}
     >
       <Image
-        src="/icon.png"
+        src="/brand-logo.png"
         alt="Privii"
-        width={30}
-        height={30}
-        className="rounded-full"
+        width={204}
+        height={52}
+        className="h-auto w-[128px] sm:w-[152px]"
+        priority
       />
-      <span className="text-[2rem] font-semibold tracking-tight sm:text-[2rem]">
-        {APP_NAME}
-      </span>
     </Link>
   );
 }

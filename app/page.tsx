@@ -32,8 +32,11 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <section className="flex min-h-[68vh] flex-col items-center justify-center pb-20 pt-2 text-center sm:pt-4">
-        <div className="space-y-8">
+      <section className="relative isolate flex min-h-[68vh] flex-col items-center justify-center overflow-hidden px-6 pb-20 pt-4 text-center sm:px-10 sm:pt-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(255,255,255,0.04),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.01),transparent_30%)]" />
+        <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-white/[0.03] blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-16 h-32 w-32 rounded-full bg-white/[0.02] blur-3xl" />
+        <div className="relative space-y-8">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent">
             Tags and PayLinks
           </div>
@@ -52,16 +55,19 @@ export default async function HomePage() {
       <section className="mx-auto mb-20 flex max-w-5xl flex-col gap-4" id="how-it-works">
         <FeatureCard
           icon={<Tag className="h-5 w-5" />}
+          iconClassName="border-accent/20 bg-accent/10 text-accent"
           title="Tags"
           text="Create a permanent payment identity anyone can use to pay you."
         />
         <FeatureCard
           icon={<Link2 className="h-5 w-5" />}
+          iconClassName="border-electric/20 bg-electric/10 text-electric"
           title="PayLinks"
           text="Generate fixed or flexible payment requests in seconds."
         />
         <FeatureCard
           icon={<Wallet className="h-5 w-5" />}
+          iconClassName="border-mint/20 bg-mint/10 text-mint"
           title="Direct Wallet Payments"
           text="Receive crypto directly into your wallet with no friction."
         />
@@ -83,16 +89,19 @@ export default async function HomePage() {
       <section className="mx-auto mb-20 grid max-w-6xl gap-4 lg:grid-cols-3">
         <ValueCard
           icon={<Sparkles className="h-5 w-5" />}
+          iconClassName="border-accent/20 bg-accent/10 text-accent"
           title="Built for Simplicity"
           text="No complicated setup. Just create a tag and start receiving payments instantly."
         />
         <ValueCard
           icon={<ArrowRightLeft className="h-5 w-5" />}
+          iconClassName="border-electric/20 bg-electric/10 text-electric"
           title="Faster Payments"
           text="Share a link or tag and get paid in seconds."
         />
         <ValueCard
           icon={<Wallet className="h-5 w-5" />}
+          iconClassName="border-mint/20 bg-mint/10 text-mint"
           title="Flexible Payments"
           text="Accept fixed payments or let users send any amount."
         />
@@ -109,21 +118,25 @@ export default async function HomePage() {
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <UseCaseCard
             icon={<Sparkles className="h-5 w-5" />}
+            iconClassName="border-accent/20 bg-accent/10 text-accent"
             title="Creators"
             text="Get paid directly from your audience"
           />
           <UseCaseCard
             icon={<BriefcaseBusiness className="h-5 w-5" />}
+            iconClassName="border-electric/20 bg-electric/10 text-electric"
             title="Freelancers"
             text="Receive payments without sending wallet addresses"
           />
           <UseCaseCard
             icon={<Users className="h-5 w-5" />}
+            iconClassName="border-accentDeep/20 bg-accentDeep/10 text-accentDeep"
             title="Communities"
             text="Collect payments easily with a shared link"
           />
           <UseCaseCard
             icon={<ArrowRightLeft className="h-5 w-5" />}
+            iconClassName="border-mint/20 bg-mint/10 text-mint"
             title="Traders"
             text="Accept fast peer-to-peer payments"
           />
@@ -155,17 +168,19 @@ export default async function HomePage() {
 
 function FeatureCard({
   icon,
+  iconClassName,
   title,
   text
 }: {
   icon: ReactNode;
+  iconClassName?: string;
   title: string;
   text: string;
 }) {
   return (
     <Card className="rounded-[32px] p-6 sm:p-7">
       <div className="space-y-5">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${iconClassName ?? "border-accent/20 bg-accent/10 text-accent"}`}>
           {icon}
         </div>
         <div className="space-y-2">
@@ -179,17 +194,19 @@ function FeatureCard({
 
 function ValueCard({
   icon,
+  iconClassName,
   title,
   text
 }: {
   icon: ReactNode;
+  iconClassName?: string;
   title: string;
   text: string;
 }) {
   return (
     <Card className="rounded-[32px] p-6 sm:p-7">
       <div className="space-y-5">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${iconClassName ?? "border-accent/20 bg-accent/10 text-accent"}`}>
           {icon}
         </div>
         <div className="space-y-3">
@@ -203,17 +220,19 @@ function ValueCard({
 
 function UseCaseCard({
   icon,
+  iconClassName,
   title,
   text
 }: {
   icon: ReactNode;
+  iconClassName?: string;
   title: string;
   text: string;
 }) {
   return (
     <div className="rounded-[28px] border border-border bg-card/95 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)]">
       <div className="space-y-4">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
+        <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${iconClassName ?? "border-accent/20 bg-accent/10 text-accent"}`}>
           {icon}
         </div>
         <div className="space-y-1">

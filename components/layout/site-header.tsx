@@ -31,7 +31,7 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-7 flex items-center justify-between">
         <BrandMark />
 
         <nav className="hidden items-center gap-6 text-sm text-secondary md:flex">
@@ -62,7 +62,7 @@ export function SiteHeader({
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
-            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-white/15 hover:bg-white/[0.03]"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-accent/25 hover:bg-accent/10"
             onClick={() => setOpen((current) => !current)}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -76,7 +76,7 @@ export function SiteHeader({
           open ? "mb-8 max-h-[520px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="ml-auto w-full max-w-[390px] rounded-[32px] border border-white/10 bg-[#111111]/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
+        <div className="ml-auto w-full max-w-[390px] rounded-[32px] border border-border bg-card/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="flex flex-col gap-6">
             {navItems.map((item) => (
               <Link
@@ -89,22 +89,22 @@ export function SiteHeader({
               </Link>
             ))}
       
-            <div className="border-t border-white/8 pt-5">
+            <div className="border-t border-border/80 pt-5">
               <div className="grid grid-cols-2 gap-3">
                 <a
-                  href="https://x.com/"
+                  href="https://x.com/priviilabs?s=21"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 text-base font-medium text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background/70 px-4 text-base font-medium text-primary transition hover:border-accent/25 hover:bg-accent/10"
                   onClick={() => setOpen(false)}
                 >
                   <span className="text-lg font-medium">X</span>
                 </a>
                 <a
-                  href="https://t.me/"
+                  href="https://t.me/priviilabs"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-4 text-base font-medium text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background/70 px-4 text-base font-medium text-primary transition hover:border-mint/25 hover:bg-mint/10"
                   onClick={() => setOpen(false)}
                 >
                   <Send className="h-4 w-4" />
