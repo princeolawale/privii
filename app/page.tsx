@@ -33,16 +33,20 @@ export default async function HomePage() {
   return (
     <PageShell>
       <section className="relative isolate flex min-h-[64vh] flex-col items-center justify-center overflow-hidden bg-background px-6 pb-12 pt-2 text-center sm:px-10 sm:pt-4">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(255,255,255,0.025),transparent_34%)]" />
-        <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-white/[0.018] blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-16 h-32 w-32 rounded-full bg-white/[0.014] blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(139,92,255,0.10),transparent_24%),radial-gradient(circle_at_50%_18%,rgba(0,163,255,0.06),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.012),transparent_30%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-[18%] h-32 w-[26rem] -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 top-14 h-36 w-36 rounded-full bg-electric/[0.08] blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-20 h-28 w-28 rounded-full bg-mint/[0.05] blur-3xl" />
         <div className="relative space-y-8">
-          <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent">
+          <div className="inline-flex rounded-full border border-accent/30 bg-[linear-gradient(180deg,rgba(139,92,255,0.14)_0%,rgba(91,45,255,0.08)_100%)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent shadow-[0_0_0_1px_rgba(139,92,255,0.06),0_10px_30px_rgba(91,45,255,0.08)]">
             Tags and PayLinks
           </div>
           <div className="space-y-4">
             <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-              Crypto payments made simple
+              Crypto payments made{" "}
+              <span className="bg-accent-gradient bg-clip-text text-transparent">
+                simple
+              </span>
             </h1>
             <p className="mx-auto max-w-xl text-base leading-7 text-secondary sm:text-lg">
               Create a tag. Share a link. Get paid in seconds.

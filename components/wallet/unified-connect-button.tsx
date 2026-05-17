@@ -46,7 +46,7 @@ export function UnifiedConnectButton({
   return (
     <button
       type="button"
-      className={`inline-flex min-h-14 items-center justify-center rounded-2xl border border-white bg-white px-5 text-base font-medium text-black shadow-[0_10px_30px_rgba(255,255,255,0.06)] transition duration-200 hover:-translate-y-0.5 hover:bg-white/90 focus:outline-none focus:ring-2 focus:ring-accent/30 ${className ?? ""}`}
+      className={`inline-flex min-h-14 items-center justify-center rounded-2xl border border-accent/30 bg-[linear-gradient(180deg,rgba(16,16,18,0.98)_0%,rgba(10,10,10,0.98)_100%)] px-5 text-base font-medium text-primary shadow-[0_0_0_1px_rgba(139,92,255,0.08),0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-200 hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_0_0_1px_rgba(139,92,255,0.16),0_20px_48px_rgba(0,0,0,0.44),0_0_28px_rgba(91,45,255,0.14)] focus:outline-none focus:ring-2 focus:ring-accent/30 ${className ?? ""}`}
       onClick={() =>
         open({
           namespace,
@@ -54,7 +54,9 @@ export function UnifiedConnectButton({
         })
       }
     >
-      {buttonLabel}
+      <span className="pointer-events-none relative z-10 inline-flex items-center">
+        {buttonLabel}
+      </span>
     </button>
   );
 }

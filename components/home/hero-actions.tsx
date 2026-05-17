@@ -12,9 +12,9 @@ export function HeroActions() {
   return (
     <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
       <Link href={hasTag ? "/dashboard" : "/get-started"}>
-        <Button className="w-full min-w-[200px] sm:w-auto">
+        <Button className="group w-full min-w-[220px] sm:w-auto">
           {hasTag ? "Dashboard" : "Get Started"}
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
         </Button>
       </Link>
     </div>
