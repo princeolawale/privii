@@ -32,7 +32,7 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <section className="relative isolate flex min-h-[68vh] flex-col items-center justify-center overflow-hidden bg-background px-6 pb-20 pt-4 text-center sm:px-10 sm:pt-6">
+      <section className="relative isolate flex min-h-[64vh] flex-col items-center justify-center overflow-hidden bg-background px-6 pb-12 pt-2 text-center sm:px-10 sm:pt-4">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(255,255,255,0.025),transparent_34%)]" />
         <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-white/[0.018] blur-3xl" />
         <div className="pointer-events-none absolute right-0 top-16 h-32 w-32 rounded-full bg-white/[0.014] blur-3xl" />
@@ -52,7 +52,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mb-20 flex max-w-5xl flex-col gap-4" id="how-it-works">
+      <section className="mx-auto mb-16 flex max-w-5xl flex-col gap-4" id="how-it-works">
         <FeatureCard
           icon={<Tag className="h-5 w-5" />}
           iconClassName="border-accent/20 bg-accent/10 text-accent"
@@ -143,7 +143,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mb-24 max-w-4xl">
+      <section className="mx-auto mb-14 max-w-4xl">
         <Card className="rounded-[36px] px-6 py-10 text-center sm:px-10 sm:py-12">
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.24em] text-accent">Start Now</p>

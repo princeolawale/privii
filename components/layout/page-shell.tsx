@@ -16,7 +16,7 @@ export function PageShell({
 }>) {
   return (
     <div className="min-h-screen bg-background text-primary">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-16 pt-5 sm:px-6 sm:pt-6 lg:px-8">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-16 pt-3 sm:px-6 sm:pt-4 lg:px-8">
         <SiteHeader hideWalletButton={hideWalletButton} largeLogo={largeLogo} />
         <main className={cn("relative flex-1", className)}>{children}</main>
         <SiteFooter />

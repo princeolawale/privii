@@ -5,7 +5,7 @@ import { BrandMark } from "@/components/layout/brand-mark";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-border/80 pt-12">
+    <footer className="mt-12 border-t border-border/80 pt-10">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 pb-6 text-center">
         <div className="space-y-3">
           <BrandMark className="justify-center" />
