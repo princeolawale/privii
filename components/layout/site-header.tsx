@@ -68,7 +68,7 @@ export function SiteHeader({
             className={cn(
               "inline-flex h-12 w-12 items-center justify-center rounded-[26px] border text-primary transition backdrop-blur",
               isHome
-                ? "border-mint/35 bg-black/35 shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/50 hover:bg-black/45"
+                ? "border-accent/25 bg-black/35 shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/40 hover:bg-black/45"
                 : "border-border bg-card hover:border-mint/25 hover:bg-mint/8"
             )}
             onClick={() => setOpen((current) => !current)}
@@ -113,7 +113,7 @@ export function SiteHeader({
                   className={cn(
                     "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
                     isHome
-                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/30 hover:bg-black/45"
+                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
                       : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
                   )}
                   onClick={() => setOpen(false)}
@@ -128,7 +128,7 @@ export function SiteHeader({
                   className={cn(
                     "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
                     isHome
-                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/30 hover:bg-black/45"
+                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
                       : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
                   )}
                   onClick={() => setOpen(false)}

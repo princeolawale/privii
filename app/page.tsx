@@ -33,11 +33,12 @@ export default async function HomePage() {
   return (
     <PageShell>
       <section className="relative isolate flex min-h-[64vh] flex-col items-center justify-center overflow-hidden bg-background px-6 pb-12 pt-2 text-center sm:px-10 sm:pt-4">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(0,240,181,0.08),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.012),transparent_30%)]" />
-        <div className="pointer-events-none absolute left-1/2 top-[18%] h-32 w-[26rem] -translate-x-1/2 rounded-full bg-mint/[0.07] blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-20 h-28 w-28 rounded-full bg-mint/[0.04] blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(139,92,255,0.10),transparent_24%),radial-gradient(circle_at_50%_18%,rgba(0,163,255,0.06),transparent_18%),linear-gradient(180deg,rgba(255,255,255,0.012),transparent_30%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-[18%] h-32 w-[26rem] -translate-x-1/2 rounded-full bg-accent/8 blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 top-14 h-36 w-36 rounded-full bg-electric/[0.08] blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-20 h-28 w-28 rounded-full bg-mint/[0.05] blur-3xl" />
         <div className="relative space-y-8">
-          <div className="inline-flex rounded-full border border-mint/30 bg-[linear-gradient(180deg,rgba(0,240,181,0.12)_0%,rgba(0,240,181,0.05)_100%)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-mint shadow-[0_0_0_1px_rgba(0,240,181,0.05),0_10px_30px_rgba(0,240,181,0.06),inset_0_-1px_0_rgba(255,255,255,0.03)]">
+          <div className="inline-flex rounded-full border border-accent/30 bg-[linear-gradient(180deg,rgba(139,92,255,0.14)_0%,rgba(91,45,255,0.08)_100%)] px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent shadow-[0_0_0_1px_rgba(139,92,255,0.06),0_10px_30px_rgba(91,45,255,0.08),inset_0_-1px_0_rgba(0,240,181,0.08)]">
             Tags and PayLinks
           </div>
           <div className="space-y-4">
