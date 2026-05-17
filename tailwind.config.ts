@@ -10,7 +10,7 @@ const config: Config = {
     extend: {
       colors: {
         background: "#000000",
-        section: "#050505",
+        section: "#000000",
         card: "#0A0A0A",
         border: "#1A1A1A",
         accent: "#8B5CFF",
@@ -26,7 +26,7 @@ const config: Config = {
       },
       backgroundImage: {
         "accent-radial":
-          "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.03), transparent 32%), radial-gradient(circle at 18% 10%, rgba(255,255,255,0.018), transparent 18%), radial-gradient(circle at 82% 14%, rgba(255,255,255,0.015), transparent 18%), linear-gradient(180deg, #050505 0%, #000000 100%)",
+          "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.02), transparent 30%), radial-gradient(circle at 18% 10%, rgba(255,255,255,0.012), transparent 18%), radial-gradient(circle at 82% 14%, rgba(255,255,255,0.01), transparent 18%), linear-gradient(180deg, #000000 0%, #000000 100%)",
         "accent-gradient":
           "linear-gradient(135deg, #8B5CFF 0%, #5B2DFF 38%, #00A3FF 72%, #00F0B5 100%)"
       }

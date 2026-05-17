@@ -32,10 +32,10 @@ export default async function HomePage() {
 
   return (
     <PageShell>
-      <section className="relative isolate flex min-h-[68vh] flex-col items-center justify-center overflow-hidden px-6 pb-20 pt-4 text-center sm:px-10 sm:pt-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(255,255,255,0.04),transparent_38%),linear-gradient(180deg,rgba(255,255,255,0.01),transparent_30%)]" />
-        <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-white/[0.03] blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-16 h-32 w-32 rounded-full bg-white/[0.02] blur-3xl" />
+      <section className="relative isolate flex min-h-[68vh] flex-col items-center justify-center overflow-hidden bg-background px-6 pb-20 pt-4 text-center sm:px-10 sm:pt-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(255,255,255,0.025),transparent_34%)]" />
+        <div className="pointer-events-none absolute -left-16 top-10 h-40 w-40 rounded-full bg-white/[0.018] blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-16 h-32 w-32 rounded-full bg-white/[0.014] blur-3xl" />
         <div className="relative space-y-8">
           <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs font-medium uppercase tracking-[0.24em] text-accent">
             Tags and PayLinks
