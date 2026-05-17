@@ -21,6 +21,7 @@ export function SiteHeader({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { hasTag } = useOwnerTag();
+  const isHome = pathname === "/";
   const navItems = hasTag
     ? [
         { href: "/", label: "Home" },
@@ -52,17 +53,24 @@ export function SiteHeader({
               <Button className="min-w-[140px]">Get Started</Button>
             </Link>
           ) : null}
-          {!hideWalletButton ? <ConnectMenuButton /> : null}
+          {!hideWalletButton ? (
+            <ConnectMenuButton className="min-h-12 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_12px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
+          ) : null}
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
           {!hideWalletButton ? (
-            <ConnectMenuButton />
+            <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_10px_24px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
           ) : null}
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
-            className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-card text-primary transition hover:border-accent/25 hover:bg-accent/10"
+            className={cn(
+              "inline-flex h-12 w-12 items-center justify-center rounded-[26px] border text-primary transition backdrop-blur",
+              isHome
+                ? "border-mint/35 bg-black/35 shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/50 hover:bg-black/45"
+                : "border-border bg-card hover:border-mint/25 hover:bg-mint/8"
+            )}
             onClick={() => setOpen((current) => !current)}
           >
             {open ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -76,7 +84,14 @@ export function SiteHeader({
           open ? "mb-8 max-h-[520px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="ml-auto w-full max-w-[390px] rounded-[32px] border border-border bg-card/95 p-5 shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur">
+        <div
+          className={cn(
+            "ml-auto w-full max-w-[390px] rounded-[32px] p-5 backdrop-blur-xl",
+            isHome
+              ? "border border-white/10 bg-black/45 shadow-[0_30px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)]"
+              : "border border-border bg-card/95 shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+          )}
+        >
           <div className="flex flex-col gap-6">
             {navItems.map((item) => (
               <Link
@@ -89,13 +104,18 @@ export function SiteHeader({
               </Link>
             ))}
       
-            <div className="border-t border-border/80 pt-5">
+            <div className={cn("pt-5", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
               <div className="grid grid-cols-2 gap-3">
                 <a
                   href="https://x.com/priviilabs?s=21"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background/70 px-4 text-base font-medium text-primary transition hover:border-accent/25 hover:bg-accent/10"
+                  className={cn(
+                    "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
+                    isHome
+                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/30 hover:bg-black/45"
+                      : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
+                  )}
                   onClick={() => setOpen(false)}
                 >
                   <CloseIcon className="h-4 w-4" />
@@ -105,7 +125,12 @@ export function SiteHeader({
                   href="https://t.me/priviilabs"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-border bg-background/70 px-4 text-base font-medium text-primary transition hover:border-mint/25 hover:bg-mint/10"
+                  className={cn(
+                    "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
+                    isHome
+                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-mint/30 hover:bg-black/45"
+                      : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
+                  )}
                   onClick={() => setOpen(false)}
                 >
                   <Send className="h-4 w-4" />
