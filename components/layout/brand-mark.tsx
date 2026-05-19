@@ -16,7 +16,7 @@ export function BrandMark({
       className={cn("inline-flex items-center gap-3 text-primary", className)}
     >
       <Image
-        src="/brand-logo.png"
+        src="/clinks-logo.png"
         alt="Clinks"
         width={236}
         height={52}
