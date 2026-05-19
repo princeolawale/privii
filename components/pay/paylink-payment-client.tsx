@@ -118,7 +118,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
         if (!response.ok) {
           throw new Error(
-            result.error || (kind === "tag" ? "Privii tag not found" : "Payment link not found")
+            result.error || (kind === "tag" ? "Clinks tag not found" : "Payment link not found")
           );
         }
 
@@ -136,7 +136,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
             fetchError instanceof Error
               ? fetchError.message
               : kind === "tag"
-                ? "Privii tag not found"
+                ? "Clinks tag not found"
                 : "Payment link not found"
           );
         }
@@ -368,8 +368,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       try {
         const shareTag = data.kind === "tag" ? data.tagRecord.tag : data.link.tag;
         await navigator.share({
-          title: "Privii PayLink",
-          text: `Pay me privately with my Privii link (@${shareTag})`,
+          title: "Clinks payment link",
+          text: `Pay me with my Clinks link (@${shareTag})`,
           url: currentUrl
         });
         return;
@@ -544,7 +544,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       return;
     }
 
-    console.log("Privii EVM debug", {
+    console.log("Clinks EVM debug", {
       headerAddress: priviiWallet.address,
       hookAddress: activePaymentWallet.address,
       wagmiAddress: wagmiAddress ?? null,
@@ -582,7 +582,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
       <Card className="flex min-h-[360px] items-center justify-center">
         <div className="flex items-center gap-3 text-secondary">
           <LoaderCircle className="h-5 w-5 animate-spin" />
-          {kind === "tag" ? "Loading Privii tag" : "Loading PayLink"}
+          {kind === "tag" ? "Loading Clinks tag" : "Loading PayLink"}
         </div>
       </Card>
     );
@@ -592,7 +592,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
     return (
       <Card className="space-y-3">
         <h1 className="text-2xl font-semibold">
-          {kind === "tag" ? "Privii tag not found" : "Payment link not found"}
+          {kind === "tag" ? "Clinks tag not found" : "Payment link not found"}
         </h1>
         <p className="text-sm text-secondary">{error}</p>
       </Card>
@@ -639,7 +639,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
           <div className="space-y-4 text-center">
             <p className="text-xs uppercase tracking-[0.34em] text-secondary">
-              {data.kind === "tag" ? "Privii tag" : "Payment Request"}
+              {data.kind === "tag" ? "Clinks tag" : "Payment Request"}
             </p>
             <h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">
               {title}

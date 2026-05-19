@@ -44,8 +44,8 @@ export default async function HomePage() {
           <div className="space-y-4">
             <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
               Crypto payments made{" "}
-              <span className="bg-accent-gradient bg-clip-text text-transparent">
-                simple
+              <span className="text-[#8B5CFF]">
+                seamless
               </span>
             </h1>
             <p className="mx-auto max-w-xl text-base leading-7 text-secondary sm:text-lg">
@@ -79,12 +79,12 @@ export default async function HomePage() {
 
       <section className="mx-auto mb-20 max-w-3xl text-center">
         <div className="space-y-4">
-          <p className="text-xs uppercase tracking-[0.24em] text-accent">What is Privii?</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-accent">What is Clinks?</p>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Simple payments for crypto users
+            Seamless payments for crypto users
           </h2>
           <p className="mx-auto max-w-2xl text-base leading-7 text-secondary sm:text-lg">
-            Privii is a simple crypto payment layer that lets you receive payments using
+            Clinks is a seamless crypto payment layer that lets you receive payments using
             tags and links instead of sharing wallet addresses.
           </p>
         </div>
@@ -152,7 +152,7 @@ export default async function HomePage() {
           <div className="space-y-4">
             <p className="text-xs uppercase tracking-[0.24em] text-accent">Start Now</p>
             <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-              Start receiving crypto with Privii
+              Start receiving crypto with Clinks
             </h2>
             <p className="mx-auto max-w-2xl text-base leading-7 text-secondary sm:text-lg">
               Create your tag or generate a PayLink in seconds.

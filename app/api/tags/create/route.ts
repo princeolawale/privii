@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     if ((await priviiTagExists(tag)) || (await tagExists(tag))) {
       return NextResponse.json(
-        { error: "This Privii tag is already taken" },
+        { error: "This Clinks tag is already taken" },
         { status: 409 }
       );
     }
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     if (existingTag) {
       return NextResponse.json(
         {
-          error: "This wallet already has a Privii tag",
+          error: "This wallet already has a Clinks tag",
           tag: existingTag
         },
         { status: 409 }
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Unable to create Privii tag."
+        error: error instanceof Error ? error.message : "Unable to create Clinks tag."
       },
       { status: 500 }
     );

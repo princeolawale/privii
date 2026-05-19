@@ -243,8 +243,8 @@ export function DashboardClient() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Privii tag",
-          text: `Pay me with my Privii tag @${tagRecord.tag}`,
+          title: "Clinks tag",
+          text: `Pay me with my Clinks tag @${tagRecord.tag}`,
           url: publicUrl
         });
         return;
@@ -379,7 +379,7 @@ export function DashboardClient() {
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mx-auto max-w-lg text-sm leading-6 text-secondary">
-              Connect at least one wallet to manage your Privii tag, payment links, and payment
+              Connect at least one wallet to manage your Clinks tag, payment links, and payment
               activity.
             </p>
             <div className="flex justify-center pt-2">
@@ -463,7 +463,7 @@ export function DashboardClient() {
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
                       <p className="mt-2 text-sm text-secondary">
-                        Manage wallets linked to your Privii tag.
+                        Manage wallets linked to your Clinks tag.
                       </p>
                     </div>
 
@@ -692,7 +692,7 @@ export function DashboardClient() {
                 <form className="mt-6 flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
                   <Input
                     value={payTarget}
-                    placeholder="prince or https://privii.xyz/prince"
+                    placeholder="prince or https://clinks.one/prince"
                     onChange={(event) => setPayTarget(event.target.value)}
                   />
                   <Button className="w-full sm:w-auto">Continue</Button>
@@ -704,7 +704,7 @@ export function DashboardClient() {
           <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">
-              No Privii tag yet. Register your payment identity to unlock your dashboard.
+              No Clinks tag yet. Register your payment identity to unlock your dashboard.
             </p>
             <Link href="/get-started" className="mt-6 inline-flex">
               <Button>Get Started</Button>

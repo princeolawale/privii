@@ -8,10 +8,10 @@
     Get paid privately
   </text>
   <text x="110" y="390" fill="white" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">
-    with your Privii tag
+    with your Clinks tag
   </text>
   <text x="110" y="468" fill="#A1A1AA" font-family="Inter, Arial, sans-serif" font-size="34">
-    Register a Privii tag and share a cleaner payment identity.
+    Register a Clinks tag and share a cleaner payment identity.
   </text>
   <rect x="110" y="510" width="170" height="4" rx="2" fill="#7C5CFF"/>
 </svg>

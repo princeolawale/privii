@@ -19,13 +19,13 @@ import { getEvmRpcUrl } from "@/lib/evm/chains";
 import { SOLANA_RPC_URL } from "@/lib/solana";
 
 const reownProjectId =
-  process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "privii-demo-project-id";
+  process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "clinks-demo-project-id";
 
 const metadata = {
   name: APP_NAME,
   description: APP_DESCRIPTION,
-  url: "https://privii.xyz",
-  icons: ["https://privii.xyz/icon.png"]
+  url: "https://clinks.one",
+  icons: ["https://clinks.one/icon.png"]
 };
 
 const solanaNetwork = {

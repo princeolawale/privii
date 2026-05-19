@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       const record = await getPriviiTag(tag);
 
       if (!record) {
-        return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
+        return NextResponse.json({ error: "Clinks tag not found" }, { status: 404 });
       }
 
       const network: PaymentNetwork = requestedNetwork;

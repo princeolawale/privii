@@ -10,7 +10,7 @@ export function SiteFooter() {
         <div className="space-y-3">
           <BrandMark className="justify-center" />
           <p className="max-w-md text-sm leading-6 text-secondary">
-            Simple crypto payments with tags and links.
+            Seamless crypto payments with tags and links.
           </p>
         </div>
 
@@ -19,7 +19,7 @@ export function SiteFooter() {
             href="https://x.com/priviilabs?s=21"
             target="_blank"
             rel="noreferrer"
-            aria-label="Privii on X"
+            aria-label="Clinks on X"
             className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-accent/25 hover:bg-accent/10"
           >
             <span className="text-xl font-medium">X</span>
@@ -28,7 +28,7 @@ export function SiteFooter() {
             href="https://t.me/priviilabs"
             target="_blank"
             rel="noreferrer"
-            aria-label="Privii on Telegram"
+            aria-label="Clinks on Telegram"
             className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary transition hover:border-mint/25 hover:bg-mint/10"
           >
             <Send className="h-5 w-5" />
@@ -50,7 +50,7 @@ export function SiteFooter() {
           </Link>
         </div>
 
-        <p className="text-sm text-secondary">© 2026 Privii. All rights reserved.</p>
+        <p className="text-sm text-secondary">© 2026 Clinks. All rights reserved.</p>
       </div>
     </footer>
   );

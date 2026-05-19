@@ -14,7 +14,7 @@ export default function V2HomePage() {
           </span>
           <div className="space-y-5">
             <h1 className="max-w-4xl text-6xl font-semibold tracking-[-0.08em] text-primary sm:text-7xl">
-              A second Privii frontend on the same backend.
+              A second Clinks frontend on the same backend.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-secondary">
               This `v2` surface reuses the working create, fetch, KV, wallet, and payment

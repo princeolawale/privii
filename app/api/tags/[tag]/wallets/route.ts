@@ -68,7 +68,7 @@ export async function PATCH(
     const record = await getPriviiTag(normalizePriviiTag(tag));
 
     if (!record) {
-      return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
+      return NextResponse.json({ error: "Clinks tag not found" }, { status: 404 });
     }
 
     const body = (await request.json()) as UpdateWalletPayload;
@@ -114,7 +114,7 @@ export async function PATCH(
 
       if (existingOwnerTag && existingOwnerTag.tag !== record.tag) {
         return NextResponse.json(
-          { error: "This wallet is already linked to a Privii tag" },
+          { error: "This wallet is already linked to a Clinks tag" },
           { status: 409 }
         );
       }
@@ -149,7 +149,7 @@ export async function PATCH(
 
     if (existingOwnerTag && existingOwnerTag.tag !== record.tag) {
       return NextResponse.json(
-        { error: "This wallet is already linked to a Privii tag" },
+        { error: "This wallet is already linked to a Clinks tag" },
         { status: 409 }
       );
     }

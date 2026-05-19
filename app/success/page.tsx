@@ -24,7 +24,7 @@ export default async function SuccessPage({
         <div className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight">Payment complete</h1>
           <p className="text-sm leading-6 text-secondary">
-            The transaction has been submitted to Solana. You can reopen the Privii link
+            The transaction has been submitted to Solana. You can reopen the Clinks link
             or inspect the transaction hash below.
           </p>
         </div>

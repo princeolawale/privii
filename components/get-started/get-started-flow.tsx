@@ -35,7 +35,7 @@ export function GetStartedFlow() {
 
   const normalizedTag = normalizePriviiTag(tag);
   const isTagValid = isValidPriviiTag(normalizedTag);
-  const tagPreview = normalizedTag ? `${normalizedTag}.privii.xyz` : "prince.privii.xyz";
+  const tagPreview = normalizedTag ? `${normalizedTag}.clinks.one` : "prince.clinks.one";
   const currentStep = justCreated ? 3 : anyWalletConnected ? 2 : 1;
   const resolvedWalletType =
     primaryWalletType ||
@@ -104,17 +104,17 @@ export function GetStartedFlow() {
 
       if (!response.ok) {
         if (response.status === 409 && result.tag) {
-          showToast("This wallet already has a Privii tag");
+          showToast("This wallet already has a Clinks tag");
           showToast("Redirecting to your dashboard");
           router.replace("/dashboard");
           return;
         }
 
-        throw new Error(result.error || "Unable to create your Privii tag.");
+        throw new Error(result.error || "Unable to create your Clinks tag.");
       }
 
       setJustCreated(true);
-      showToast("Your Privii is live");
+      showToast("Your Clinks is live");
       window.setTimeout(() => {
         router.push("/dashboard");
       }, 700);
@@ -122,7 +122,7 @@ export function GetStartedFlow() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : "Unable to create your Privii tag."
+          : "Unable to create your Clinks tag."
       );
     } finally {
       setIsSubmitting(false);
@@ -143,11 +143,11 @@ export function GetStartedFlow() {
     }
 
     if (availability === "taken") {
-      return "This Privii tag is already taken";
+      return "This Clinks tag is already taken";
     }
 
     if (availability === "available") {
-      return "That Privii tag is available.";
+      return "That Clinks tag is available.";
     }
 
     return "Choose the payment identity you want people to remember.";
@@ -157,7 +157,7 @@ export function GetStartedFlow() {
     return (
       <div className="mx-auto w-full max-w-3xl">
         <Card className="rounded-[32px] p-6 sm:p-8">
-          <p className="text-sm text-secondary">Checking your Privii setup...</p>
+          <p className="text-sm text-secondary">Checking your Clinks setup...</p>
         </Card>
       </div>
     );
@@ -181,7 +181,7 @@ export function GetStartedFlow() {
             Get started
           </div>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Register your Privii tag
+            Register your Clinks tag
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-secondary sm:text-base">
             Connect one wallet, choose your tag, and go live in minutes.
@@ -218,7 +218,7 @@ export function GetStartedFlow() {
             onSubmit={handleSubmit}
           >
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
-            <h2 className="mt-3 text-2xl font-semibold">Choose Privii tag</h2>
+            <h2 className="mt-3 text-2xl font-semibold">Choose Clinks tag</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
               This tag will be connected to your {resolvedWalletType === "evm" ? "EVM" : "Solana"} wallet.
             </p>
@@ -236,7 +236,7 @@ export function GetStartedFlow() {
             </div>
 
             <label className="mt-6 block space-y-2">
-              <span className="text-sm text-secondary">Choose your Privii tag</span>
+              <span className="text-sm text-secondary">Choose your Clinks tag</span>
               <Input
                 autoComplete="off"
                 placeholder="prince"
@@ -288,7 +288,7 @@ export function GetStartedFlow() {
         {currentStep === 3 ? (
           <div className="mt-8 rounded-[28px] border border-border bg-background/60 p-6 sm:p-7">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
-            <h2 className="mt-3 text-2xl font-semibold">Your Privii is live</h2>
+            <h2 className="mt-3 text-2xl font-semibold">Your Clinks is live</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
               Opening your dashboard now.
             </p>

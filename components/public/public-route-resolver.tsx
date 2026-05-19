@@ -61,7 +61,7 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
       <Card className="flex min-h-[360px] items-center justify-center">
         <div className="flex items-center gap-3 text-secondary">
           <LoaderCircle className="h-5 w-5 animate-spin" />
-          Loading Privii
+          Loading Clinks
         </div>
       </Card>
     );
@@ -70,9 +70,9 @@ export function PublicRouteResolver({ tag }: { tag: string }) {
   if (state.kind === "missing") {
     return (
       <Card className="mx-auto max-w-xl space-y-3 rounded-[32px] p-7">
-        <h1 className="text-2xl font-semibold tracking-tight">Privii tag not found</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Clinks tag not found</h1>
         <p className="text-sm leading-6 text-secondary">
-          This tag does not exist yet. Use Get Started to register your own Privii tag,
+          This tag does not exist yet. Use Get Started to register your own Clinks tag,
           or open a one-time PayLink directly for testing.
         </p>
       </Card>

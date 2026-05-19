@@ -208,8 +208,8 @@ export function PayLinkForm() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Privii PayLink",
-          text: `Pay me privately with my Privii link (@${createdLink.link.tag})`,
+          title: "Clinks payment link",
+          text: `Pay me with my Clinks link (@${createdLink.link.tag})`,
           url: createdLink.url
         });
         return;
@@ -324,7 +324,7 @@ export function PayLinkForm() {
               Preview payment page
             </Link>
 
-            <p className="text-center text-sm text-secondary">Powered by Privii</p>
+            <p className="text-center text-sm text-secondary">Powered by Clinks</p>
           </div>
         </div>
       </div>

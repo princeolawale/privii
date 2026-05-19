@@ -162,7 +162,7 @@ export function V2PayClient({ tag }: { tag: string }) {
       <section className="rounded-[34px] border border-white/10 bg-[#0A0B10] p-6 sm:p-8">
         <div className="mb-8 flex items-center justify-between">
           <span className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-xs uppercase tracking-[0.24em] text-accent">
-            Privii v2
+            Clinks v2
           </span>
           <span className="text-sm text-secondary">@{data.link.tag}</span>
         </div>

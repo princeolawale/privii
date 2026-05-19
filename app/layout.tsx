@@ -7,8 +7,8 @@ import { APP_DESCRIPTION } from "@/lib/constants";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://privii.xyz"),
-  title: "Privii — Crypto Payments with Tags and Links",
+  metadataBase: new URL("https://clinks.one"),
+  title: "Clinks — Crypto Payments with Tags and Links",
   description: APP_DESCRIPTION,
   icons: {
     icon: "/icon.png",
@@ -16,16 +16,16 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png"
   },
   openGraph: {
-    title: "Privii — Crypto Payments with Tags and Links",
+    title: "Clinks — Crypto Payments with Tags and Links",
     description: APP_DESCRIPTION,
-    url: "https://privii.xyz",
-    siteName: "Privii",
+    url: "https://clinks.one",
+    siteName: "Clinks",
     type: "website",
     images: ["/social-card.png"]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Privii — Crypto Payments with Tags and Links",
+    title: "Clinks — Crypto Payments with Tags and Links",
     description: APP_DESCRIPTION,
     images: ["/social-card.png"]
   }

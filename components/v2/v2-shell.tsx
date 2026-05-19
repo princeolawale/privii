@@ -15,7 +15,7 @@ export function V2Shell({
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-12 pt-5 sm:px-6 lg:px-8">
         <header className="mb-12 flex items-center justify-between">
           <Link href="/v2" className="text-xl font-semibold tracking-[-0.04em] text-primary">
-            Privii v2
+            Clinks v2
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/">

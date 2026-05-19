@@ -104,7 +104,7 @@ export function TagPaymentClient({ record }: { record: PriviiTagRecord }) {
     <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
       <Card className="space-y-8 rounded-[34px] px-6 py-8 sm:px-8 sm:py-10">
         <div className="space-y-4 text-center">
-          <p className="text-xs uppercase tracking-[0.34em] text-secondary">Privii tag</p>
+          <p className="text-xs uppercase tracking-[0.34em] text-secondary">Clinks tag</p>
           <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl">@{record.tag}</h1>
           <p className="mx-auto max-w-md text-sm leading-6 text-secondary sm:text-base">
             Send crypto privately. The wallet stays hidden in the UI, and private
@@ -139,7 +139,7 @@ export function TagPaymentClient({ record }: { record: PriviiTagRecord }) {
 
         <div className="space-y-6 text-sm text-secondary">
           <ProfileRow label="Status" value="Active" />
-          <ProfileRow label="Link type" value="Privii tag" />
+          <ProfileRow label="Link type" value="Clinks tag" />
           <ProfileRow
             label="Creator"
             value="Hidden"
@@ -175,7 +175,7 @@ export function TagPaymentClient({ record }: { record: PriviiTagRecord }) {
           )}
         </Button>
 
-        <p className="text-center text-sm text-secondary">Powered by Privii</p>
+        <p className="text-center text-sm text-secondary">Powered by Clinks</p>
       </Card>
     </div>
   );

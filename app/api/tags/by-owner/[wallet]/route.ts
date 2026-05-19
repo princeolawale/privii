@@ -31,7 +31,7 @@ export async function GET(
 
   if (!record) {
     return NextResponse.json(
-      { error: "No Privii tag found for this wallet." },
+      { error: "No Clinks tag found for this wallet." },
       { status: 404 }
     );
   }

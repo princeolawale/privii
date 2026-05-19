@@ -127,7 +127,7 @@ export function V2CreateForm() {
             <div className="rounded-[30px] border border-white/10 bg-[#0B0C12] p-6">
               <div className="mb-6 space-y-3">
                 <p className="text-xs uppercase tracking-[0.32em] text-secondary">
-                  Privii v2 payment request
+                  Clinks v2 payment request
                 </p>
                 <h1 className="text-4xl font-semibold tracking-[-0.05em] text-primary sm:text-5xl">
                   {formatAmount(createdLink.link.amount, createdLink.link.token)}
@@ -220,7 +220,7 @@ export function V2CreateForm() {
             Second frontend version
           </span>
           <h1 className="max-w-xl text-5xl font-semibold tracking-[-0.06em] text-primary sm:text-6xl">
-            Build a new Privii surface on the same backend.
+            Build a new Clinks surface on the same backend.
           </h1>
           <p className="max-w-lg text-base leading-7 text-secondary">
             This version rethinks the front-end experience while keeping the exact
@@ -244,7 +244,7 @@ export function V2CreateForm() {
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Privii tag">
+            <Field label="Clinks tag">
               <InputV2
                 placeholder="defi-prince"
                 value={tag}

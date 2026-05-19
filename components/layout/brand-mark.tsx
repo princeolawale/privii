@@ -17,10 +17,10 @@ export function BrandMark({
     >
       <Image
         src="/brand-logo.png"
-        alt="Privii"
-        width={204}
+        alt="Clinks"
+        width={236}
         height={52}
-        className="h-auto w-[128px] sm:w-[152px]"
+        className="h-auto w-[136px] sm:w-[164px]"
         priority
       />
     </Link>

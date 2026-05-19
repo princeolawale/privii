@@ -21,7 +21,7 @@ export function getBaseUrl() {
 }
 
 export function generateRandomTag() {
-  return `privii-${Math.random().toString(36).slice(2, 8)}`;
+  return `clinks-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function normalizePriviiTag(value: string) {
@@ -77,12 +77,12 @@ export function buildFallbackTagUrl(tag: string) {
 
 export function buildWhatsAppShareUrl(url: string, tag: string) {
   return `https://wa.me/?text=${encodeURIComponent(
-    `Pay me privately with my Privii link: ${url} (@${tag})`
+    `Pay me with my Clinks link: ${url} (@${tag})`
   )}`;
 }
 
 export function buildXShareUrl(url: string, tag: string) {
   return `https://x.com/intent/tweet?text=${encodeURIComponent(
-    `Get paid in crypto with my Privii link ${url} @${tag}`
+    `Get paid in crypto with my Clinks link ${url} @${tag}`
   )}`;
 }

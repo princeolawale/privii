@@ -1,6 +1,6 @@
-# Privii
+# Clinks
 
-Privii is a dark-mode MVP for registering crypto payment tags backed by Vercel KV. Users connect a supported wallet, claim a Privii identity, and accept SOL or USDC without exposing the recipient wallet in the public UI.
+Clinks is a dark-mode MVP for registering crypto payment tags backed by Vercel KV. Users connect a supported wallet, claim a Clinks identity, and accept SOL or USDC without exposing the recipient wallet in the public UI.
 
 ## Stack
 
@@ -14,7 +14,7 @@ Privii is a dark-mode MVP for registering crypto payment tags backed by Vercel K
 ## Features
 
 - Connect a supported Solana wallet
-- Register a Privii tag and reuse it as a payment identity
+- Register a Clinks tag and reuse it as a payment identity
 - Keep one-time PayLinks available at `/pay/[slug]` for testing and ad hoc payment requests
 - Optional fixed amount or payer-entered custom amount
 - SOL and USDC payment support
@@ -76,7 +76,7 @@ npm run dev
 
 ## Wildcard subdomain setup
 
-Domain: `privii.xyz`
+Domain: `clinks.one`
 
 Required DNS:
 
@@ -86,7 +86,7 @@ Required DNS:
 
 Fallback route:
 
-- `privii.xyz/[tag]`
+- `clinks.one/[tag]`
 
 ## Notes
 

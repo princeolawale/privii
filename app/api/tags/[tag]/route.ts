@@ -19,7 +19,7 @@ export async function GET(
   const record = await getPriviiTag(normalizePriviiTag(tag));
 
   if (!record) {
-    return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
+    return NextResponse.json({ error: "Clinks tag not found" }, { status: 404 });
   }
 
   return NextResponse.json({ tag: record });
@@ -35,7 +35,7 @@ export async function PATCH(
     const record = await getPriviiTag(normalizedTag);
 
     if (!record) {
-      return NextResponse.json({ error: "Privii tag not found" }, { status: 404 });
+      return NextResponse.json({ error: "Clinks tag not found" }, { status: 404 });
     }
 
     const body = (await request.json()) as UpdateTagPayload;
@@ -97,6 +97,6 @@ export async function PATCH(
     return NextResponse.json({ tag: updated });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Unable to update Privii tag." }, { status: 500 });
+    return NextResponse.json({ error: "Unable to update Clinks tag." }, { status: 500 });
   }
 }
