@@ -107,7 +107,7 @@ export function SiteHeader({
             <div className={cn("pt-5", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
               <div className="grid grid-cols-2 gap-3">
                 <a
-                  href="https://x.com/priviilabs?s=21"
+                  href="https://x.com/clinksdotone?s=21"
                   target="_blank"
                   rel="noreferrer"
                   className={cn(
@@ -122,7 +122,7 @@ export function SiteHeader({
                   X
                 </a>
                 <a
-                  href="https://t.me/priviilabs"
+                  href="https://t.me/clinksdotone"
                   target="_blank"
                   rel="noreferrer"
                   className={cn(

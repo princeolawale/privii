@@ -16,7 +16,7 @@ export function SiteFooter() {
 
         <div className="flex items-center gap-4">
           <a
-            href="https://x.com/priviilabs?s=21"
+            href="https://x.com/clinksdotone?s=21"
             target="_blank"
             rel="noreferrer"
             aria-label="Clinks on X"
@@ -25,7 +25,7 @@ export function SiteFooter() {
             <span className="text-xl font-medium">X</span>
           </a>
           <a
-            href="https://t.me/priviilabs"
+            href="https://t.me/clinksdotone"
             target="_blank"
             rel="noreferrer"
             aria-label="Clinks on Telegram"
