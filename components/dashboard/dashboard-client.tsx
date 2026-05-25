@@ -425,7 +425,7 @@ export function DashboardClient() {
                 </div>
               </Card>
 
-              <div className="space-y-2 rounded-[28px] bg-white/[0.025] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+              <div className="space-y-2 rounded-[28px] bg-white/[0.02] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
                 <SidebarTabButton
                   active={activeTab === "tag"}
                   icon={<UserRound className="h-4 w-4" />}
@@ -496,150 +496,128 @@ export function DashboardClient() {
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard label="Payment links" value={String(links.length)} hint="Created" />
-                <StatCard label="Received" value={String(confirmedReceivedCount)} hint="Confirmed payments" />
-                <StatCard label="Sent" value={String(confirmedSentCount)} hint="Confirmed payments" />
-                <StatCard label="Network" value={receivingNetworks || "Unlinked"} hint={`${linkedWalletCount} wallet${linkedWalletCount === 1 ? "" : "s"} linked`} />
-              </div>
-
               {activeTab === "tag" ? (
-              <Card className="rounded-[36px] px-6 py-8 text-center sm:px-10 sm:py-10">
-                <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
-                <p className="mt-3 text-sm text-secondary">
-                  Receiving networks: {receivingNetworks || "None linked"}
-                </p>
-                <p className="mx-auto mt-4 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
-                  {publicUrl}
-                </p>
-                <div className="mt-8 flex items-center justify-center gap-4">
-                  <IconActionButton
-                    label={copied ? "Copied" : "Copy"}
-                    icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                    onClick={handleCopyTagLink}
-                  />
-                  <IconActionLink
-                    href={publicUrl ?? "#"}
-                    label="Open"
-                    icon={<ExternalLink className="h-5 w-5" />}
-                  />
-                  <IconActionButton
-                    label="Share"
-                    icon={<Send className="h-5 w-5" />}
-                    onClick={handleShareTag}
-                  />
+              <Card className="rounded-[38px] px-6 py-8 sm:px-10 sm:py-10">
+                <div className="text-center">
+                  <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
+                  <p className="mt-3 text-sm text-secondary">
+                    Receiving networks: {receivingNetworks || "None linked"}
+                  </p>
+                  <p className="mx-auto mt-4 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
+                    {publicUrl}
+                  </p>
+                  <div className="mt-8 flex items-center justify-center gap-4">
+                    <IconActionButton
+                      label={copied ? "Copied" : "Copy"}
+                      icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+                      onClick={handleCopyTagLink}
+                    />
+                    <IconActionLink
+                      href={publicUrl ?? "#"}
+                      label="Open"
+                      icon={<ExternalLink className="h-5 w-5" />}
+                    />
+                    <IconActionButton
+                      label="Share"
+                      icon={<Send className="h-5 w-5" />}
+                      onClick={handleShareTag}
+                    />
+                  </div>
                 </div>
-                <div className="mt-8 rounded-[26px] bg-white/[0.025] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
-                      <p className="mt-2 text-sm text-secondary">
-                        Manage wallets linked to your Clinks tag.
-                      </p>
+                <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+                  <div className="rounded-[28px] bg-white/[0.02] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+                    <p className="text-xs uppercase tracking-[0.2em] text-accent/90">Overview</p>
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                      <MiniMetric label="Payment Links" value={String(links.length)} />
+                      <MiniMetric label="Received" value={String(confirmedReceivedCount)} hint="Confirmed" />
+                      <MiniMetric label="Sent" value={String(confirmedSentCount)} hint="Confirmed" />
+                      <MiniMetric
+                        label="Wallets"
+                        value={String(linkedWalletCount)}
+                        hint={`${receivingNetworks || "Unlinked"}`}
+                      />
                     </div>
+                  </div>
+                  <div className="rounded-[28px] bg-white/[0.02] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+                    <div className="space-y-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
+                        <p className="mt-2 text-sm text-secondary">
+                          Manage wallets linked to your Clinks tag.
+                        </p>
+                      </div>
 
-                    <WalletRow
-                      label="EVM Wallet"
-                      value={linkedEvmWallet}
-                      isPrimary={Boolean(linkedEvmWallet)}
-                      isBusy={isLinkingWallet && linkingWalletType === "evm"}
-                      action={
-                        linkedEvmWallet ? null : linkingWalletType === "evm" ? (
-                          <div className="w-full max-w-[240px] space-y-2">
-                            <Input
+                      <WalletRow
+                        label="EVM Wallet"
+                        value={linkedEvmWallet}
+                        isPrimary={Boolean(linkedEvmWallet)}
+                        isBusy={isLinkingWallet && linkingWalletType === "evm"}
+                        action={
+                          linkedEvmWallet ? null : linkingWalletType === "evm" ? (
+                            <InlineWalletLinker
                               value={walletInputValue}
                               placeholder="Paste EVM address"
-                              onChange={(event) => setWalletInputValue(event.target.value)}
+                              onChange={setWalletInputValue}
+                              onCancel={() => {
+                                setLinkingWalletType(null);
+                                setWalletInputValue("");
+                                setWalletLinkError(null);
+                              }}
+                              onSave={handleSaveLinkedWallet}
                             />
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                type="button"
-                                onClick={() => {
-                                  setLinkingWalletType(null);
-                                  setWalletInputValue("");
-                                  setWalletLinkError(null);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button type="button" onClick={handleSaveLinkedWallet}>
-                                Link wallet
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="text-sm font-medium text-accent transition hover:text-accent/80"
-                            onClick={() => {
-                              setWalletLinkError(null);
-                              setWalletInputValue("");
-                              setLinkingWalletType("evm");
-                            }}
-                          >
-                            Link
-                          </button>
-                        )
-                      }
-                    />
+                          ) : (
+                            <InlineLinkButton
+                              onClick={() => {
+                                setWalletLinkError(null);
+                                setWalletInputValue("");
+                                setLinkingWalletType("evm");
+                              }}
+                            />
+                          )
+                        }
+                      />
 
-                    <WalletRow
-                      label="Solana Wallet"
-                      value={linkedSolanaWallet}
-                      isPrimary={Boolean(linkedSolanaWallet)}
-                      isBusy={isLinkingWallet && linkingWalletType === "solana"}
-                      action={
-                        linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
-                          <div className="w-full max-w-[240px] space-y-2">
-                            <Input
+                      <WalletRow
+                        label="Solana Wallet"
+                        value={linkedSolanaWallet}
+                        isPrimary={Boolean(linkedSolanaWallet)}
+                        isBusy={isLinkingWallet && linkingWalletType === "solana"}
+                        action={
+                          linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
+                            <InlineWalletLinker
                               value={walletInputValue}
                               placeholder="Paste Solana address"
-                              onChange={(event) => setWalletInputValue(event.target.value)}
+                              onChange={setWalletInputValue}
+                              onCancel={() => {
+                                setLinkingWalletType(null);
+                                setWalletInputValue("");
+                                setWalletLinkError(null);
+                              }}
+                              onSave={handleSaveLinkedWallet}
                             />
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                type="button"
-                                onClick={() => {
-                                  setLinkingWalletType(null);
-                                  setWalletInputValue("");
-                                  setWalletLinkError(null);
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button type="button" onClick={handleSaveLinkedWallet}>
-                                Link wallet
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="text-sm font-medium text-accent transition hover:text-accent/80"
-                            onClick={() => {
-                              setWalletLinkError(null);
-                              setWalletInputValue("");
-                              setLinkingWalletType("solana");
-                            }}
-                          >
-                            Link
-                          </button>
-                        )
-                      }
-                    />
+                          ) : (
+                            <InlineLinkButton
+                              onClick={() => {
+                                setWalletLinkError(null);
+                                setWalletInputValue("");
+                                setLinkingWalletType("solana");
+                              }}
+                            />
+                          )
+                        }
+                      />
 
-                    {walletLinkError ? (
-                      <p className="text-sm text-red-400">{walletLinkError}</p>
-                    ) : null}
+                      {walletLinkError ? (
+                        <p className="text-sm text-red-400">{walletLinkError}</p>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </Card>
             ) : null}
 
             {activeTab === "links" ? (
-              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
@@ -660,7 +638,7 @@ export function DashboardClient() {
                     links.map((link) => (
                       <div
                         key={link.tag}
-                        className="rounded-[24px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
+                        className="rounded-[26px] bg-white/[0.02] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
@@ -681,14 +659,17 @@ export function DashboardClient() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-secondary">No payment links yet</p>
+                    <EmptyStatePanel
+                      title="No payment links yet"
+                      text="Create your first Clinks PayLink to start collecting payments."
+                    />
                   )}
                 </div>
               </Card>
             ) : null}
 
             {activeTab === "history" ? (
-              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
                 <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
                     Payment History
@@ -702,7 +683,7 @@ export function DashboardClient() {
                     payments.map((payment) => (
                       <div
                         key={payment.id}
-                        className="rounded-[24px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
+                        className="rounded-[26px] bg-white/[0.02] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
@@ -755,7 +736,7 @@ export function DashboardClient() {
             ) : null}
 
             {activeTab === "pay" ? (
-              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
                 <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-accent/90">Quick Pay</p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight">Pay Someone</h2>
@@ -807,8 +788,8 @@ function SidebarTabButton({
       type="button"
       className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-medium transition ${
         active
-          ? "bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(124,92,255,0.16)]"
-          : "text-secondary hover:bg-white/[0.03] hover:text-primary"
+          ? "bg-accent/12 text-accent shadow-[inset_0_0_0_1px_rgba(124,92,255,0.18)]"
+          : "text-secondary hover:bg-white/[0.025] hover:text-primary"
       }`}
       onClick={onClick}
     >
@@ -818,27 +799,9 @@ function SidebarTabButton({
   );
 }
 
-function StatCard({
-  hint,
-  label,
-  value
-}: {
-  hint: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[28px] bg-white/[0.025] px-5 py-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
-      <p className="text-[11px] uppercase tracking-[0.26em] text-secondary">{label}</p>
-      <p className="mt-5 text-4xl font-semibold tracking-tight text-primary">{value}</p>
-      <p className="mt-3 text-sm text-secondary">{hint}</p>
-    </div>
-  );
-}
-
 function EmptyStatePanel({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+    <div className="rounded-[28px] bg-white/[0.02] px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <p className="text-xl font-semibold text-primary">{title}</p>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-secondary">{text}</p>
     </div>
@@ -857,7 +820,7 @@ function IconActionButton({
   return (
     <button
       type="button"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/20 hover:bg-white/[0.05]"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-primary transition hover:border-accent/20 hover:bg-white/[0.04]"
       aria-label={label}
       title={label}
       onClick={onClick}
@@ -881,7 +844,7 @@ function IconActionLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/20 hover:bg-white/[0.05]"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-primary transition hover:border-accent/20 hover:bg-white/[0.04]"
       aria-label={label}
       title={label}
     >
@@ -921,7 +884,7 @@ function WalletRow({
   value: string | null;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[18px] bg-white/[0.03] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+    <div className="flex items-center justify-between gap-4 rounded-[20px] bg-white/[0.025] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm text-secondary">{label}</p>
@@ -944,6 +907,68 @@ function WalletRow({
         ) : (
           action
         )}
+      </div>
+    </div>
+  );
+}
+
+function MiniMetric({
+  hint,
+  label,
+  value
+}: {
+  hint?: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[22px] bg-white/[0.025] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]">
+      <p className="text-[11px] uppercase tracking-[0.22em] text-secondary">{label}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-primary">{value}</p>
+      {hint ? <p className="mt-2 text-sm text-secondary">{hint}</p> : null}
+    </div>
+  );
+}
+
+function InlineLinkButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="text-sm font-medium text-accent transition hover:text-accent/80"
+      onClick={onClick}
+    >
+      Link
+    </button>
+  );
+}
+
+function InlineWalletLinker({
+  onCancel,
+  onChange,
+  onSave,
+  placeholder,
+  value
+}: {
+  onCancel: () => void;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  placeholder: string;
+  value: string;
+}) {
+  return (
+    <div className="w-full max-w-[240px] space-y-2">
+      <Input
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" type="button" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="button" onClick={onSave}>
+          Link wallet
+        </Button>
       </div>
     </div>
   );

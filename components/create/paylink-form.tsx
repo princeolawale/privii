@@ -333,17 +333,36 @@ export function PayLinkForm() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Card className="rounded-[36px] p-7 sm:p-10">
-        <div className="mb-10 space-y-4">
-          <div className="inline-flex rounded-full bg-accent/10 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
+      <Card className="rounded-[38px] p-7 sm:p-10">
+        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-4">
+            <div className="inline-flex rounded-full bg-accent/10 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
             One-time PayLink
+            </div>
+            <h1 className="text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
+              Create one-time PayLink
+            </h1>
+            <p className="max-w-xl text-base leading-7 text-secondary">
+              This link will receive payments through your registered payment tag or connected wallet.
+            </p>
           </div>
-          <h1 className="text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-            Create one-time PayLink
-          </h1>
-          <p className="max-w-xl text-base leading-7 text-secondary">
-            This link will receive payments through your registered payment tag or connected wallet.
-          </p>
+          <div className="rounded-[28px] bg-white/[0.02] px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] lg:max-w-xs">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-accent/90">Receive surface</p>
+            <div className="mt-4 space-y-3 text-sm text-secondary">
+              <div className="flex items-center justify-between gap-3">
+                <span>Payment links</span>
+                <span className="text-primary">{anyWalletConnected ? "Ready" : "Connect wallet"}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span>Wallet mode</span>
+                <span className="text-primary">{network === "solana" ? "Solana" : "EVM"}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span>Destination</span>
+                <span className="text-primary">{hasTag && tagRecord ? `@${tagRecord.tag}` : "Connected wallet"}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {!anyWalletConnected ? (
