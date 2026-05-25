@@ -13,16 +13,20 @@ import { cn } from "@/lib/utils";
 
 export function SiteHeader({
   hideWalletButton = false,
-  largeLogo = false
+  largeLogo = false,
+  marketing = false
 }: {
   hideWalletButton?: boolean;
   largeLogo?: boolean;
+  marketing?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { hasTag } = useOwnerTag();
   const isHome = pathname === "/";
-  const navItems = hasTag
+  const navItems = marketing
+    ? marketingNavItems
+    : hasTag
     ? [
         { href: "/", label: "Home" },
         { href: "/create", label: "Create Link" },
@@ -32,7 +36,7 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="mb-7 flex items-center justify-between">
+      <header className={cn("flex items-center justify-between", marketing ? "mb-5" : "mb-7")}>
         <BrandMark />
 
         <nav className="hidden items-center gap-6 text-sm text-secondary md:flex">
@@ -48,18 +52,33 @@ export function SiteHeader({
               {item.label}
             </Link>
           ))}
-          {!hasTag ? (
-            <Link href="/get-started">
-              <Button className="min-w-[140px]">Get Started</Button>
-            </Link>
-          ) : null}
-          {!hideWalletButton ? (
-            <ConnectMenuButton className="min-h-12 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_12px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
-          ) : null}
+          {marketing ? (
+            <div className="flex items-center gap-3 pl-3">
+              <Link href="/dashboard" className="text-sm text-secondary transition hover:text-primary">
+                Sign in
+              </Link>
+              <Link href="/get-started">
+                <button className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] px-4 text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.28)]">
+                  Create ID
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              {!hasTag ? (
+                <Link href="/get-started">
+                  <Button className="min-w-[140px]">Get Started</Button>
+                </Link>
+              ) : null}
+              {!hideWalletButton ? (
+                <ConnectMenuButton className="min-h-12 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_12px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
+              ) : null}
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
-          {!hideWalletButton ? (
+          {!marketing && !hideWalletButton ? (
             <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_10px_24px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
           ) : null}
           <button
@@ -103,6 +122,25 @@ export function SiteHeader({
                 {item.label}
               </Link>
             ))}
+
+            {marketing ? (
+              <div className={cn("grid grid-cols-2 gap-3 pt-1", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
+                <Link
+                  href="/dashboard"
+                  className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-sm font-medium text-primary transition hover:bg-black/45"
+                  onClick={() => setOpen(false)}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/get-started"
+                  className="flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.22)] transition hover:-translate-y-0.5"
+                  onClick={() => setOpen(false)}
+                >
+                  Create ID
+                </Link>
+              </div>
+            ) : null}
       
             <div className={cn("pt-5", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
               <div className="grid grid-cols-2 gap-3">
@@ -150,4 +188,12 @@ const baseNavItems = [
   { href: "/get-started", label: "Get Started" }, 
   { href: "/create", label: "Create Link" },
   { href: "/dashboard", label: "Dashboard" }
+];
+
+const marketingNavItems = [
+  { href: "/#product", label: "Product" },
+  { href: "/#features", label: "Features" },
+  { href: "/#use-cases", label: "Use Cases" },
+  { href: "/#docs", label: "Docs" },
+  { href: "/#about", label: "About" }
 ];

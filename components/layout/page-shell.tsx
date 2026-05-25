@@ -8,18 +8,20 @@ export function PageShell({
   children,
   className,
   hideWalletButton,
-  largeLogo
+  largeLogo,
+  marketing
 }: PropsWithChildren<{
   className?: string;
   hideWalletButton?: boolean;
   largeLogo?: boolean;
+  marketing?: boolean;
 }>) {
   return (
     <div className="min-h-screen bg-background text-primary">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-16 pt-3 sm:px-6 sm:pt-4 lg:px-8">
-        <SiteHeader hideWalletButton={hideWalletButton} largeLogo={largeLogo} />
+        <SiteHeader hideWalletButton={hideWalletButton} largeLogo={largeLogo} marketing={marketing} />
         <main className={cn("relative flex-1", className)}>{children}</main>
-        <SiteFooter />
+        <SiteFooter marketing={marketing} />
       </div>
     </div>
   );
