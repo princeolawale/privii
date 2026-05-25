@@ -9,7 +9,7 @@ export default async function PayPage({
   const { slug } = await params;
 
   return (
-    <PageShell className="flex items-start pt-6 sm:pt-10" largeLogo>
+    <PageShell className="flex items-start pt-4 sm:pt-8 lg:pt-10" largeLogo>
       <PayLinkPaymentClient tag={slug} kind="paylink" />
     </PageShell>
   );

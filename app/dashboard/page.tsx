@@ -3,7 +3,7 @@ import { PageShell } from "@/components/layout/page-shell";
 
 export default function DashboardPage() {
   return (
-    <PageShell className="pt-0 sm:pt-1" largeLogo>
+    <PageShell className="pt-2 sm:pt-6 lg:pt-8" largeLogo>
       <DashboardClient />
     </PageShell>
   );

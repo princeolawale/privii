@@ -3,7 +3,7 @@ import { PayLinkForm } from "@/components/create/paylink-form";
 
 export default function CreatePage() {
   return (
-    <PageShell>
+    <PageShell className="flex items-start pt-4 sm:pt-8 lg:pt-10">
       <PayLinkForm />
     </PageShell>
   );

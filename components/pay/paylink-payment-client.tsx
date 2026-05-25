@@ -590,7 +590,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
   if (error && !data) {
     return (
-      <Card className="space-y-3">
+      <Card className="space-y-3 rounded-[34px] p-7 sm:p-9">
         <h1 className="text-2xl font-semibold">
           {kind === "tag" ? "Clinks tag not found" : "Payment link not found"}
         </h1>
@@ -626,8 +626,8 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
         : "Enter an amount and complete the payment.";
 
   return (
-    <div className="mx-auto w-full max-w-xl pt-16 sm:pt-20">
-      <div className="relative rounded-[34px] border border-border bg-card/95 px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
+    <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
+      <div className="relative rounded-[38px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(17,17,20,0.96)_0%,rgba(10,10,10,0.98)_100%)] px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
           <TokenBadge token={paymentToken} />
         </div>
@@ -836,7 +836,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
 function TokenBadge({ token }: { token: PaymentAsset }) {
   return (
-    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
+    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/[0.08] bg-white/[0.03] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent text-3xl font-semibold text-white">
         {token === "USDC" || token === "USDT" ? "$" : token === "SOL" ? "S" : token.charAt(0)}
       </div>

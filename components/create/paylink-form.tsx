@@ -333,15 +333,15 @@ export function PayLinkForm() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <Card className="p-5 sm:p-8">
-        <div className="mb-8 space-y-3">
-          <div className="inline-flex rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-accent">
+      <Card className="rounded-[36px] p-7 sm:p-10">
+        <div className="mb-10 space-y-4">
+          <div className="inline-flex rounded-full bg-accent/10 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
             One-time PayLink
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
             Create one-time PayLink
           </h1>
-          <p className="max-w-xl text-sm leading-6 text-secondary">
+          <p className="max-w-xl text-base leading-7 text-secondary">
             This link will receive payments through your registered payment tag or connected wallet.
           </p>
         </div>
@@ -357,7 +357,7 @@ export function PayLinkForm() {
         ) : null}
 
         {anyWalletConnected && !isTagLoading ? (
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-sm text-secondary">Payment purpose</span>
@@ -496,7 +496,7 @@ export function PayLinkForm() {
 
 function TokenBadge({ token }: { token: PaymentAsset }) {
   return (
-    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/10 bg-[#171717] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
+    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border border-white/[0.08] bg-white/[0.03] shadow-[0_20px_40px_rgba(0,0,0,0.35)]">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#2563EB] text-3xl font-semibold text-white">
         {token === "USDC" ? "$" : "S"}
       </div>
@@ -543,7 +543,7 @@ function ShareCircle({
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background/70 text-primary transition hover:border-white/20 hover:bg-white/[0.03]"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/20 hover:bg-white/[0.05]"
     >
       {children}
     </a>

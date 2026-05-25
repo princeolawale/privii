@@ -24,19 +24,16 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const { hasTag } = useOwnerTag();
   const isHome = pathname === "/";
-  const navItems = marketing
-    ? marketingNavItems
-    : hasTag
-    ? [
-        { href: "/", label: "Home" },
-        { href: "/create", label: "Create Link" },
-        { href: "/dashboard", label: "Dashboard" }
-      ]
-    : baseNavItems;
+  const navItems = marketing ? marketingNavItems : appNavItems;
 
   return (
     <>
-      <header className={cn("flex items-center justify-between", marketing ? "mb-5" : "mb-7")}>
+      <header
+        className={cn(
+          "sticky top-0 z-40 mb-7 flex items-center justify-between rounded-[28px] border border-white/[0.05] bg-black/45 px-4 py-3 backdrop-blur-xl sm:px-5",
+          marketing ? "mb-6" : "mb-8"
+        )}
+      >
         <BrandMark />
 
         <nav className="hidden items-center gap-6 text-sm text-secondary md:flex">
@@ -52,43 +49,37 @@ export function SiteHeader({
               {item.label}
             </Link>
           ))}
-          {marketing ? (
-            <div className="flex items-center gap-3 pl-3">
-              <Link href="/dashboard" className="text-sm text-secondary transition hover:text-primary">
-                Sign in
+          <div className="flex items-center gap-3 pl-3">
+            <Link href={hasTag ? "/dashboard" : "/dashboard"} className="text-sm text-secondary transition hover:text-primary">
+              {hasTag ? "Dashboard" : "Sign in"}
+            </Link>
+            {hasTag ? (
+              <Link href="/create">
+                <Button className="min-h-11 rounded-xl px-4 text-sm">Create Link</Button>
               </Link>
+            ) : (
               <Link href="/get-started">
-                <button className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] px-4 text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.28)]">
-                  Create ID
-                </button>
+                <Button className="min-h-11 rounded-xl px-4 text-sm">
+                  {pathname === "/get-started" ? "Create ID" : "Create ID"}
+                </Button>
               </Link>
-            </div>
-          ) : (
-            <>
-              {!hasTag ? (
-                <Link href="/get-started">
-                  <Button className="min-w-[140px]">Get Started</Button>
-                </Link>
-              ) : null}
-              {!hideWalletButton ? (
-                <ConnectMenuButton className="min-h-12 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_12px_28px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
-              ) : null}
-            </>
-          )}
+            )}
+            {!hideWalletButton && !marketing ? (
+              <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_14px_34px_rgba(0,0,0,0.3)]" />
+            ) : null}
+          </div>
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
           {!marketing && !hideWalletButton ? (
-            <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_0_0_1px_rgba(0,240,181,0.08),0_10px_24px_rgba(0,0,0,0.32),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.08)]" />
+            <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_14px_34px_rgba(0,0,0,0.3)]" />
           ) : null}
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
             className={cn(
               "inline-flex h-12 w-12 items-center justify-center rounded-[26px] border text-primary transition backdrop-blur",
-              isHome
-                ? "border-accent/25 bg-black/35 shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/40 hover:bg-black/45"
-                : "border-border bg-card hover:border-mint/25 hover:bg-mint/8"
+              "border-white/[0.06] bg-white/[0.03] shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/30 hover:bg-white/[0.05]"
             )}
             onClick={() => setOpen((current) => !current)}
           >
@@ -106,9 +97,7 @@ export function SiteHeader({
         <div
           className={cn(
             "ml-auto w-full max-w-[390px] rounded-[32px] p-5 backdrop-blur-xl",
-            isHome
-              ? "border border-white/10 bg-black/45 shadow-[0_30px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)]"
-              : "border border-border bg-card/95 shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+            "border border-white/[0.08] bg-black/65 shadow-[0_30px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)]"
           )}
         >
           <div className="flex flex-col gap-6">
@@ -123,26 +112,24 @@ export function SiteHeader({
               </Link>
             ))}
 
-            {marketing ? (
-              <div className={cn("grid grid-cols-2 gap-3 pt-1", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
-                <Link
-                  href="/dashboard"
-                  className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-sm font-medium text-primary transition hover:bg-black/45"
-                  onClick={() => setOpen(false)}
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/get-started"
-                  className="flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.22)] transition hover:-translate-y-0.5"
-                  onClick={() => setOpen(false)}
-                >
-                  Create ID
-                </Link>
-              </div>
-            ) : null}
+            <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-1">
+              <Link
+                href={hasTag ? "/dashboard" : "/dashboard"}
+                className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-sm font-medium text-primary transition hover:bg-black/45"
+                onClick={() => setOpen(false)}
+              >
+                {hasTag ? "Dashboard" : "Sign in"}
+              </Link>
+              <Link
+                href={hasTag ? "/create" : "/get-started"}
+                className="flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.22)] transition hover:-translate-y-0.5"
+                onClick={() => setOpen(false)}
+              >
+                {hasTag ? "Create Link" : "Create ID"}
+              </Link>
+            </div>
       
-            <div className={cn("pt-5", isHome ? "border-t border-white/10" : "border-t border-border/80")}>
+            <div className="border-t border-white/10 pt-5">
               <div className="grid grid-cols-2 gap-3">
                 <a
                   href="https://x.com/clinksdotone?s=21"
@@ -150,9 +137,7 @@ export function SiteHeader({
                   rel="noreferrer"
                   className={cn(
                     "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
-                    isHome
-                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
-                      : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
+                    "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
                   )}
                   onClick={() => setOpen(false)}
                 >
@@ -165,9 +150,7 @@ export function SiteHeader({
                   rel="noreferrer"
                   className={cn(
                     "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
-                    isHome
-                      ? "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
-                      : "border-border bg-background/70 hover:border-mint/25 hover:bg-mint/10"
+                    "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
                   )}
                   onClick={() => setOpen(false)}
                 >
@@ -183,17 +166,12 @@ export function SiteHeader({
   );
 }
 
-const baseNavItems = [
-  { href: "/", label: "Home" },
-  { href: "/get-started", label: "Get Started" }, 
-  { href: "/create", label: "Create Link" },
-  { href: "/dashboard", label: "Dashboard" }
-];
-
 const marketingNavItems = [
   { href: "/#product", label: "Product" },
   { href: "/#features", label: "Features" },
   { href: "/#use-cases", label: "Use Cases" },
-  { href: "/#docs", label: "Docs" },
-  { href: "/#about", label: "About" }
+  { href: "/about#docs", label: "Docs" },
+  { href: "/about", label: "About" }
 ];
+
+const appNavItems = marketingNavItems;

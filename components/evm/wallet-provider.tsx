@@ -121,7 +121,6 @@ export function EvmWalletProvider({ children }: { children: ReactNode }) {
           projectId={reownProjectId}
           metadata={metadata}
           networks={[...appkitNetworks]}
-          defaultNetwork={solanaNetwork}
           themeMode="dark"
         >
           {children}

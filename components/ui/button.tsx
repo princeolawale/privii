@@ -19,9 +19,9 @@ export function Button({
       className={cn(
         "inline-flex min-h-14 items-center justify-center rounded-2xl border px-5 text-base font-medium transition duration-200 focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:cursor-not-allowed disabled:opacity-50",
         variant === "primary" &&
-          "border-accent/30 bg-[linear-gradient(180deg,rgba(16,16,18,0.98)_0%,rgba(10,10,10,0.98)_100%)] text-primary shadow-[0_0_0_1px_rgba(139,92,255,0.08),0_16px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05),inset_0_-1px_0_rgba(0,240,181,0.06)] hover:-translate-y-0.5 hover:border-accent/45 hover:shadow-[0_0_0_1px_rgba(139,92,255,0.16),0_20px_48px_rgba(0,0,0,0.44),0_0_22px_rgba(91,45,255,0.12),0_0_10px_rgba(0,240,181,0.06)]",
+          "border-accent/25 bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7043FF_100%)] text-white shadow-[0_18px_44px_rgba(91,45,255,0.28)] hover:-translate-y-0.5 hover:shadow-[0_22px_52px_rgba(91,45,255,0.34)]",
         variant === "secondary" &&
-          "border-border bg-card text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] hover:border-accent/30 hover:bg-accent/8 hover:text-white",
+          "border-white/[0.06] bg-white/[0.03] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.025)] hover:border-accent/25 hover:bg-white/[0.045]",
         variant === "ghost" &&
           "min-h-0 border-transparent bg-transparent px-4 py-2 text-sm text-secondary hover:bg-accent/8 hover:text-primary",
         className

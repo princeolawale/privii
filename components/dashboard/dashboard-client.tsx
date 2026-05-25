@@ -374,8 +374,8 @@ export function DashboardClient() {
 
   if (!anyWalletConnected) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl justify-center pt-4 sm:pt-6">
-        <Card className="w-full rounded-[32px] p-6 text-center sm:p-8">
+      <div className="mx-auto flex w-full max-w-4xl justify-center pt-2 sm:pt-4">
+        <Card className="w-full rounded-[36px] p-7 text-center sm:p-10">
           <div className="space-y-4">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mx-auto max-w-lg text-sm leading-6 text-secondary">
@@ -392,10 +392,10 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl justify-center pt-4 sm:pt-6">
+    <div className="mx-auto flex w-full max-w-5xl justify-center pt-2 sm:pt-4">
       <div className="w-full space-y-8">
         {isLoading ? (
-          <Card className="flex min-h-[240px] items-center justify-center rounded-[32px]">
+          <Card className="flex min-h-[240px] items-center justify-center rounded-[36px]">
             <div className="flex items-center gap-3 text-secondary">
               <LoaderCircle className="h-5 w-5 animate-spin" />
               Loading dashboard
@@ -404,7 +404,7 @@ export function DashboardClient() {
         ) : tagRecord ? (
           <>
             <div className="flex justify-center">
-              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] border border-border bg-card/80 p-2 sm:grid-cols-4">
+              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] bg-white/[0.03] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:grid-cols-4">
                 <TabButton
                   active={activeTab === "tag"}
                   icon={<UserRound className="h-4 w-4" />}
@@ -433,7 +433,7 @@ export function DashboardClient() {
             </div>
 
             {activeTab === "tag" ? (
-              <Card className="rounded-[32px] px-6 py-8 text-center sm:px-10 sm:py-10">
+              <Card className="rounded-[36px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
                 <p className="mt-3 text-sm text-secondary">
                   Receiving networks: {receivingNetworks || "None linked"}
@@ -458,7 +458,7 @@ export function DashboardClient() {
                     onClick={handleShareTag}
                   />
                 </div>
-                <div className="mt-8 rounded-[24px] border border-border bg-background/60 p-5 text-left">
+                <div className="mt-8 rounded-[26px] bg-white/[0.025] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
@@ -568,7 +568,7 @@ export function DashboardClient() {
             ) : null}
 
             {activeTab === "links" ? (
-              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
@@ -589,7 +589,7 @@ export function DashboardClient() {
                     links.map((link) => (
                       <div
                         key={link.tag}
-                        className="rounded-[24px] border border-border bg-background/60 p-5"
+                        className="rounded-[24px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
@@ -617,7 +617,7 @@ export function DashboardClient() {
             ) : null}
 
             {activeTab === "history" ? (
-              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
                 <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
                     Payment History
@@ -631,7 +631,7 @@ export function DashboardClient() {
                     payments.map((payment) => (
                       <div
                         key={payment.id}
-                        className="rounded-[24px] border border-border bg-background/60 p-5"
+                        className="rounded-[24px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
@@ -681,7 +681,7 @@ export function DashboardClient() {
             ) : null}
 
             {activeTab === "pay" ? (
-              <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+              <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
                 <div>
                   <p className="text-sm uppercase tracking-[0.2em] text-accent/90">Quick Pay</p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight">Pay Someone</h2>
@@ -701,7 +701,7 @@ export function DashboardClient() {
             ) : null}
           </>
         ) : (
-          <Card className="rounded-[32px] px-6 py-8 sm:px-8 sm:py-8">
+          <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">
               No Clinks tag yet. Register your payment identity to unlock your dashboard.
@@ -755,7 +755,7 @@ function IconActionButton({
   return (
     <button
       type="button"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/60 text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/20 hover:bg-white/[0.05]"
       aria-label={label}
       title={label}
       onClick={onClick}
@@ -779,7 +779,7 @@ function IconActionLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/60 text-primary transition hover:border-white/20 hover:bg-white/[0.04]"
+      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/20 hover:bg-white/[0.05]"
       aria-label={label}
       title={label}
     >
@@ -819,7 +819,7 @@ function WalletRow({
   value: string | null;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[18px] border border-border bg-card/40 px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-[18px] bg-white/[0.03] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm text-secondary">{label}</p>

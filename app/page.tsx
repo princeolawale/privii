@@ -1,17 +1,16 @@
 import { headers } from "next/headers";
 import {
   ArrowRight,
-  ArrowRightLeft,
+  BriefcaseBusiness,
   Check,
-  Code2,
-  Copy,
-  Link2,
-  QrCode,
+  Globe2,
   ReceiptText,
-  ShieldCheck,
+  Send,
   Sparkles,
+  UsersRound,
   WalletCards
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -20,27 +19,14 @@ import { PublicRouteResolver } from "@/components/public/public-route-resolver";
 import { Card } from "@/components/ui/card";
 import { extractTagFromHost } from "@/lib/host";
 
-const supportedChains = [
-  "Ethereum",
-  "Solana",
-  "Base",
-  "Polygon",
-  "BNB Chain",
-  "Arbitrum",
-  "And more"
-] as const;
-
-const recentPayments = [
-  { asset: "USDC", chain: "Base", amount: "+250.00 USDC" },
-  { asset: "USDT", chain: "Polygon", amount: "+150.00 USDT" },
-  { asset: "SOL", chain: "Solana", amount: "+0.85 SOL" },
-  { asset: "DAI", chain: "Ethereum", amount: "+500.00 DAI" }
-] as const;
-
-const connectedWallets = [
-  { label: "Ethereum", address: "0x27...E792" },
-  { label: "Solana", address: "4wGh...9Qy2" },
-  { label: "Base", address: "0x27...E792" }
+const chainStrip = [
+  { label: "Ethereum", icon: <EthereumMark /> },
+  { label: "Solana", icon: <SolanaMark /> },
+  { label: "Base", icon: <BaseMark /> },
+  { label: "Polygon", icon: <PolygonMark /> },
+  { label: "BNB Chain", icon: <BnbMark /> },
+  { label: "Arbitrum", icon: <ArbitrumMark /> },
+  { label: "More", icon: <MoreMark /> }
 ] as const;
 
 export default async function HomePage() {
@@ -57,46 +43,46 @@ export default async function HomePage() {
 
   return (
     <PageShell marketing>
-      <section className="relative isolate overflow-hidden pt-4 sm:pt-6">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_62%_22%,rgba(139,92,255,0.14),transparent_24%),radial-gradient(circle_at_74%_30%,rgba(0,163,255,0.08),transparent_20%),linear-gradient(180deg,rgba(255,255,255,0.015),transparent_40%)]" />
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-center">
-          <div className="relative z-10 max-w-2xl space-y-8 pt-6 sm:pt-10 lg:pt-14">
-            <div className="inline-flex rounded-full border border-accent/25 bg-accent/8 px-4 py-2 text-xs font-medium uppercase tracking-[0.28em] text-accent">
+      <section className="relative isolate overflow-hidden pt-6 sm:pt-8 lg:pt-10">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(circle_at_74%_18%,rgba(139,92,255,0.16),transparent_20%),radial-gradient(circle_at_70%_28%,rgba(0,163,255,0.06),transparent_16%),linear-gradient(180deg,rgba(255,255,255,0.015),transparent_40%)]" />
+        <div className="grid gap-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
+          <div className="relative z-10 max-w-2xl space-y-9 pt-4 sm:pt-8 lg:pt-14">
+            <div className="inline-flex rounded-full bg-white/[0.03] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
               One identity. Any chain.
             </div>
 
             <div className="space-y-5">
-              <h1 className="max-w-3xl text-5xl font-semibold tracking-[-0.04em] sm:text-6xl lg:text-7xl">
+              <h1 className="max-w-3xl text-5xl font-semibold tracking-[-0.05em] sm:text-6xl lg:text-7xl">
                 The universal payment identity for crypto.
               </h1>
-              <p className="max-w-xl text-base leading-7 text-secondary sm:text-lg">
-                Receive payments from any blockchain using a single link or username.
+              <p className="max-w-lg text-lg leading-8 text-secondary sm:text-xl">
+                Receive payments across chains using one username or link.
               </p>
             </div>
 
             <div className="flex flex-col items-start gap-4 sm:flex-row">
               <Link href="/get-started">
-                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] px-6 text-base font-medium text-white shadow-[0_18px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(91,45,255,0.28)]">
+                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)]">
                   Create your Clinks ID
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </Link>
               <Link href="/#how-it-works">
-                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl border border-border bg-card px-6 text-base font-medium text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] transition hover:border-accent/25 hover:bg-accent/8">
+                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-white/[0.03] px-6 text-base font-medium text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition hover:bg-white/[0.05]">
                   See how it works
                 </button>
               </Link>
             </div>
 
-            <div className="space-y-4 pt-2">
-              <p className="text-sm text-secondary">Built for teams and individuals receiving on-chain.</p>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-secondary">
-                {supportedChains.slice(0, 5).map((chain) => (
-                  <span
-                    key={chain}
-                    className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-2"
-                  >
-                    {chain}
+            <div className="space-y-4">
+              <p className="text-sm text-secondary">Trusted by people building on</p>
+              <div className="flex flex-wrap items-center gap-5 text-sm text-secondary">
+                {chainStrip.slice(0, 5).map((chain) => (
+                  <span key={chain.label} className="inline-flex items-center gap-2.5">
+                    <span className="flex h-5 w-5 items-center justify-center">
+                      {chain.icon}
+                    </span>
+                    {chain.label}
                   </span>
                 ))}
               </div>
@@ -104,318 +90,164 @@ export default async function HomePage() {
           </div>
 
           <div className="relative z-10">
-            <Card className="rounded-[32px] border-white/8 bg-[#0B0B12] p-4 shadow-[0_20px_100px_rgba(0,0,0,0.48),0_0_0_1px_rgba(139,92,255,0.08)] sm:p-5">
-              <div className="grid gap-4 lg:grid-cols-[180px_minmax(0,1fr)]">
-                <div className="rounded-[24px] border border-white/6 bg-black/30 p-4">
-                  <div className="mb-6 flex items-center gap-2 text-sm font-medium text-primary">
-                    <div className="h-2.5 w-2.5 rounded-full bg-accent" />
-                    clinks
-                  </div>
-                  <div className="space-y-2">
-                    {["Overview", "Receive", "Transactions", "Connections", "Settings"].map((item, index) => (
-                      <div
-                        key={item}
-                        className={`rounded-2xl px-3 py-2 text-sm ${
-                          index === 1
-                            ? "bg-accent/12 text-primary shadow-[inset_0_0_0_1px_rgba(139,92,255,0.12)]"
-                            : "text-secondary"
-                        }`}
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-8 rounded-2xl border border-white/6 bg-card/90 p-3">
-                    <p className="text-xs uppercase tracking-[0.2em] text-secondary">Profile</p>
-                    <p className="mt-2 text-sm font-medium text-primary">chido.clinks</p>
-                    <p className="mt-1 text-xs text-secondary">View profile</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 rounded-[24px] border border-white/6 bg-card/95 p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-2">
-                      <p className="text-sm text-secondary">Your Clinks ID</p>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-2xl font-semibold text-primary sm:text-3xl">
-                          chido.clinks
-                        </h2>
-                        <Copy className="h-4 w-4 text-secondary" />
-                      </div>
-                    </div>
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/8 bg-black/30 text-secondary">
-                      <QrCode className="h-8 w-8" />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_170px]">
-                    <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                      <p className="text-sm text-secondary">Share link</p>
-                      <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-white/6 bg-card px-4 py-3 text-sm text-primary">
-                        <span className="truncate">https://clinks.one/chido</span>
-                        <span className="text-secondary">Copy</span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                      <p className="text-sm text-secondary">Connected wallets</p>
-                      <div className="mt-3 space-y-3">
-                        {connectedWallets.map((wallet) => (
-                          <div key={`${wallet.label}-${wallet.address}`} className="rounded-2xl border border-white/6 bg-card px-3 py-2.5">
-                            <p className="text-xs uppercase tracking-[0.18em] text-secondary">{wallet.label}</p>
-                            <p className="mt-1 text-sm text-primary">{wallet.address}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm text-secondary">Recent received payments</p>
-                      <span className="text-xs text-accent">View all</span>
-                    </div>
-                    <div className="space-y-3">
-                      {recentPayments.map((payment) => (
-                        <div
-                          key={`${payment.asset}-${payment.chain}`}
-                          className="flex items-center justify-between gap-3 rounded-2xl border border-white/6 bg-card px-3 py-3"
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-primary">{payment.asset}</p>
-                            <p className="text-xs text-secondary">{payment.chain}</p>
-                          </div>
-                          <p className="text-sm font-medium text-mint">{payment.amount}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <div className="mx-auto max-w-[560px]">
+              <div className="pointer-events-none absolute inset-x-20 bottom-8 h-24 rounded-full bg-[radial-gradient(circle,rgba(91,45,255,0.2),transparent_64%)] blur-2xl" />
+              <Image
+                src="/home-hero-clinks.jpg"
+                alt="Clinks hero preview showing yourname.clinks across multiple chains"
+                width={1280}
+                height={1280}
+                className="h-auto w-full object-cover opacity-96 [mask-image:radial-gradient(circle_at_center,black_68%,transparent_100%)]"
+                priority
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <section id="features" className="mt-10">
-        <Card className="rounded-[28px] border-white/8 bg-[#0B0B12] px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-secondary">
-              Supported chains
-            </p>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-secondary">
-              {supportedChains.map((chain) => (
-                <span key={chain} className="inline-flex items-center rounded-full border border-white/6 bg-card/80 px-3 py-2">
-                  {chain}
-                </span>
-              ))}
-            </div>
-          </div>
-        </Card>
+      <section id="features" className="mt-14">
+        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:justify-between sm:px-6">
+          <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-secondary">
+            Supported chains
+          </span>
+          {chainStrip.map((chain) => (
+            <span key={chain.label} className="inline-flex items-center gap-2.5 whitespace-nowrap">
+              <span className="flex h-5 w-5 items-center justify-center">{chain.icon}</span>
+              {chain.label}
+            </span>
+          ))}
+        </div>
       </section>
 
-      <section id="how-it-works" className="mx-auto mt-20 max-w-6xl">
+      <section id="how-it-works" className="mx-auto mt-28 max-w-6xl">
         <div className="space-y-3 text-center">
           <p className="text-xs uppercase tracking-[0.28em] text-accent">How Clinks Works</p>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Three simple steps to get paid from any chain.
+            Three clean steps to get paid on-chain.
           </h2>
-        </div>
-
-        <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
-          <StepCard
-            number="1"
-            icon={<Sparkles className="h-5 w-5" />}
-            title="Create your ID"
-            text="Claim your unique Clinks ID. It becomes your universal payment identity."
-          />
-          <StepArrow />
-          <StepCard
-            number="2"
-            icon={<WalletCards className="h-5 w-5" />}
-            title="Connect wallets"
-            text="Connect wallets across the chains you want to receive on."
-          />
-          <StepArrow />
-          <StepCard
-            number="3"
-            icon={<ArrowRightLeft className="h-5 w-5" />}
-            title="Receive payments"
-            text="Share your username or link and get paid on any supported chain."
-          />
-        </div>
-      </section>
-
-      <section id="use-cases" className="mx-auto mt-24 max-w-6xl">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.28em] text-accent">Use Cases</p>
-            <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-              Built for the teams moving money on-chain every day.
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-secondary sm:text-base">
-            From creators to global communities, Clinks gives every recipient one identity to
-            receive across chains.
+          <p className="mx-auto max-w-2xl text-base leading-7 text-secondary">
+            Set up one identity, link your wallets, and use it everywhere you receive.
           </p>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <UseCaseCard
-            title="Creators"
-            text="Collect support, subscriptions, and paid drops with one public profile."
+        <div className="mt-12 grid gap-6 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
+          <StepCard
+            icon={<Sparkles className="h-5 w-5" />}
+            title="Create your ID"
+            text="Claim a username that becomes your universal payment identity."
           />
-          <UseCaseCard
-            title="Freelancers"
-            text="Invoice clients with a single payment identity instead of pasting wallet addresses."
+          <StepConnector />
+          <StepCard
+            icon={<WalletCards className="h-5 w-5" />}
+            title="Link wallets"
+            text="Connect the wallets you want to receive with, without changing your public link."
           />
-          <UseCaseCard
-            title="Communities"
-            text="Settle treasury contributions, dues, or event payments from one shareable link."
-          />
-          <UseCaseCard
-            title="Teams"
-            text="Route payments to the right wallets while keeping the receive experience simple."
+          <StepConnector />
+          <StepCard
+            icon={<Send className="h-5 w-5" />}
+            title="Receive payments"
+            text="Share one username or link and accept funds across supported chains."
           />
         </div>
       </section>
 
-      <section id="product" className="mx-auto mt-24 grid max-w-6xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <div className="space-y-6">
+      <section id="use-cases" className="mx-auto mt-28 max-w-6xl">
+        <div className="space-y-3 text-center">
+          <p className="text-xs uppercase tracking-[0.28em] text-accent">Use Cases</p>
+          <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            Built for operators, creators, and teams receiving on-chain.
+          </h2>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <UseCaseCard
+            icon={<Sparkles className="h-4 w-4" />}
+            title="Creators"
+            text="Get paid from your audience without sharing multiple wallet addresses."
+          />
+          <UseCaseCard
+            icon={<BriefcaseBusiness className="h-4 w-4" />}
+            title="Freelancers"
+            text="Invoice clients with one identity that works across chains."
+          />
+          <UseCaseCard
+            icon={<UsersRound className="h-4 w-4" />}
+            title="Communities"
+            text="Collect dues, treasury contributions, and event payments from one link."
+          />
+          <UseCaseCard
+            icon={<ReceiptText className="h-4 w-4" />}
+            title="Teams"
+            text="Standardize inbound on-chain payments across products and markets."
+          />
+        </div>
+      </section>
+
+      <section
+        id="product"
+        className="mx-auto mt-32 grid max-w-6xl gap-14 lg:grid-cols-[0.84fr_1.16fr] lg:items-center"
+      >
+        <div className="space-y-7">
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.28em] text-accent">Simple. Powerful.</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-accent">Product</p>
             <h2 className="max-w-xl text-4xl font-semibold tracking-tight sm:text-5xl">
               Everything you need to receive, in one place.
             </h2>
+            <p className="max-w-lg text-base leading-7 text-secondary">
+              A single payment identity for links, wallets, routing, and activity across the chains your users already use.
+            </p>
           </div>
 
           <div className="space-y-4">
-            <FeatureBullet icon={<Link2 className="h-4 w-4" />}>
-              One link for all chains
-            </FeatureBullet>
-            <FeatureBullet icon={<ReceiptText className="h-4 w-4" />}>
-              Real-time transaction tracking
-            </FeatureBullet>
-            <FeatureBullet icon={<WalletCards className="h-4 w-4" />}>
-              Multi-wallet connections
-            </FeatureBullet>
-            <FeatureBullet icon={<ShieldCheck className="h-4 w-4" />}>
-              Secure and non-custodial
-            </FeatureBullet>
+            <FeatureBullet>One link for all chains</FeatureBullet>
+            <FeatureBullet>Multi-wallet receiving</FeatureBullet>
+            <FeatureBullet>Real-time payment activity</FeatureBullet>
+            <FeatureBullet>Non-custodial by design</FeatureBullet>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <MiniInfoCard id="docs" title="Docs" text="Reference guides, integration patterns, and launch checklists for shipping faster." icon={<ReceiptText className="h-4 w-4" />} />
-            <MiniInfoCard id="about" title="Operations" text="Keep receive flows simple while tracking confirmations and wallet coverage in one place." icon={<Code2 className="h-4 w-4" />} />
-          </div>
-
-          <div id="about" className="rounded-[24px] border border-white/6 bg-card/90 p-5">
-            <p className="text-sm text-secondary">
-              Clinks is built for modern crypto teams, creators, and operators who need a
-              cleaner way to receive across chains.
+          <div
+            id="docs"
+            className="rounded-[26px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+          >
+            <p className="text-sm leading-7 text-secondary">
+              Documentation, guides, and reference material for integrating Clinks into production payment flows.
             </p>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-          <Card className="rounded-[32px] border-white/8 bg-[#0B0B12] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.46)]">
-            <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)]">
-              <div className="rounded-[24px] border border-white/6 bg-black/30 p-4">
-                <div className="space-y-2">
-                  {["Overview", "Receive", "Transactions", "Connections"].map((item, index) => (
-                    <div
-                      key={item}
-                      className={`rounded-2xl px-3 py-2 text-sm ${
-                        index === 1
-                          ? "bg-accent/12 text-primary shadow-[inset_0_0_0_1px_rgba(139,92,255,0.12)]"
-                          : "text-secondary"
-                      }`}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 rounded-[24px] border border-white/6 bg-card/95 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-secondary">Receive</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-primary">chido.clinks</h3>
-                  </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/8 bg-black/30 text-secondary">
-                    <QrCode className="h-8 w-8" />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                  <p className="text-sm text-secondary">Share your link</p>
-                  <div className="mt-3 flex items-center justify-between rounded-2xl border border-white/6 bg-card px-4 py-3 text-sm text-primary">
-                    <span>https://clinks.one/chido</span>
-                    <Copy className="h-4 w-4 text-secondary" />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-secondary">Auto-detect</p>
-                    <p className="mt-2 text-sm text-primary">Accept payments from all linked chains.</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/6 bg-black/25 p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-secondary">Tracking</p>
-                    <p className="mt-2 text-sm text-primary">Monitor confirmed transactions in real time.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="rounded-[32px] border-white/8 bg-[#0B0B12] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.46)]">
-            <div className="overflow-hidden rounded-[28px] border border-white/6 bg-black/30 p-4">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-secondary">chido.clinks</p>
-                  <h3 className="mt-2 text-3xl font-semibold text-primary">$24,596.24</h3>
-                  <p className="mt-1 text-sm text-mint">+12.5%</p>
-                </div>
-
-                <div className="h-28 rounded-[24px] border border-white/6 bg-[linear-gradient(180deg,rgba(139,92,255,0.14),rgba(0,163,255,0.04))]" />
-
-                <div className="space-y-3">
-                  {recentPayments.slice(0, 3).map((payment) => (
-                    <div
-                      key={`${payment.asset}-${payment.amount}`}
-                      className="flex items-center justify-between rounded-2xl border border-white/6 bg-card px-3 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-primary">{payment.asset}</p>
-                        <p className="text-xs text-secondary">{payment.chain}</p>
-                      </div>
-                      <p className="text-sm font-medium text-mint">{payment.amount}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
+        <div className="relative">
+          <div className="mx-auto max-w-[620px]">
+            <div className="pointer-events-none absolute inset-x-16 bottom-8 h-24 rounded-full bg-[radial-gradient(circle,rgba(91,45,255,0.18),transparent_64%)] blur-2xl" />
+            <Image
+              src="/home-product-clinks.jpg"
+              alt="Clinks product showcase with global crypto payment activity"
+              width={1280}
+              height={1280}
+              className="h-auto w-full object-cover opacity-96 [mask-image:radial-gradient(circle_at_center,black_72%,transparent_100%)]"
+            />
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto mt-24 max-w-5xl">
-        <Card className="rounded-[36px] border-white/8 bg-[#0B0B12] px-6 py-8 shadow-[0_24px_100px_rgba(0,0,0,0.46)] sm:px-10 sm:py-10">
+      <section className="mx-auto mt-28 max-w-5xl">
+        <Card className="rounded-[36px] border-white/[0.05] bg-[#0A0A0F] px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-3">
+            <div className="flex items-start gap-4">
+              <div className="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
+                <Globe2 className="h-5 w-5" />
+              </div>
+              <div className="space-y-3">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Ready to simplify your crypto payments?
+                Ready to simplify crypto payments?
               </h2>
               <p className="max-w-2xl text-base leading-7 text-secondary">
-                Create your Clinks ID and start receiving on any chain.
+                Create your Clinks ID and start receiving across chains.
               </p>
+              </div>
             </div>
 
             <Link href="/get-started">
-              <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] px-6 text-base font-medium text-white shadow-[0_18px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_50px_rgba(91,45,255,0.28)]">
+              <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)]">
                 Create your Clinks ID
                 <ArrowRight className="ml-2 h-4 w-4" />
               </button>
@@ -427,100 +259,167 @@ export default async function HomePage() {
   );
 }
 
+function EthereumMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <path d="M16 2 8.4 16 16 12.1 23.6 16 16 2Z" fill="#D9D9D9" />
+      <path d="M16 29.6 8.4 17.5 16 21.9l7.6-4.4L16 29.6Z" fill="#B5B5B5" />
+      <path d="M16 20.4 8.4 16 16 12.1V20.4Z" fill="#A0A0A0" />
+      <path d="M16 12.1 23.6 16 16 20.4V12.1Z" fill="#F2F2F2" />
+    </svg>
+  );
+}
+
+function SolanaMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <defs>
+        <linearGradient id="solana-gradient" x1="0%" x2="100%" y1="0%" y2="100%">
+          <stop offset="0%" stopColor="#00FFA3" />
+          <stop offset="52%" stopColor="#8B5CFF" />
+          <stop offset="100%" stopColor="#00A3FF" />
+        </linearGradient>
+      </defs>
+      <path d="M8 7.5A2 2 0 0 1 10 6h13.7a1 1 0 0 1 .7 1.7l-3.3 3.4a2 2 0 0 1-1.4.6H6a1 1 0 0 1-.7-1.7L8 7.5Z" fill="url(#solana-gradient)" />
+      <path d="M8 20.5A2 2 0 0 1 10 19h13.7a1 1 0 0 1 .7 1.7l-3.3 3.4a2 2 0 0 1-1.4.6H6a1 1 0 0 1-.7-1.7L8 20.5Z" fill="url(#solana-gradient)" />
+      <path d="M24 13.5A2 2 0 0 0 22 12H8.3a1 1 0 0 0-.7 1.7l3.3 3.4a2 2 0 0 0 1.4.6H26a1 1 0 0 0 .7-1.7L24 13.5Z" fill="url(#solana-gradient)" />
+    </svg>
+  );
+}
+
+function BaseMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <circle cx="16" cy="16" r="14" fill="#ffffff" />
+      <rect x="8" y="14.4" width="16" height="3.2" rx="1.6" fill="#0052FF" />
+    </svg>
+  );
+}
+
+function PolygonMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <path
+        d="m11.1 10.4 4-2.3a2 2 0 0 1 2 0l4 2.3a2 2 0 0 1 1 1.7v4.6a2 2 0 0 1-1 1.7l-4 2.3a2 2 0 0 1-2 0l-4-2.3a2 2 0 0 1-1-1.7v-4.6a2 2 0 0 1 1-1.7Z"
+        fill="none"
+        stroke="#8247E5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.3"
+      />
+      <path
+        d="m20.9 11.1 3.3-1.9a2 2 0 0 1 2 0l1.6.9a2 2 0 0 1 1 1.7v3.8a2 2 0 0 1-1 1.7l-3.3 1.9"
+        fill="none"
+        stroke="#8247E5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.3"
+      />
+    </svg>
+  );
+}
+
+function BnbMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <path
+        d="m16 4 3.1 3.1-3.1 3.1-3.1-3.1L16 4Zm6.2 6.2 3.1 3.1-3.1 3.1-3.1-3.1 3.1-3.1ZM9.8 10.2l3.1 3.1-3.1 3.1-3.1-3.1 3.1-3.1ZM16 12.4l3.6 3.6-3.6 3.6-3.6-3.6 3.6-3.6Zm-6.2 6.2 3.1 3.1-3.1 3.1-3.1-3.1 3.1-3.1Zm12.4 0 3.1 3.1-3.1 3.1-3.1-3.1 3.1-3.1Z"
+        fill="#F3BA2F"
+      />
+    </svg>
+  );
+}
+
+function ArbitrumMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <path
+        d="M16 3.5 26.4 9.5v13L16 28.5 5.6 22.5v-13L16 3.5Z"
+        fill="#1F2430"
+        stroke="#A4B1CC"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="m18.7 9.2 4.8 13.6-2.8 1.6-4.8-13.6 2.8-1.6Z" fill="#28A0F0" />
+      <path d="m13.3 10.5 4.8 13.6-2.7 1.5-4.8-13.5 2.7-1.6Z" fill="#ffffff" />
+      <path d="m21.1 8 4.3 2.4v11.2l-1.6.9L19 9.2 21.1 8Z" fill="#96BEDC" />
+    </svg>
+  );
+}
+
+function MoreMark() {
+  return (
+    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
+      <circle cx="9" cy="16" r="2.2" fill="#8A8A8A" />
+      <circle cx="16" cy="16" r="2.2" fill="#8A8A8A" />
+      <circle cx="23" cy="16" r="2.2" fill="#8A8A8A" />
+    </svg>
+  );
+}
+
 function StepCard({
-  number,
   icon,
   title,
   text
 }: {
-  number: string;
   icon: ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-[#0B0B12] p-6">
+    <div className="rounded-[28px] bg-white/[0.02] p-7 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
-            {icon}
-          </div>
-          <span className="inline-flex rounded-full border border-white/8 bg-card/80 px-2.5 py-1 text-xs text-secondary">
-            {number}
-          </span>
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
+          {icon}
         </div>
         <div className="space-y-2">
           <h3 className="text-xl font-semibold text-primary">{title}</h3>
-          <p className="text-sm leading-6 text-secondary">{text}</p>
+          <p className="max-w-sm text-sm leading-7 text-secondary">{text}</p>
         </div>
       </div>
-    </Card>
-  );
-}
-
-function StepArrow() {
-  return (
-    <div className="hidden lg:flex lg:justify-center">
-      <ArrowRight className="h-5 w-5 text-secondary" />
     </div>
   );
 }
 
-function FeatureBullet({
-  icon,
-  children
-}: {
-  icon: ReactNode;
-  children: ReactNode;
-}) {
+function StepConnector() {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-white/6 bg-card/90 px-4 py-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-accent/20 bg-accent/10 text-accent">
-        {icon}
-      </div>
-      <span className="text-sm text-primary">{children}</span>
+    <div className="hidden lg:flex lg:items-center lg:justify-center">
+      <ArrowRight className="h-5 w-5 text-secondary/60" />
     </div>
   );
 }
 
-function MiniInfoCard({
-  id,
-  title,
-  text,
-  icon
-}: {
-  id: string;
-  title: string;
-  text: string;
-  icon: ReactNode;
-}) {
+function FeatureBullet({ children }: { children: ReactNode }) {
   return (
-    <div id={id} className="rounded-[24px] border border-white/6 bg-card/90 p-4">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-2xl border border-electric/20 bg-electric/10 text-electric">
-        {icon}
+    <div className="flex items-center gap-3 text-base text-primary">
+      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
+        <Check className="h-3.5 w-3.5" />
       </div>
-      <h3 className="text-sm font-medium text-primary">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-secondary">{text}</p>
+      <span>{children}</span>
     </div>
   );
 }
 
 function UseCaseCard({
+  icon,
   title,
   text
 }: {
+  icon: ReactNode;
   title: string;
   text: string;
 }) {
   return (
-    <Card className="rounded-[28px] border-white/8 bg-[#0B0B12] p-6">
-      <div className="space-y-3">
-        <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent">
-          <Check className="h-4 w-4" />
+    <div className="rounded-[28px] bg-white/[0.02] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+      <div className="space-y-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
+          {icon}
         </div>
-        <h3 className="text-lg font-medium text-primary">{title}</h3>
-        <p className="text-sm leading-6 text-secondary">{text}</p>
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-primary">{title}</h3>
+          <p className="text-sm leading-6 text-secondary">{text}</p>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 }
