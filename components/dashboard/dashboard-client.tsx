@@ -198,6 +198,13 @@ export function DashboardClient() {
   const historyWalletAddress = tagRecord
     ? resolveTagWalletAddress(tagRecord) || tagRecord.ownerWallet
     : "";
+  const linkedWalletCount = [linkedSolanaWallet, linkedEvmWallet].filter(Boolean).length;
+  const confirmedReceivedCount = payments.filter(
+    (payment) => payment.direction === "received" && payment.status === "confirmed"
+  ).length;
+  const confirmedSentCount = payments.filter(
+    (payment) => payment.direction === "sent" && payment.status === "confirmed"
+  ).length;
   const receivingNetworks = [linkedSolanaWallet ? "Solana" : null, linkedEvmWallet ? "EVM" : null]
     .filter((value): value is string => Boolean(value))
     .join(" + ");
@@ -392,10 +399,10 @@ export function DashboardClient() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl justify-center pt-2 sm:pt-4">
-      <div className="w-full space-y-8">
+    <div className="mx-auto w-full max-w-7xl pt-2 sm:pt-4">
+      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
         {isLoading ? (
-          <Card className="flex min-h-[240px] items-center justify-center rounded-[36px]">
+          <Card className="flex min-h-[240px] items-center justify-center rounded-[36px] lg:col-span-2">
             <div className="flex items-center gap-3 text-secondary">
               <LoaderCircle className="h-5 w-5 animate-spin" />
               Loading dashboard
@@ -403,36 +410,100 @@ export function DashboardClient() {
           </Card>
         ) : tagRecord ? (
           <>
-            <div className="flex justify-center">
-              <div className="grid w-full max-w-3xl grid-cols-2 gap-2 rounded-[28px] bg-white/[0.03] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:grid-cols-4">
-                <TabButton
+            <aside className="space-y-4">
+              <Card className="rounded-[30px] p-5">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-accent/90">
+                  Connected wallet
+                </p>
+                <div className="mt-4 space-y-2">
+                  <p className="text-lg font-semibold text-primary">
+                    {truncateWalletAddress(historyWalletAddress || solanaAddress || evmAddress || "")}
+                  </p>
+                  <p className="text-sm text-secondary">
+                    {receivingNetworks || "No wallets linked"}
+                  </p>
+                </div>
+              </Card>
+
+              <div className="space-y-2 rounded-[28px] bg-white/[0.025] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+                <SidebarTabButton
                   active={activeTab === "tag"}
                   icon={<UserRound className="h-4 w-4" />}
                   label="My Tag"
                   onClick={() => setActiveTab("tag")}
                 />
-                <TabButton
+                <SidebarTabButton
                   active={activeTab === "links"}
                   icon={<Link2 className="h-4 w-4" />}
                   label="Payment Links"
                   onClick={() => setActiveTab("links")}
                 />
-                <TabButton
+                <SidebarTabButton
                   active={activeTab === "history"}
                   icon={<History className="h-4 w-4" />}
                   label="Payment History"
                   onClick={() => setActiveTab("history")}
                 />
-                <TabButton
+                <SidebarTabButton
                   active={activeTab === "pay"}
                   icon={<Send className="h-4 w-4" />}
                   label="Pay Someone"
                   onClick={() => setActiveTab("pay")}
                 />
               </div>
-            </div>
 
-            {activeTab === "tag" ? (
+              <div className="space-y-3 pt-2">
+                <Link href="/create" className="block">
+                  <Button className="w-full">Create Link</Button>
+                </Link>
+                <Button variant="secondary" className="w-full" onClick={() => setActiveTab("pay")}>
+                  Pay Someone
+                </Button>
+              </div>
+            </aside>
+
+            <div className="space-y-6">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-accent/90">Dashboard</p>
+                  <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-primary sm:text-5xl">
+                    {activeTab === "tag"
+                      ? "Universal payment identity"
+                      : activeTab === "links"
+                        ? "Payment links"
+                        : activeTab === "history"
+                          ? "Payment activity"
+                          : "Send a payment"}
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-base leading-7 text-secondary">
+                    {activeTab === "tag"
+                      ? "Manage your Clinks tag, linked wallets, and public receive surface."
+                      : activeTab === "links"
+                        ? "Create and manage payment links tied to your Clinks identity."
+                        : activeTab === "history"
+                          ? "Track confirmed sent and received activity across your linked wallets."
+                          : "Paste a tag or payment link to continue with the existing payment flow."}
+                  </p>
+                </div>
+
+                <div className="hidden gap-3 lg:flex">
+                  <Link href="/create">
+                    <Button>Create Link</Button>
+                  </Link>
+                  <Button variant="secondary" onClick={() => setActiveTab("pay")}>
+                    Pay Someone
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard label="Payment links" value={String(links.length)} hint="Created" />
+                <StatCard label="Received" value={String(confirmedReceivedCount)} hint="Confirmed payments" />
+                <StatCard label="Sent" value={String(confirmedSentCount)} hint="Confirmed payments" />
+                <StatCard label="Network" value={receivingNetworks || "Unlinked"} hint={`${linkedWalletCount} wallet${linkedWalletCount === 1 ? "" : "s"} linked`} />
+              </div>
+
+              {activeTab === "tag" ? (
               <Card className="rounded-[36px] px-6 py-8 text-center sm:px-10 sm:py-10">
                 <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
                 <p className="mt-3 text-sm text-secondary">
@@ -674,7 +745,10 @@ export function DashboardClient() {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-secondary">No payments yet</p>
+                    <EmptyStatePanel
+                      title="No payments yet"
+                      text="Confirmed sent and received payments will appear here."
+                    />
                   )}
                 </div>
               </Card>
@@ -699,9 +773,10 @@ export function DashboardClient() {
                 </form>
               </Card>
             ) : null}
+            </div>
           </>
         ) : (
-          <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8">
+          <Card className="rounded-[36px] px-6 py-8 sm:px-8 sm:py-8 lg:col-span-2">
             <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-secondary">
               No Clinks tag yet. Register your payment identity to unlock your dashboard.
@@ -716,7 +791,7 @@ export function DashboardClient() {
   );
 }
 
-function TabButton({
+function SidebarTabButton({
   active,
   icon,
   label,
@@ -730,7 +805,7 @@ function TabButton({
   return (
     <button
       type="button"
-      className={`flex min-h-12 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium transition ${
+      className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-medium transition ${
         active
           ? "bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(124,92,255,0.16)]"
           : "text-secondary hover:bg-white/[0.03] hover:text-primary"
@@ -740,6 +815,33 @@ function TabButton({
       {icon}
       <span>{label}</span>
     </button>
+  );
+}
+
+function StatCard({
+  hint,
+  label,
+  value
+}: {
+  hint: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[28px] bg-white/[0.025] px-5 py-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+      <p className="text-[11px] uppercase tracking-[0.26em] text-secondary">{label}</p>
+      <p className="mt-5 text-4xl font-semibold tracking-tight text-primary">{value}</p>
+      <p className="mt-3 text-sm text-secondary">{hint}</p>
+    </div>
+  );
+}
+
+function EmptyStatePanel({ title, text }: { title: string; text: string }) {
+  return (
+    <div className="rounded-[28px] bg-white/[0.02] px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+      <p className="text-xl font-semibold text-primary">{title}</p>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-secondary">{text}</p>
+    </div>
   );
 }
 
