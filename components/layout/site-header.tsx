@@ -29,7 +29,7 @@ export function SiteHeader({
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 mb-5 flex items-center justify-between rounded-[28px] border border-white/[0.05] bg-black/55 px-4 py-3 backdrop-blur-xl sm:px-5",
+          "sticky top-0 z-40 mb-5 flex items-center justify-between px-1 py-2 sm:rounded-[28px] sm:border sm:border-white/[0.05] sm:bg-black/55 sm:px-5 sm:py-3 sm:backdrop-blur-xl",
           marketing ? "mb-5" : "mb-6"
         )}
       >

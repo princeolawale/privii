@@ -60,9 +60,14 @@ export default async function HomePage() {
 
             <div className="flex flex-col items-start gap-4 sm:flex-row">
               <Link href="/get-started">
-                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)] lg:min-h-[72px] lg:rounded-[20px] lg:px-9 lg:text-xl">
+                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)] lg:min-h-16 lg:px-7 lg:text-lg">
                   Create Clinks ID
                   <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
+              </Link>
+              <Link href="/dashboard" className="hidden lg:inline-flex">
+                <button className="inline-flex min-h-16 items-center justify-center rounded-2xl border border-white/[0.08] bg-card px-7 text-lg font-medium text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] transition hover:border-accent/25 hover:bg-white/[0.03]">
+                  Pay Someone
                 </button>
               </Link>
             </div>
