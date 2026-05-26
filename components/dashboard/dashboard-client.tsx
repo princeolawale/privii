@@ -620,7 +620,7 @@ export function DashboardClient() {
                       <p className="max-w-xl text-sm leading-6 text-secondary">
                         Manage the PayLinks you&apos;ve already created.
                       </p>
-                      <Link href="/create">
+                      <Link href="/create" className="sm:hidden">
                         <Button className="w-full sm:w-auto">Create Link</Button>
                       </Link>
                     </div>

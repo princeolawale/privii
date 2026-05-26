@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Check,
-  Globe2,
   ReceiptText,
   Send,
   Sparkles,
@@ -25,8 +24,7 @@ const chainStrip = [
   { label: "Base", icon: <BaseMark /> },
   { label: "Polygon", icon: <PolygonMark /> },
   { label: "BNB Chain", icon: <BnbMark /> },
-  { label: "Arbitrum", icon: <ArbitrumMark /> },
-  { label: "More", icon: <MoreMark /> }
+  { label: "Arbitrum", icon: <ArbitrumMark /> }
 ] as const;
 
 export default async function HomePage() {
@@ -48,7 +46,7 @@ export default async function HomePage() {
         <div className="grid gap-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
           <div className="relative z-10 max-w-2xl space-y-9 pt-4 sm:pt-8 lg:pt-14">
             <div className="inline-flex rounded-full bg-white/[0.03] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
-              One identity. Any chain.
+              One identity. Multi-chain.
             </div>
 
             <div className="space-y-5">
@@ -63,20 +61,15 @@ export default async function HomePage() {
             <div className="flex flex-col items-start gap-4 sm:flex-row">
               <Link href="/get-started">
                 <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)]">
-                  Create your Clinks ID
+                  Create Clinks ID
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              </Link>
-              <Link href="/#how-it-works">
-                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-white/[0.03] px-6 text-base font-medium text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition hover:bg-white/[0.05]">
-                  See how it works
                 </button>
               </Link>
             </div>
 
             <div className="space-y-4">
               <p className="text-sm text-secondary">Trusted by people building on</p>
-              <div className="flex flex-wrap items-center gap-5 text-sm text-secondary">
+              <div className="grid w-full max-w-md grid-cols-2 gap-x-4 gap-y-3 text-sm text-secondary sm:flex sm:flex-wrap sm:items-center sm:gap-5">
                 {chainStrip.slice(0, 5).map((chain) => (
                   <span key={chain.label} className="inline-flex items-center gap-2.5">
                     <span className="flex h-5 w-5 items-center justify-center">
@@ -106,7 +99,7 @@ export default async function HomePage() {
       </section>
 
       <section id="features" className="mt-14">
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:justify-between sm:px-6">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-4 rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
           <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-secondary">
             Supported chains
           </span>
@@ -120,12 +113,12 @@ export default async function HomePage() {
       </section>
 
       <section id="how-it-works" className="mx-auto mt-28 max-w-6xl">
-        <div className="space-y-3 text-center">
+        <div className="max-w-2xl space-y-3">
           <p className="text-xs uppercase tracking-[0.28em] text-accent">How Clinks Works</p>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Three clean steps to get paid on-chain.
           </h2>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-secondary">
+          <p className="text-base leading-7 text-secondary">
             Set up one identity, link your wallets, and use it everywhere you receive.
           </p>
         </div>
@@ -152,9 +145,9 @@ export default async function HomePage() {
       </section>
 
       <section id="use-cases" className="mx-auto mt-28 max-w-6xl">
-        <div className="space-y-3 text-center">
+        <div className="max-w-2xl space-y-3">
           <p className="text-xs uppercase tracking-[0.28em] text-accent">Use Cases</p>
-          <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
             Built for operators, creators, and teams receiving on-chain.
           </h2>
         </div>
@@ -199,7 +192,7 @@ export default async function HomePage() {
           </div>
 
           <div className="space-y-4">
-            <FeatureBullet>One link for all chains</FeatureBullet>
+            <FeatureBullet>One link for multi-chain payments</FeatureBullet>
             <FeatureBullet>Multi-wallet receiving</FeatureBullet>
             <FeatureBullet>Real-time payment activity</FeatureBullet>
             <FeatureBullet>Non-custodial by design</FeatureBullet>
@@ -232,23 +225,18 @@ export default async function HomePage() {
       <section className="mx-auto mt-28 max-w-5xl">
         <Card className="rounded-[36px] border-white/[0.05] bg-[#0A0A0F] px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
-                <Globe2 className="h-5 w-5" />
-              </div>
-              <div className="space-y-3">
+            <div className="space-y-3 text-left">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Ready to simplify crypto payments?
               </h2>
               <p className="max-w-2xl text-base leading-7 text-secondary">
                 Create your Clinks ID and start receiving across chains.
               </p>
-              </div>
             </div>
 
             <Link href="/get-started">
               <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)]">
-                Create your Clinks ID
+                Create Clinks ID
                 <ArrowRight className="ml-2 h-4 w-4" />
               </button>
             </Link>
@@ -343,16 +331,6 @@ function ArbitrumMark() {
       <path d="m18.7 9.2 4.8 13.6-2.8 1.6-4.8-13.6 2.8-1.6Z" fill="#28A0F0" />
       <path d="m13.3 10.5 4.8 13.6-2.7 1.5-4.8-13.5 2.7-1.6Z" fill="#ffffff" />
       <path d="m21.1 8 4.3 2.4v11.2l-1.6.9L19 9.2 21.1 8Z" fill="#96BEDC" />
-    </svg>
-  );
-}
-
-function MoreMark() {
-  return (
-    <svg viewBox="0 0 32 32" className="h-5 w-5" aria-hidden="true">
-      <circle cx="9" cy="16" r="2.2" fill="#8A8A8A" />
-      <circle cx="16" cy="16" r="2.2" fill="#8A8A8A" />
-      <circle cx="23" cy="16" r="2.2" fill="#8A8A8A" />
     </svg>
   );
 }

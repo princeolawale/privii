@@ -10,7 +10,7 @@ export function SiteFooter({ marketing = false }: { marketing?: boolean }) {
         <div className="space-y-4">
           <BrandMark />
           <p className="max-w-xs text-sm leading-6 text-secondary">
-            One identity. Any chain.
+            One identity. Multi-chain.
           </p>
           <p className="text-sm text-secondary">© 2026 Clinks. All rights reserved.</p>
         </div>

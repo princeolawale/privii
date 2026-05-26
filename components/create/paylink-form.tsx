@@ -332,9 +332,9 @@ export function PayLinkForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <Card className="rounded-[38px] p-7 sm:p-10">
-        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mx-auto w-full max-w-6xl">
+      <Card className="rounded-[40px] p-6 sm:p-8 lg:p-9">
+        <div className="mb-8 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-4">
             <div className="inline-flex rounded-full bg-accent/10 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
             One-time PayLink
@@ -346,7 +346,7 @@ export function PayLinkForm() {
               This link will receive payments through your registered payment tag or connected wallet.
             </p>
           </div>
-          <div className="rounded-[28px] bg-white/[0.02] px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] lg:max-w-xs">
+          <div className="rounded-[28px] bg-white/[0.02] px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] xl:max-w-xs">
             <p className="text-[11px] uppercase tracking-[0.24em] text-accent/90">Receive surface</p>
             <div className="mt-4 space-y-3 text-sm text-secondary">
               <div className="flex items-center justify-between gap-3">
@@ -376,136 +376,151 @@ export function PayLinkForm() {
         ) : null}
 
         {anyWalletConnected && !isTagLoading ? (
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm text-secondary">Payment purpose</span>
-                <Input
-                  placeholder="Invoice"
-                  value={paymentPurpose}
-                  onChange={(event) => setPaymentPurpose(event.target.value)}
-                />
-              </label>
+          <form className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" onSubmit={handleSubmit}>
+            <div className="space-y-6">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Payment purpose</span>
+                  <Input
+                    placeholder="Invoice"
+                    value={paymentPurpose}
+                    onChange={(event) => setPaymentPurpose(event.target.value)}
+                  />
+                </label>
 
-              <label className="space-y-2">
-                <span className="text-sm text-secondary">Amount (optional)</span>
-                <Input
-                  inputMode="decimal"
-                  placeholder="25"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                />
-              </label>
-            </div>
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Amount (optional)</span>
+                  <Input
+                    inputMode="decimal"
+                    placeholder="25"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                  />
+                </label>
+              </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm text-secondary">Network</span>
-                {availableNetworks.length <= 1 ? (
-                  <Input disabled value={availableNetworks[0]?.label || "Unavailable"} />
-                ) : (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Network</span>
+                  {availableNetworks.length <= 1 ? (
+                    <Input disabled value={availableNetworks[0]?.label || "Unavailable"} />
+                  ) : (
+                    <Select
+                      value={network}
+                      onChange={(event) => {
+                        const nextNetwork = event.target.value as PaymentNetwork;
+                        setNetwork(nextNetwork);
+                        const nextTokens =
+                          nextNetwork === "solana"
+                            ? (["SOL", "USDC"] as PaymentAsset[])
+                            : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
+                        setToken(nextTokens[0] as PaymentAsset);
+                      }}
+                    >
+                      {availableNetworks.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Token</span>
                   <Select
-                    value={network}
-                    onChange={(event) => {
-                      const nextNetwork = event.target.value as PaymentNetwork;
-                      setNetwork(nextNetwork);
-                      const nextTokens =
-                        nextNetwork === "solana"
-                          ? (["SOL", "USDC"] as PaymentAsset[])
-                          : EVM_TOKENS[nextNetwork].map((item) => item.symbol);
-                      setToken(nextTokens[0] as PaymentAsset);
-                    }}
+                    value={token}
+                    onChange={(event) => setToken(event.target.value as PaymentAsset)}
                   >
-                    {availableNetworks.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
+                    {availableTokens.map((tokenOption) => (
+                      <option key={tokenOption} value={tokenOption}>
+                        {tokenOption}
                       </option>
                     ))}
                   </Select>
-                )}
-              </label>
+                </label>
+              </div>
 
-              <label className="space-y-2">
-                <span className="text-sm text-secondary">Token</span>
-                <Select
-                  value={token}
-                  onChange={(event) => setToken(event.target.value as PaymentAsset)}
-                >
-                  {availableTokens.map((tokenOption) => (
-                    <option key={tokenOption} value={tokenOption}>
-                      {tokenOption}
-                    </option>
-                  ))}
-                </Select>
-              </label>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Type</span>
+                  <Select
+                    value={type}
+                    onChange={(event) => {
+                      const nextType = event.target.value as PayLinkType;
+                      setType(nextType);
+                      if (nextType === "permanent") {
+                        setExpiry("none");
+                      }
+                    }}
+                  >
+                    <option value="permanent">Permanent</option>
+                    <option value="expiring">Expiring</option>
+                  </Select>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">Expiry</span>
+                  <Select
+                    disabled={type === "permanent"}
+                    value={type === "permanent" ? "none" : expiry}
+                    onChange={(event) => setExpiry(event.target.value as PayLinkExpiryOption)}
+                  >
+                    <option value="none">None</option>
+                    <option value="1h">1 hour</option>
+                    <option value="24h">24 hours</option>
+                    <option value="7d">7 days</option>
+                  </Select>
+                </label>
+              </div>
             </div>
 
-            <label className="space-y-2">
-              <span className="text-sm text-secondary">Type</span>
-              <Select
-                value={type}
-                onChange={(event) => {
-                  const nextType = event.target.value as PayLinkType;
-                  setType(nextType);
-                  if (nextType === "permanent") {
-                    setExpiry("none");
-                  }
-                }}
-              >
-                <option value="permanent">Permanent</option>
-                <option value="expiring">Expiring</option>
-              </Select>
-            </label>
+            <div className="rounded-[28px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-accent/90">Link summary</p>
+                  <p className="mt-2 text-sm text-secondary">
+                    Review where this link routes before publishing it.
+                  </p>
+                </div>
 
-            <label className="space-y-2">
-              <span className="text-sm text-secondary">Expiry</span>
-              <Select
-                disabled={type === "permanent"}
-                value={type === "permanent" ? "none" : expiry}
-                onChange={(event) => setExpiry(event.target.value as PayLinkExpiryOption)}
-              >
-                <option value="none">None</option>
-                <option value="1h">1 hour</option>
-                <option value="24h">24 hours</option>
-                <option value="7d">7 days</option>
-              </Select>
-            </label>
+                <label className="space-y-2">
+                  <span className="text-sm text-secondary">
+                    {hasTag ? "Registered payment tag" : "Payment destination"}
+                  </span>
+                  <Input
+                    disabled
+                    value={
+                      hasTag && tagRecord
+                        ? `@${tagRecord.tag}`
+                        : network === "solana"
+                          ? "Connected Solana wallet"
+                          : "Connected EVM wallet"
+                    }
+                    placeholder="Connected wallet"
+                  />
+                </label>
 
-            <label className="space-y-2">
-              <span className="text-sm text-secondary">
-                {hasTag ? "Registered payment tag" : "Payment destination"}
-              </span>
-              <Input
-                disabled
-                value={
-                  hasTag && tagRecord
-                    ? `@${tagRecord.tag}`
-                    : network === "solana"
-                      ? "Connected Solana wallet"
-                      : "Connected EVM wallet"
-                }
-                placeholder="Connected wallet"
-              />
-            </label>
+                {!selectedReceiverWallet ? (
+                  <p className="text-sm text-secondary">
+                    Link a wallet for this network first
+                  </p>
+                ) : null}
 
-            {!selectedReceiverWallet ? (
-              <p className="text-sm text-secondary">
-                Link a wallet for this network first
-              </p>
-            ) : null}
+                {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-            {error ? <p className="text-sm text-red-400">{error}</p> : null}
-
-            <Button className="w-full" disabled={!canCreate}>
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                  Creating...
-                </span>
-              ) : (
-                "Create Link"
-              )}
-            </Button>
+                <Button className="w-full" disabled={!canCreate}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </span>
+                  ) : (
+                    "Create Link"
+                  )}
+                </Button>
+              </div>
+            </div>
           </form>
         ) : null}
       </Card>

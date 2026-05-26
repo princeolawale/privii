@@ -1,13 +1,12 @@
 "use client";
 
-import { Menu, Send, X as CloseIcon } from "lucide-react";
+import { ArrowRight, Menu, Send, Shield, UserCircle2, X as CloseIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { BrandMark } from "@/components/layout/brand-mark";
 import { useOwnerTag } from "@/components/solana/use-owner-tag";
-import { ConnectMenuButton } from "@/components/wallet/connect-menu-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -64,23 +63,14 @@ export function SiteHeader({
                 </Button>
               </Link>
             )}
-            {!hideWalletButton && !marketing ? (
-              <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_14px_34px_rgba(0,0,0,0.3)]" />
-            ) : null}
           </div>
         </nav>
 
         <div className="flex items-center gap-3 md:hidden">
-          {!marketing && !hideWalletButton ? (
-            <ConnectMenuButton className="min-h-11 rounded-xl px-4 text-sm shadow-[0_14px_34px_rgba(0,0,0,0.3)]" />
-          ) : null}
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
-            className={cn(
-              "inline-flex h-12 w-12 items-center justify-center rounded-[26px] border text-primary transition backdrop-blur",
-              "border-white/[0.06] bg-white/[0.03] shadow-[0_18px_40px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/30 hover:bg-white/[0.05]"
-            )}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/30 hover:bg-white/[0.05]"
             onClick={() => setOpen((current) => !current)}
           >
             {open ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -96,8 +86,7 @@ export function SiteHeader({
       >
         <div
           className={cn(
-            "ml-auto w-full max-w-[390px] rounded-[32px] p-5 backdrop-blur-xl",
-            "border border-white/[0.08] bg-black/65 shadow-[0_30px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.04)]"
+            "w-full rounded-[24px] border border-white/[0.06] bg-[#0B0B0D] p-5 shadow-[0_22px_50px_rgba(0,0,0,0.35)]"
           )}
         >
           <div className="flex flex-col gap-6">
@@ -105,9 +94,16 @@ export function SiteHeader({
               <Link
                 key={item.href}
                 href={item.href}
-                className="px-2 py-1 text-[17px] text-secondary transition hover:text-primary"
+                className="flex items-center gap-3 px-2 py-1 text-[16px] text-secondary transition hover:text-primary"
                 onClick={() => setOpen(false)}
               >
+                <span className="text-accent/90">
+                  {item.label === "Product" ? <Shield className="h-4 w-4" /> : null}
+                  {item.label === "Features" ? <ArrowRight className="h-4 w-4" /> : null}
+                  {item.label === "Use Cases" ? <UserCircle2 className="h-4 w-4" /> : null}
+                  {item.label === "Docs" ? <ArrowRight className="h-4 w-4" /> : null}
+                  {item.label === "About" ? <Shield className="h-4 w-4" /> : null}
+                </span>
                 {item.label}
               </Link>
             ))}
@@ -130,15 +126,12 @@ export function SiteHeader({
             </div>
       
             <div className="border-t border-white/10 pt-5">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4">
                 <a
                   href="https://x.com/clinksdotone?s=21"
                   target="_blank"
                   rel="noreferrer"
-                  className={cn(
-                    "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
-                    "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
-                  )}
+                  className="flex items-center gap-3 px-2 py-1 text-[16px] text-secondary transition hover:text-primary"
                   onClick={() => setOpen(false)}
                 >
                   <CloseIcon className="h-4 w-4" />
@@ -148,10 +141,7 @@ export function SiteHeader({
                   href="https://t.me/clinksdotone"
                   target="_blank"
                   rel="noreferrer"
-                  className={cn(
-                    "flex h-14 items-center justify-center gap-2 rounded-2xl border px-4 text-base font-medium text-primary transition backdrop-blur",
-                    "border-white/10 bg-black/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-accent/25 hover:bg-black/45"
-                  )}
+                  className="flex items-center gap-3 px-2 py-1 text-[16px] text-secondary transition hover:text-primary"
                   onClick={() => setOpen(false)}
                 >
                   <Send className="h-4 w-4" />
