@@ -58,15 +58,15 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="flex flex-col items-start gap-4 sm:flex-row">
+            <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-start sm:gap-4 lg:flex-row">
               <Link href="/get-started">
-                <button className="inline-flex min-h-14 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)] lg:min-h-16 lg:px-7 lg:text-lg">
+                <button className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_62%,#7043FF_100%)] px-6 text-base font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_46px_rgba(91,45,255,0.3)] sm:w-auto lg:min-h-14 lg:px-8 lg:text-lg">
                   Create Clinks ID
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </Link>
-              <Link href="/dashboard" className="hidden lg:inline-flex">
-                <button className="inline-flex min-h-16 items-center justify-center rounded-2xl border border-white/[0.08] bg-card px-7 text-lg font-medium text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] transition hover:border-accent/25 hover:bg-white/[0.03]">
+              <Link href="/dashboard" className="inline-flex w-full sm:w-auto">
+                <button className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-white/[0.08] bg-card px-6 text-base font-medium text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] transition hover:border-accent/25 hover:bg-white/[0.03] sm:w-auto lg:min-h-14 lg:px-8 lg:text-lg">
                   Pay Someone
                 </button>
               </Link>
