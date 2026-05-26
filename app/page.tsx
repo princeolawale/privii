@@ -67,19 +67,6 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="space-y-4">
-              <p className="text-sm text-secondary">Trusted by people building on</p>
-              <div className="grid w-full max-w-md grid-cols-2 gap-x-4 gap-y-3 text-sm text-secondary sm:flex sm:flex-wrap sm:items-center sm:gap-5">
-                {chainStrip.slice(0, 5).map((chain) => (
-                  <span key={chain.label} className="inline-flex items-center gap-2.5">
-                    <span className="flex h-5 w-5 items-center justify-center">
-                      {chain.icon}
-                    </span>
-                    {chain.label}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="relative z-10">
@@ -99,16 +86,22 @@ export default async function HomePage() {
       </section>
 
       <section id="features" className="mt-14">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-4 rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:px-6">
-          <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-secondary">
-            Supported chains
-          </span>
-          {chainStrip.map((chain) => (
-            <span key={chain.label} className="inline-flex items-center gap-2.5 whitespace-nowrap">
-              <span className="flex h-5 w-5 items-center justify-center">{chain.icon}</span>
-              {chain.label}
+        <div className="rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-secondary">
+              Supported chains
             </span>
-          ))}
+            <div className="-mx-1 overflow-x-auto scrollbar-none sm:mx-0 sm:overflow-visible">
+              <div className="flex min-w-max items-center gap-5 px-1 sm:flex-wrap sm:justify-end">
+                {chainStrip.map((chain) => (
+                  <span key={chain.label} className="inline-flex items-center gap-2.5 whitespace-nowrap">
+                    <span className="flex h-5 w-5 items-center justify-center">{chain.icon}</span>
+                    {chain.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

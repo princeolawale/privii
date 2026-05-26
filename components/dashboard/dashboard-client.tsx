@@ -496,6 +496,25 @@ export function DashboardClient() {
                 </div>
               </div>
 
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <TopStatCard label="Payment Links" value={String(links.length)} hint="Created" />
+                <TopStatCard
+                  label="Received"
+                  value={String(confirmedReceivedCount)}
+                  hint="Confirmed payments"
+                />
+                <TopStatCard
+                  label="Sent"
+                  value={String(confirmedSentCount)}
+                  hint="Confirmed payments"
+                />
+                <TopStatCard
+                  label="Wallets"
+                  value={String(linkedWalletCount)}
+                  hint={receivingNetworks || "Unlinked"}
+                />
+              </div>
+
               <Card className="rounded-[40px] border-white/[0.04] bg-[linear-gradient(180deg,rgba(10,10,12,0.985)_0%,rgba(10,10,12,0.985)_100%)] px-5 py-5 shadow-[0_28px_90px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.014)] sm:px-6 sm:py-6">
                 {activeTab === "tag" ? (
                   <div className="space-y-6">
@@ -524,17 +543,6 @@ export function DashboardClient() {
                           onClick={handleShareTag}
                         />
                       </div>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      <MiniMetric label="Payment Links" value={String(links.length)} hint="Created" />
-                      <MiniMetric label="Received" value={String(confirmedReceivedCount)} hint="Confirmed payments" />
-                      <MiniMetric label="Sent" value={String(confirmedSentCount)} hint="Confirmed payments" />
-                      <MiniMetric
-                        label="Wallets"
-                        value={String(linkedWalletCount)}
-                        hint={`${receivingNetworks || "Unlinked"}`}
-                      />
                     </div>
 
                     <div className="rounded-[28px] bg-white/[0.018] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-5">
@@ -898,20 +906,20 @@ function WalletRow({
   );
 }
 
-function MiniMetric({
+function TopStatCard({
   hint,
   label,
   value
 }: {
-  hint?: string;
+  hint: string;
   label: string;
   value: string;
 }) {
   return (
-    <div className="rounded-[22px] bg-white/[0.025] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]">
+    <div className="rounded-[22px] bg-white/[0.018] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
       <p className="text-[10px] uppercase tracking-[0.24em] text-secondary">{label}</p>
-      <p className="mt-2 text-xl font-semibold tracking-tight text-primary">{value}</p>
-      {hint ? <p className="mt-1.5 text-xs text-secondary">{hint}</p> : null}
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-primary">{value}</p>
+      <p className="mt-1.5 text-xs text-secondary">{hint}</p>
     </div>
   );
 }
