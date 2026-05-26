@@ -496,264 +496,250 @@ export function DashboardClient() {
                 </div>
               </div>
 
-              {activeTab === "tag" ? (
-              <Card className="rounded-[38px] px-6 py-8 sm:px-10 sm:py-10">
-                <div className="text-center">
-                  <p className="text-sm uppercase tracking-[0.2em] text-accent/90">My Tag</p>
-                  <p className="mt-3 text-sm text-secondary">
-                    Receiving networks: {receivingNetworks || "None linked"}
-                  </p>
-                  <p className="mx-auto mt-4 max-w-2xl break-all text-2xl font-medium text-primary sm:text-3xl">
-                    {publicUrl}
-                  </p>
-                  <div className="mt-8 flex items-center justify-center gap-4">
-                    <IconActionButton
-                      label={copied ? "Copied" : "Copy"}
-                      icon={copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
-                      onClick={handleCopyTagLink}
-                    />
-                    <IconActionLink
-                      href={publicUrl ?? "#"}
-                      label="Open"
-                      icon={<ExternalLink className="h-5 w-5" />}
-                    />
-                    <IconActionButton
-                      label="Share"
-                      icon={<Send className="h-5 w-5" />}
-                      onClick={handleShareTag}
-                    />
-                  </div>
-                </div>
-                <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-                  <div className="rounded-[28px] bg-white/[0.02] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                    <p className="text-xs uppercase tracking-[0.2em] text-accent/90">Overview</p>
-                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                      <MiniMetric label="Payment Links" value={String(links.length)} />
-                      <MiniMetric label="Received" value={String(confirmedReceivedCount)} hint="Confirmed" />
-                      <MiniMetric label="Sent" value={String(confirmedSentCount)} hint="Confirmed" />
+              <Card className="rounded-[40px] border-white/[0.04] bg-[linear-gradient(180deg,rgba(10,10,12,0.985)_0%,rgba(10,10,12,0.985)_100%)] px-5 py-5 shadow-[0_28px_90px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.014)] sm:px-6 sm:py-6">
+                {activeTab === "tag" ? (
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-accent/90">Public receive link</p>
+                      <p className="mt-3 text-sm text-secondary">
+                        Receiving networks: {receivingNetworks || "None linked"}
+                      </p>
+                      <p className="mx-auto mt-4 max-w-2xl break-all text-xl font-medium text-primary sm:text-2xl">
+                        {publicUrl}
+                      </p>
+                      <div className="mt-6 flex items-center justify-center gap-3">
+                        <IconActionButton
+                          label={copied ? "Copied" : "Copy"}
+                          icon={copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          onClick={handleCopyTagLink}
+                        />
+                        <IconActionLink
+                          href={publicUrl ?? "#"}
+                          label="Open"
+                          icon={<ExternalLink className="h-4 w-4" />}
+                        />
+                        <IconActionButton
+                          label="Share"
+                          icon={<Send className="h-4 w-4" />}
+                          onClick={handleShareTag}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <MiniMetric label="Payment Links" value={String(links.length)} hint="Created" />
+                      <MiniMetric label="Received" value={String(confirmedReceivedCount)} hint="Confirmed payments" />
+                      <MiniMetric label="Sent" value={String(confirmedSentCount)} hint="Confirmed payments" />
                       <MiniMetric
                         label="Wallets"
                         value={String(linkedWalletCount)}
                         hint={`${receivingNetworks || "Unlinked"}`}
                       />
                     </div>
-                  </div>
-                  <div className="rounded-[28px] bg-white/[0.02] p-5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                    <div className="space-y-4">
-                      <div>
+
+                    <div className="rounded-[28px] bg-white/[0.018] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-5">
+                      <div className="mb-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
                         <p className="mt-2 text-sm text-secondary">
                           Manage wallets linked to your Clinks tag.
                         </p>
                       </div>
 
-                      <WalletRow
-                        label="EVM Wallet"
-                        value={linkedEvmWallet}
-                        isPrimary={Boolean(linkedEvmWallet)}
-                        isBusy={isLinkingWallet && linkingWalletType === "evm"}
-                        action={
-                          linkedEvmWallet ? null : linkingWalletType === "evm" ? (
-                            <InlineWalletLinker
-                              value={walletInputValue}
-                              placeholder="Paste EVM address"
-                              onChange={setWalletInputValue}
-                              onCancel={() => {
-                                setLinkingWalletType(null);
-                                setWalletInputValue("");
-                                setWalletLinkError(null);
-                              }}
-                              onSave={handleSaveLinkedWallet}
-                            />
-                          ) : (
-                            <InlineLinkButton
-                              onClick={() => {
-                                setWalletLinkError(null);
-                                setWalletInputValue("");
-                                setLinkingWalletType("evm");
-                              }}
-                            />
-                          )
-                        }
-                      />
+                      <div className="space-y-3">
+                        <WalletRow
+                          label="EVM Wallet"
+                          value={linkedEvmWallet}
+                          isPrimary={Boolean(linkedEvmWallet)}
+                          isBusy={isLinkingWallet && linkingWalletType === "evm"}
+                          action={
+                            linkedEvmWallet ? null : linkingWalletType === "evm" ? (
+                              <InlineWalletLinker
+                                value={walletInputValue}
+                                placeholder="Paste EVM address"
+                                onChange={setWalletInputValue}
+                                onCancel={() => {
+                                  setLinkingWalletType(null);
+                                  setWalletInputValue("");
+                                  setWalletLinkError(null);
+                                }}
+                                onSave={handleSaveLinkedWallet}
+                              />
+                            ) : (
+                              <InlineLinkButton
+                                onClick={() => {
+                                  setWalletLinkError(null);
+                                  setWalletInputValue("");
+                                  setLinkingWalletType("evm");
+                                }}
+                              />
+                            )
+                          }
+                        />
 
-                      <WalletRow
-                        label="Solana Wallet"
-                        value={linkedSolanaWallet}
-                        isPrimary={Boolean(linkedSolanaWallet)}
-                        isBusy={isLinkingWallet && linkingWalletType === "solana"}
-                        action={
-                          linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
-                            <InlineWalletLinker
-                              value={walletInputValue}
-                              placeholder="Paste Solana address"
-                              onChange={setWalletInputValue}
-                              onCancel={() => {
-                                setLinkingWalletType(null);
-                                setWalletInputValue("");
-                                setWalletLinkError(null);
-                              }}
-                              onSave={handleSaveLinkedWallet}
-                            />
-                          ) : (
-                            <InlineLinkButton
-                              onClick={() => {
-                                setWalletLinkError(null);
-                                setWalletInputValue("");
-                                setLinkingWalletType("solana");
-                              }}
-                            />
-                          )
-                        }
-                      />
+                        <WalletRow
+                          label="Solana Wallet"
+                          value={linkedSolanaWallet}
+                          isPrimary={Boolean(linkedSolanaWallet)}
+                          isBusy={isLinkingWallet && linkingWalletType === "solana"}
+                          action={
+                            linkedSolanaWallet ? null : linkingWalletType === "solana" ? (
+                              <InlineWalletLinker
+                                value={walletInputValue}
+                                placeholder="Paste Solana address"
+                                onChange={setWalletInputValue}
+                                onCancel={() => {
+                                  setLinkingWalletType(null);
+                                  setWalletInputValue("");
+                                  setWalletLinkError(null);
+                                }}
+                                onSave={handleSaveLinkedWallet}
+                              />
+                            ) : (
+                              <InlineLinkButton
+                                onClick={() => {
+                                  setWalletLinkError(null);
+                                  setWalletInputValue("");
+                                  setLinkingWalletType("solana");
+                                }}
+                              />
+                            )
+                          }
+                        />
+                      </div>
 
                       {walletLinkError ? (
-                        <p className="text-sm text-red-400">{walletLinkError}</p>
+                        <p className="mt-4 text-sm text-red-400">{walletLinkError}</p>
                       ) : null}
                     </div>
                   </div>
-                </div>
-              </Card>
-            ) : null}
+                ) : null}
 
-            {activeTab === "links" ? (
-              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
-                      Payment Links
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight">Your links</h2>
-                    <p className="mt-2 text-sm text-secondary">
-                      Manage the PayLinks you&apos;ve already created.
-                    </p>
+                {activeTab === "links" ? (
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="max-w-xl text-sm leading-6 text-secondary">
+                        Manage the PayLinks you&apos;ve already created.
+                      </p>
+                      <Link href="/create">
+                        <Button className="w-full sm:w-auto">Create Link</Button>
+                      </Link>
+                    </div>
+
+                    <div className="space-y-4">
+                      {links.length ? (
+                        links.map((link) => (
+                          <div
+                            key={link.tag}
+                            className="rounded-[24px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
+                          >
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="space-y-1">
+                                <p className="text-lg font-medium text-primary">
+                                  {link.ownerTag ? `@${link.ownerTag}` : link.tag}
+                                </p>
+                                <p className="text-sm text-secondary">
+                                  {link.paymentPurpose || "General payment"} •{" "}
+                                  {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
+                                </p>
+                              </div>
+                              <Link href={`/pay/${link.tag}`}>
+                                <Button variant="secondary" className="w-full sm:w-auto">
+                                  Open PayLink
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <EmptyStatePanel
+                          title="No payment links yet"
+                          text="Create your first Clinks PayLink to start collecting payments."
+                        />
+                      )}
+                    </div>
                   </div>
-                  <Link href="/create">
-                    <Button className="w-full sm:w-auto">Create Link</Button>
-                  </Link>
-                </div>
+                ) : null}
 
-                <div className="mt-8 space-y-4">
-                  {links.length ? (
-                    links.map((link) => (
-                      <div
-                        key={link.tag}
-                        className="rounded-[26px] bg-white/[0.02] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                      >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-lg font-medium text-primary">
-                              {link.ownerTag ? `@${link.ownerTag}` : link.tag}
-                            </p>
-                            <p className="text-sm text-secondary">
-                              {link.paymentPurpose || "General payment"} •{" "}
-                              {link.amount ? `${link.amount} ${link.token}` : "Custom amount"}
-                            </p>
+                {activeTab === "history" ? (
+                  <div className="space-y-6">
+                    <p className="text-sm leading-6 text-secondary">
+                      Confirmed sent and received activity across your linked wallets.
+                    </p>
+                    <div className="space-y-4">
+                      {historyError ? (
+                        <p className="text-sm text-red-400">{historyError}</p>
+                      ) : payments.length ? (
+                        payments.map((payment) => (
+                          <div
+                            key={payment.id}
+                            className="rounded-[24px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="space-y-1">
+                                <p className="text-lg font-medium text-primary">
+                                  <span className="text-accent/90">
+                                    {payment.direction === "sent" ? "Sent" : "Received"}
+                                  </span>{" "}
+                                  • {payment.amount} {payment.asset}
+                                </p>
+                                <p className="text-sm text-secondary">
+                                  {formatPaymentStatus(payment.status)} •{" "}
+                                  {new Date(
+                                    payment.confirmed_at || payment.updated_at || payment.created_at
+                                  ).toLocaleString()}
+                                </p>
+                                <p className="text-sm text-secondary">
+                                  {payment.direction === "sent" ? "To" : "From"}{" "}
+                                  {truncateCounterparty(payment, historyWalletAddress)}
+                                </p>
+                              </div>
+                              {payment.tx_signature &&
+                              (payment.explorer_url || payment.chain === "solana") ? (
+                                <a
+                                  href={
+                                    payment.explorer_url ||
+                                    (payment.chain === "solana"
+                                      ? `https://solscan.io/tx/${payment.tx_signature}`
+                                      : "#")
+                                  }
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex"
+                                >
+                                  <Button variant="secondary" className="w-full sm:w-auto">
+                                    View on Solscan
+                                  </Button>
+                                </a>
+                              ) : null}
+                            </div>
                           </div>
-                          <Link href={`/pay/${link.tag}`}>
-                            <Button variant="secondary" className="w-full sm:w-auto">
-                              Open PayLink
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <EmptyStatePanel
-                      title="No payment links yet"
-                      text="Create your first Clinks PayLink to start collecting payments."
-                    />
-                  )}
-                </div>
-              </Card>
-            ) : null}
+                        ))
+                      ) : (
+                        <EmptyStatePanel
+                          title="No payments yet"
+                          text="Confirmed sent and received payments will appear here."
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
 
-            {activeTab === "history" ? (
-              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-accent/90">
-                    Payment History
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">Activity</h2>
-                </div>
-                <div className="mt-6 space-y-4">
-                  {historyError ? (
-                    <p className="text-sm text-red-400">{historyError}</p>
-                  ) : payments.length ? (
-                    payments.map((payment) => (
-                      <div
-                        key={payment.id}
-                        className="rounded-[26px] bg-white/[0.02] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="space-y-1">
-                            <p className="text-lg font-medium text-primary">
-                              <span className="text-accent/90">
-                                {payment.direction === "sent" ? "Sent" : "Received"}
-                              </span>{" "}
-                              • {payment.amount} {payment.asset}
-                            </p>
-                            <p className="text-sm text-secondary">
-                              {formatPaymentStatus(payment.status)} •{" "}
-                              {new Date(
-                                payment.confirmed_at || payment.updated_at || payment.created_at
-                              ).toLocaleString()}
-                            </p>
-                            <p className="text-sm text-secondary">
-                              {payment.direction === "sent" ? "To" : "From"}{" "}
-                              {truncateCounterparty(payment, historyWalletAddress)}
-                            </p>
-                          </div>
-                          {payment.tx_signature &&
-                          (payment.explorer_url || payment.chain === "solana") ? (
-                            <a
-                              href={
-                                payment.explorer_url ||
-                                (payment.chain === "solana"
-                                  ? `https://solscan.io/tx/${payment.tx_signature}`
-                                  : "#")
-                              }
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex"
-                            >
-                              <Button variant="secondary" className="w-full sm:w-auto">
-                                View on Solscan
-                              </Button>
-                            </a>
-                          ) : null}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <EmptyStatePanel
-                      title="No payments yet"
-                      text="Confirmed sent and received payments will appear here."
-                    />
-                  )}
-                </div>
+                {activeTab === "pay" ? (
+                  <div className="space-y-6">
+                    <p className="text-sm leading-6 text-secondary">
+                      Paste a tag or payment link and continue with the existing payment flow.
+                    </p>
+                    <form className="flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
+                      <Input
+                        value={payTarget}
+                        placeholder="prince or https://clinks.one/prince"
+                        onChange={(event) => setPayTarget(event.target.value)}
+                      />
+                      <Button className="w-full sm:w-auto">Continue</Button>
+                    </form>
+                  </div>
+                ) : null}
               </Card>
-            ) : null}
-
-            {activeTab === "pay" ? (
-              <Card className="rounded-[38px] px-6 py-8 sm:px-8 sm:py-8">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-accent/90">Quick Pay</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">Pay Someone</h2>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-secondary">
-                  Paste a tag or payment link and continue with the existing payment flow.
-                </p>
-                <form className="mt-6 flex flex-col gap-4 sm:flex-row" onSubmit={handlePaySomeone}>
-                  <Input
-                    value={payTarget}
-                    placeholder="prince or https://clinks.one/prince"
-                    onChange={(event) => setPayTarget(event.target.value)}
-                  />
-                  <Button className="w-full sm:w-auto">Continue</Button>
-                </form>
-              </Card>
-            ) : null}
             </div>
           </>
         ) : (
@@ -788,8 +774,8 @@ function SidebarTabButton({
       type="button"
       className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-medium transition ${
         active
-          ? "bg-accent/12 text-accent shadow-[inset_0_0_0_1px_rgba(124,92,255,0.18)]"
-          : "text-secondary hover:bg-white/[0.025] hover:text-primary"
+          ? "border border-accent/20 bg-white/[0.022] text-accent shadow-[0_0_0_1px_rgba(124,92,255,0.08)]"
+          : "border border-transparent text-secondary hover:bg-white/[0.02] hover:text-primary"
       }`}
       onClick={onClick}
     >
@@ -820,7 +806,7 @@ function IconActionButton({
   return (
     <button
       type="button"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-primary transition hover:border-accent/20 hover:bg-white/[0.04]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.022] text-primary transition hover:border-accent/20 hover:bg-white/[0.035]"
       aria-label={label}
       title={label}
       onClick={onClick}
@@ -844,7 +830,7 @@ function IconActionLink({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.025] text-primary transition hover:border-accent/20 hover:bg-white/[0.04]"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.05] bg-white/[0.022] text-primary transition hover:border-accent/20 hover:bg-white/[0.035]"
       aria-label={label}
       title={label}
     >
@@ -884,7 +870,7 @@ function WalletRow({
   value: string | null;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[20px] bg-white/[0.025] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="flex items-center justify-between gap-4 rounded-[18px] bg-white/[0.018] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm text-secondary">{label}</p>
@@ -923,9 +909,9 @@ function MiniMetric({
 }) {
   return (
     <div className="rounded-[22px] bg-white/[0.025] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)]">
-      <p className="text-[11px] uppercase tracking-[0.22em] text-secondary">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-primary">{value}</p>
-      {hint ? <p className="mt-2 text-sm text-secondary">{hint}</p> : null}
+      <p className="text-[10px] uppercase tracking-[0.24em] text-secondary">{label}</p>
+      <p className="mt-2 text-xl font-semibold tracking-tight text-primary">{value}</p>
+      {hint ? <p className="mt-1.5 text-xs text-secondary">{hint}</p> : null}
     </div>
   );
 }
