@@ -517,16 +517,16 @@ export function DashboardClient() {
 
               <Card className="rounded-[40px] border-white/[0.04] bg-card px-5 py-5 shadow-[0_28px_90px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.014)] sm:px-6 sm:py-6">
                 {activeTab === "tag" ? (
-                  <div className="space-y-6">
-                    <div className="text-center">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] xl:items-start">
+                    <div className="rounded-[28px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-6">
                       <p className="text-[11px] uppercase tracking-[0.28em] text-accent/90">Public receive link</p>
-                      <p className="mt-3 text-sm text-secondary">
+                      <p className="mt-2 text-sm text-secondary">
                         Receiving networks: {receivingNetworks || "None linked"}
                       </p>
-                      <p className="mx-auto mt-4 max-w-2xl break-all text-xl font-medium text-primary sm:text-2xl">
+                      <p className="mt-4 break-all text-xl font-medium text-primary sm:text-2xl">
                         {publicUrl}
                       </p>
-                      <div className="mt-6 flex items-center justify-center gap-3">
+                      <div className="mt-5 flex items-center gap-2.5">
                         <IconActionButton
                           label={copied ? "Copied" : "Copy"}
                           icon={copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -548,7 +548,7 @@ export function DashboardClient() {
                     <div className="rounded-[28px] bg-card p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-5">
                       <div className="mb-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
-                        <p className="mt-2 text-sm text-secondary">
+                        <p className="mt-1.5 text-sm text-secondary">
                           Manage wallets linked to your Clinks tag.
                         </p>
                       </div>
