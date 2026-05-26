@@ -29,8 +29,8 @@ export function SiteHeader({
     <>
       <header
         className={cn(
-          "sticky top-0 z-40 mb-7 flex items-center justify-between rounded-[28px] border border-white/[0.05] bg-black/45 px-4 py-3 backdrop-blur-xl sm:px-5",
-          marketing ? "mb-6" : "mb-8"
+          "sticky top-0 z-40 mb-5 flex items-center justify-between rounded-[28px] border border-white/[0.05] bg-black/55 px-4 py-3 backdrop-blur-xl sm:px-5",
+          marketing ? "mb-5" : "mb-6"
         )}
       >
         <BrandMark />
@@ -70,7 +70,7 @@ export function SiteHeader({
           <button
             aria-expanded={open}
             aria-label="Toggle menu"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-primary transition hover:border-accent/30 hover:bg-white/[0.05]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-primary transition hover:text-accent"
             onClick={() => setOpen((current) => !current)}
           >
             {open ? <CloseIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -81,13 +81,11 @@ export function SiteHeader({
       <div
         className={cn(
           "overflow-hidden transition-all duration-300 md:hidden",
-          open ? "mb-8 max-h-[520px] opacity-100" : "max-h-0 opacity-0"
+          open ? "mb-6 max-h-[620px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
         <div
-          className={cn(
-            "w-full rounded-[24px] border border-white/[0.06] bg-[#0B0B0D] p-5 shadow-[0_22px_50px_rgba(0,0,0,0.35)]"
-          )}
+          className="w-full rounded-[24px] border border-white/[0.05] bg-card/95 p-5 shadow-[0_24px_56px_rgba(0,0,0,0.42)] backdrop-blur-xl"
         >
           <div className="flex flex-col gap-6">
             {navItems.map((item) => (
@@ -108,23 +106,6 @@ export function SiteHeader({
               </Link>
             ))}
 
-            <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-1">
-              <Link
-                href={hasTag ? "/dashboard" : "/dashboard"}
-                className="flex h-12 items-center justify-center rounded-2xl border border-white/10 bg-black/35 text-sm font-medium text-primary transition hover:bg-black/45"
-                onClick={() => setOpen(false)}
-              >
-                {hasTag ? "Dashboard" : "Sign in"}
-              </Link>
-              <Link
-                href={hasTag ? "/create" : "/get-started"}
-                className="flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.22)] transition hover:-translate-y-0.5"
-                onClick={() => setOpen(false)}
-              >
-                {hasTag ? "Create Link" : "Create ID"}
-              </Link>
-            </div>
-      
             <div className="border-t border-white/10 pt-5">
               <div className="space-y-4">
                 <a
@@ -148,6 +129,23 @@ export function SiteHeader({
                   Telegram
                 </a>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-1">
+              <Link
+                href={hasTag ? "/dashboard" : "/dashboard"}
+                className="flex h-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-black/30 text-sm font-medium text-primary transition hover:bg-black/45"
+                onClick={() => setOpen(false)}
+              >
+                {hasTag ? "Dashboard" : "Sign in"}
+              </Link>
+              <Link
+                href={hasTag ? "/create" : "/get-started"}
+                className="flex h-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8B5CFF_0%,#5B2DFF_55%,#7C4DFF_100%)] text-sm font-medium text-white shadow-[0_16px_40px_rgba(91,45,255,0.22)] transition hover:-translate-y-0.5"
+                onClick={() => setOpen(false)}
+              >
+                {hasTag ? "Create Link" : "Create ID"}
+              </Link>
             </div>
           </div>
         </div>

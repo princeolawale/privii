@@ -41,10 +41,10 @@ export default async function HomePage() {
 
   return (
     <PageShell marketing>
-      <section className="relative isolate overflow-hidden pt-6 sm:pt-8 lg:pt-10">
+      <section className="relative isolate overflow-hidden pt-2 sm:pt-4 lg:pt-6">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[620px] bg-[radial-gradient(circle_at_74%_18%,rgba(139,92,255,0.16),transparent_20%),radial-gradient(circle_at_70%_28%,rgba(0,163,255,0.06),transparent_16%),linear-gradient(180deg,rgba(255,255,255,0.015),transparent_40%)]" />
         <div className="grid gap-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
-          <div className="relative z-10 max-w-2xl space-y-9 pt-4 sm:pt-8 lg:pt-14">
+          <div className="relative z-10 max-w-2xl space-y-9 pt-2 sm:pt-5 lg:pt-10">
             <div className="inline-flex rounded-full bg-white/[0.03] px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.18)]">
               One identity. Multi-chain.
             </div>
@@ -86,7 +86,7 @@ export default async function HomePage() {
       </section>
 
       <section id="features" className="mt-14">
-        <div className="rounded-[24px] bg-white/[0.022] px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:px-6">
+        <div className="rounded-[24px] bg-card px-5 py-4 text-sm text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.035)] sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-[11px] font-medium uppercase tracking-[0.28em] text-secondary">
               Supported chains
@@ -193,7 +193,7 @@ export default async function HomePage() {
 
           <div
             id="docs"
-            className="rounded-[26px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+            className="rounded-[26px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
           >
             <p className="text-sm leading-7 text-secondary">
               Documentation, guides, and reference material for integrating Clinks into production payment flows.
@@ -216,7 +216,7 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto mt-28 max-w-5xl">
-        <Card className="rounded-[36px] border-white/[0.05] bg-[#0A0A0F] px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
+        <Card className="rounded-[36px] border-white/[0.05] bg-card px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-3 text-left">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -338,7 +338,7 @@ function StepCard({
   text: string;
 }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] p-7 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[28px] bg-card p-7 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="space-y-5">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
           {icon}
@@ -381,7 +381,7 @@ function UseCaseCard({
   text: string;
 }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[28px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="space-y-4">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
           {icon}

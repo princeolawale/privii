@@ -346,7 +346,7 @@ export function PayLinkForm() {
               This link will receive payments through your registered payment tag or connected wallet.
             </p>
           </div>
-          <div className="rounded-[28px] bg-white/[0.02] px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] xl:max-w-xs">
+          <div className="rounded-[28px] bg-card px-5 py-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] xl:max-w-xs">
             <p className="text-[11px] uppercase tracking-[0.24em] text-accent/90">Receive surface</p>
             <div className="mt-4 space-y-3 text-sm text-secondary">
               <div className="flex items-center justify-between gap-3">
@@ -475,7 +475,7 @@ export function PayLinkForm() {
               </div>
             </div>
 
-            <div className="rounded-[28px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
+            <div className="rounded-[28px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
               <div className="space-y-5">
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-accent/90">Link summary</p>

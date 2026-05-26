@@ -627,7 +627,7 @@ export function PayLinkPaymentClient({ tag, kind = "paylink" }: Props) {
 
   return (
     <div className="mx-auto w-full max-w-xl pt-12 sm:pt-16">
-      <div className="relative rounded-[38px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(17,17,20,0.96)_0%,rgba(10,10,10,0.98)_100%)] px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
+      <div className="relative rounded-[38px] border border-white/[0.06] bg-card px-6 pb-8 pt-24 shadow-[0_30px_120px_rgba(0,0,0,0.5)] sm:px-8 sm:pb-10 sm:pt-28">
         <div className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
           <TokenBadge token={paymentToken} />
         </div>

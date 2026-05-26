@@ -129,7 +129,7 @@ export default function AboutPage() {
       </section>
 
       <section id="status" className="mx-auto mt-24 max-w-6xl">
-        <Card className="rounded-[32px] border-white/[0.05] bg-[#0A0A0F] px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.48)] sm:px-8 sm:py-9">
+        <Card className="rounded-[32px] border-white/[0.05] bg-card px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.48)] sm:px-8 sm:py-9">
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div className="space-y-3">
               <p className="text-xs uppercase tracking-[0.28em] text-accent">Status</p>
@@ -163,7 +163,7 @@ export default function AboutPage() {
       </section>
 
       <section className="mx-auto mt-24 max-w-5xl">
-        <Card className="rounded-[36px] border-white/[0.05] bg-[#0A0A0F] px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
+        <Card className="rounded-[36px] border-white/[0.05] bg-card px-6 py-9 shadow-[0_28px_90px_rgba(0,0,0,0.5)] sm:px-10 sm:py-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-3">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -197,7 +197,7 @@ function InfoCard({
   text: string;
 }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[28px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="space-y-4">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
           {icon}
@@ -213,7 +213,7 @@ function InfoCard({
 
 function DocCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[26px] bg-white/[0.025] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[26px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <h3 className="text-base font-semibold text-primary">{title}</h3>
       <p className="mt-3 text-sm leading-7 text-secondary">{text}</p>
     </div>
@@ -230,7 +230,7 @@ function GuideCard({
   text: string;
 }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[28px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <div className="space-y-4">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent shadow-[inset_0_0_0_1px_rgba(139,92,255,0.14)]">
           {icon}

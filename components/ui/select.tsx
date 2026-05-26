@@ -10,7 +10,7 @@ export function Select({
   return (
     <select
       className={cn(
-        "w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 text-sm text-primary transition duration-200 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 hover:border-white/[0.1] disabled:opacity-60",
+        "w-full rounded-2xl border border-white/[0.06] bg-card px-4 py-3.5 text-sm text-primary transition duration-200 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 hover:border-white/[0.1] disabled:opacity-60",
         className
       )}
       {...props}

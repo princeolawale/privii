@@ -425,7 +425,7 @@ export function DashboardClient() {
                 </div>
               </Card>
 
-              <div className="space-y-2 rounded-[28px] bg-white/[0.02] p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+              <div className="space-y-2 rounded-[28px] bg-card p-2 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
                 <SidebarTabButton
                   active={activeTab === "tag"}
                   icon={<UserRound className="h-4 w-4" />}
@@ -515,7 +515,7 @@ export function DashboardClient() {
                 />
               </div>
 
-              <Card className="rounded-[40px] border-white/[0.04] bg-[linear-gradient(180deg,rgba(10,10,12,0.985)_0%,rgba(10,10,12,0.985)_100%)] px-5 py-5 shadow-[0_28px_90px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.014)] sm:px-6 sm:py-6">
+              <Card className="rounded-[40px] border-white/[0.04] bg-card px-5 py-5 shadow-[0_28px_90px_rgba(0,0,0,0.46),inset_0_1px_0_rgba(255,255,255,0.014)] sm:px-6 sm:py-6">
                 {activeTab === "tag" ? (
                   <div className="space-y-6">
                     <div className="text-center">
@@ -545,7 +545,7 @@ export function DashboardClient() {
                       </div>
                     </div>
 
-                    <div className="rounded-[28px] bg-white/[0.018] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-5">
+                    <div className="rounded-[28px] bg-card p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)] sm:p-5">
                       <div className="mb-4">
                         <p className="text-xs uppercase tracking-[0.2em] text-accent/90">My Wallets</p>
                         <p className="mt-2 text-sm text-secondary">
@@ -638,7 +638,7 @@ export function DashboardClient() {
                         links.map((link) => (
                           <div
                             key={link.tag}
-                            className="rounded-[24px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
+                            className="rounded-[24px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
                           >
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="space-y-1">
@@ -680,7 +680,7 @@ export function DashboardClient() {
                         payments.map((payment) => (
                           <div
                             key={payment.id}
-                            className="rounded-[24px] bg-white/[0.018] p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
+                            className="rounded-[24px] bg-card p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]"
                           >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               <div className="space-y-1">
@@ -782,7 +782,7 @@ function SidebarTabButton({
       type="button"
       className={`flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-medium transition ${
         active
-          ? "border border-accent/20 bg-white/[0.022] text-accent shadow-[0_0_0_1px_rgba(124,92,255,0.08)]"
+          ? "border border-accent/25 bg-accent/8 text-accent shadow-[0_0_0_1px_rgba(124,92,255,0.08),0_8px_28px_rgba(91,45,255,0.08)]"
           : "border border-transparent text-secondary hover:bg-white/[0.02] hover:text-primary"
       }`}
       onClick={onClick}
@@ -795,7 +795,7 @@ function SidebarTabButton({
 
 function EmptyStatePanel({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[28px] bg-white/[0.02] px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+    <div className="rounded-[28px] bg-card px-6 py-12 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
       <p className="text-xl font-semibold text-primary">{title}</p>
       <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-secondary">{text}</p>
     </div>
@@ -878,7 +878,7 @@ function WalletRow({
   value: string | null;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-[18px] bg-white/[0.018] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
+    <div className="flex items-center justify-between gap-4 rounded-[18px] bg-card px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm text-secondary">{label}</p>
@@ -916,7 +916,7 @@ function TopStatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[22px] bg-white/[0.018] px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
+    <div className="rounded-[22px] bg-card px-4 py-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.038)]">
       <p className="text-[10px] uppercase tracking-[0.24em] text-secondary">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight text-primary">{value}</p>
       <p className="mt-1.5 text-xs text-secondary">{hint}</p>

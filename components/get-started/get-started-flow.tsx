@@ -195,7 +195,7 @@ export function GetStartedFlow() {
         </div>
 
         {currentStep === 1 ? (
-          <div className="mt-10 rounded-[30px] bg-white/[0.025] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8">
+          <div className="mt-10 rounded-[30px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 1</p>
             <h2 className="mt-3 text-2xl font-semibold">Connect wallet</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
@@ -214,7 +214,7 @@ export function GetStartedFlow() {
 
         {currentStep === 2 ? (
           <form
-            className="mt-10 rounded-[30px] bg-white/[0.025] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8"
+            className="mt-10 rounded-[30px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8"
             onSubmit={handleSubmit}
           >
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 2</p>
@@ -223,7 +223,7 @@ export function GetStartedFlow() {
               This tag will be connected to your {resolvedWalletType === "evm" ? "EVM" : "Solana"} wallet.
             </p>
 
-            <div className="mt-6 rounded-[22px] bg-white/[0.03] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+            <div className="mt-6 rounded-[22px] bg-card p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
               <p className="text-xs uppercase tracking-[0.2em] text-secondary">Connected wallet</p>
               <div className="mt-3 flex items-center justify-between gap-4">
                 <span className="text-base font-medium text-primary">
@@ -248,7 +248,7 @@ export function GetStartedFlow() {
               />
             </label>
 
-            <div className="mt-4 rounded-[22px] bg-white/[0.03] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+            <div className="mt-4 rounded-[22px] bg-card p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
               <p className="text-xs uppercase tracking-[0.2em] text-secondary">Preview</p>
               <p className="mt-3 text-2xl font-semibold tracking-tight text-primary">
                 {tagPreview}
@@ -286,7 +286,7 @@ export function GetStartedFlow() {
         ) : null}
 
         {currentStep === 3 ? (
-          <div className="mt-10 rounded-[30px] bg-white/[0.025] p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8">
+          <div className="mt-10 rounded-[30px] bg-card p-6 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] sm:p-8">
             <p className="text-xs uppercase tracking-[0.24em] text-secondary">Step 3</p>
             <h2 className="mt-3 text-2xl font-semibold">Your Clinks is live</h2>
             <p className="mt-3 text-sm leading-6 text-secondary">
@@ -316,8 +316,8 @@ function StepChip({
         active
           ? "bg-accent/10 text-primary shadow-[inset_0_0_0_1px_rgba(139,92,255,0.2)]"
           : done
-            ? "bg-white/[0.03] text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
-            : "bg-white/[0.02] text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
+            ? "bg-card text-primary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]"
+            : "bg-card/90 text-secondary shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]"
       }`}
     >
       <p className="text-[11px] uppercase tracking-[0.24em] text-secondary">Step {number}</p>
